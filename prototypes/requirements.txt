@@ -1,0 +1,2 @@
+# Workers Python des prototypes (photo -> 3D via les Spaces Hugging Face)
+gradio_client>=1.0

@@ -1,0 +1,20 @@
+# Outils lourds et environnements locaux
+prototypes/tools/
+prototypes/.venv/
+__pycache__/
+.DS_Store
+.claude/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Fichiers générés lourds ou temporaires
+prototypes/blender/out/*.glb
+!prototypes/blender/out/salon_trellis.glb
+prototypes/blender/out/inspect.py
+prototypes/models3d/out/hunyuan3d_2_shape.glb
+prototypes/models3d/rotera.json
+# Photos produits des enseignes : non redistribuées
+prototypes/models3d/input/
