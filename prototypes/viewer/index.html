@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PilePoil — test visionneuse 3D</title>
+<style>
+  :root { --bg:#f6f3ee; --fg:#2b2622; --muted:#7a7068; --card:#fff; --line:#e4ddd3; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1e1c1a; --fg:#f1ece6; --muted:#a69c92; --card:#2a2724; --line:#3a3632; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--fg); display:grid; grid-template-columns: 1fr 320px; height:100vh; }
+  #view { position:relative; }
+  canvas { display:block; width:100%; height:100%; }
+  #status { position:absolute; left:16px; top:16px; padding:6px 10px; background:var(--card); border:1px solid var(--line); border-radius:6px; font-size:13px; color:var(--muted); }
+  aside { border-left:1px solid var(--line); padding:16px; overflow:auto; background:var(--card); }
+  h1 { font-size:17px; margin:0 0 4px; } .muted { color:var(--muted); font-size:13px; }
+  ul { list-style:none; padding:0; margin:16px 0; } li { padding:10px 0; border-bottom:1px solid var(--line); }
+  li.sel { font-weight:600; } a { color:inherit; } .total { font-weight:600; margin-top:8px; }
+  @media (max-width: 720px) { body { grid-template-columns:1fr; grid-template-rows: 60vh auto; } aside { border-left:0; border-top:1px solid var(--line); } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="view"><div id="status">Chargement du salon…</div></div>
+<aside>
+  <h1>Salon de Léa</h1>
+  <div class="muted">Tourne avec la souris, clique un meuble pour le voir dans la liste.</div>
+  <ul id="list"></ul>
+  <div class="total" id="total"></div>
+</aside>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const view = document.getElementById("view"), status = document.getElementById("status");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(getComputedStyle(document.body).backgroundColor);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x887766, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(3, 6, 4); scene.add(sun);
+
+function resize() { const r = view.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+
+const t0 = performance.now();
+const products = [];
+const file = new URLSearchParams(location.search).get("salon") || "salon_trellis";
+new GLTFLoader().load(`../blender/out/${file.replace(/[^a-z0-9_]/gi, "")}.glb`, (gltf) => {
+  scene.add(gltf.scene);
+  gltf.scene.traverse((o) => {
+    if (!o.isMesh) return;
+    // Murs côté caméra masqués par défaut, comme le rendu Blender.
+    if (o.name === "Mur_south" || o.name === "Mur_east") o.visible = false;
+    if (o.userData.pilepoil_name) products.push(o);
+  });
+  const box = new THREE.Box3().setFromObject(gltf.scene), c = box.getCenter(new THREE.Vector3());
+  camera.position.set(c.x + 3.2, 4.2, c.z + 4.2); controls.target.copy(c); controls.update();
+  const list = document.getElementById("list"); let total = 0;
+  for (const p of products) {
+    const d = p.userData, li = document.createElement("li");
+    li.id = "li-" + p.uuid;
+    li.innerHTML = (d.pilepoil_url ? `<a href="${d.pilepoil_url}" target="_blank" rel="noopener">${d.pilepoil_name}</a>` : d.pilepoil_name) + `<div class="muted">${d.pilepoil_price_eur} €</div>`;
+    list.appendChild(li); total += d.pilepoil_price_eur;
+  }
+  document.getElementById("total").textContent = `Total : ${total.toFixed(2)} €`;
+  status.textContent = `Salon chargé en ${Math.round(performance.now() - t0)} ms · ${products.length} produits`;
+  window.__pilepoil = { loadedMs: Math.round(performance.now() - t0), products: products.length };
+}, undefined, (e) => { status.textContent = "Erreur de chargement : " + e.message; window.__pilepoil = { error: String(e) }; });
+
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+renderer.domElement.addEventListener("click", (ev) => {
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(products)[0];
+  document.querySelectorAll("li.sel").forEach((e) => e.classList.remove("sel"));
+  if (hit) document.getElementById("li-" + hit.object.uuid)?.classList.add("sel");
+});
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>
+</body>
+</html>

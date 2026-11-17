@@ -1,0 +1,71 @@
+{
+ "room": {
+  "name": "Salon de Léa",
+  "width_cm": 420,
+  "length_cm": 360,
+  "height_cm": 250,
+  "wall_color_hex": "#EDE6DA",
+  "floor_color_hex": "#C8A27A",
+  "door": {
+   "wall": "south",
+   "offset_cm": 30,
+   "width_cm": 83,
+   "height_cm": 204
+  },
+  "window": {
+   "wall": "north",
+   "offset_cm": 140,
+   "width_cm": 140,
+   "height_cm": 120,
+   "sill_cm": 90
+  }
+ },
+ "products": [
+  {
+   "category": "canape",
+   "name": "EKTORP Canapé 3 places, Kilanda beige clair",
+   "retailer": "ikea",
+   "url": "https://www.ikea.com/fr/fr/p/ektorp-canape-3-places-kilanda-beige-clair-s69509010/",
+   "price_eur": 649,
+   "width_cm": 218,
+   "depth_cm": 88,
+   "height_cm": 88,
+   "color_hex": "#E3DCCB",
+   "model_glb": "../models3d/out/hunyuan3d_2_shape.glb"
+  },
+  {
+   "category": "tapis",
+   "name": "Tapis en laine et coton tufté à motifs multicolores 160x230",
+   "retailer": "maisonsdumonde",
+   "url": "https://www.maisonsdumonde.com/FR/fr/p/tapis-en-laine-et-coton-tufte-a-motifs-multicolores-160x230-moliceiros-230394.htm",
+   "price_eur": 149.5,
+   "width_cm": 230,
+   "depth_cm": 160,
+   "height_cm": 1,
+   "color_hex": "#B8875E"
+  },
+  {
+   "category": "table_basse",
+   "name": "Table basse (exemple, dimensions fictives)",
+   "retailer": "maisonsdumonde",
+   "url": null,
+   "price_eur": 149.0,
+   "width_cm": 110,
+   "depth_cm": 60,
+   "height_cm": 40,
+   "color_hex": "#D9C2A0"
+  },
+  {
+   "category": "luminaire",
+   "name": "Sphere - Lampadaire en acier chromé, H200 cm",
+   "retailer": "maisonsdumonde",
+   "url": "https://www.maisonsdumonde.com/FR/fr/p/lampadaire-en-acier-chrome-h200-cm-sphere-130542.htm",
+   "price_eur": 129.0,
+   "width_cm": null,
+   "depth_cm": null,
+   "height_cm": 200,
+   "diameter_cm": null,
+   "color_hex": "#C9CCD1"
+  }
+ ]
+}
