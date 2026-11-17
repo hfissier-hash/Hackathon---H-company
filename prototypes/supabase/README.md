@@ -1,6 +1,6 @@
-# Catalogue PilePoil (Supabase)
+# Catalogue Nester (Supabase)
 
-Projet : « hfissier's Project » (`rqituuutedejjoyjwfzh`). Deux migrations appliquées le 17.11.2026 :
+Projet : « hfissier's Project » (`rqituuutedejjoyjwfzh`). Deux migrations appliquées le 17.11.2026 (noms d'origine, avant le renommage en Nester) :
 `pilepoil_catalog` (tables) et `pilepoil_search_function` (recherche).
 
 ## Tables

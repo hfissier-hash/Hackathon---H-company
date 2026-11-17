@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PilePoil — test visionneuse 3D</title>
+<title>Nester — test visionneuse 3D</title>
 <style>
   :root { --bg:#f6f3ee; --fg:#2b2622; --muted:#7a7068; --card:#fff; --line:#e4ddd3; }
   @media (prefers-color-scheme: dark) { :root { --bg:#1e1c1a; --fg:#f1ece6; --muted:#a69c92; --card:#2a2724; --line:#3a3632; } }
@@ -61,7 +61,7 @@ new GLTFLoader().load(`../blender/out/${file.replace(/[^a-z0-9_]/gi, "")}.glb`, 
     if (!o.isMesh) return;
     // Murs côté caméra masqués par défaut, comme le rendu Blender.
     if (o.name === "Mur_south" || o.name === "Mur_east") o.visible = false;
-    if (o.userData.pilepoil_name) products.push(o);
+    if (o.userData.nester_name) products.push(o);
   });
   const box = new THREE.Box3().setFromObject(gltf.scene), c = box.getCenter(new THREE.Vector3());
   camera.position.set(c.x + 3.2, 4.2, c.z + 4.2); controls.target.copy(c); controls.update();
@@ -69,13 +69,13 @@ new GLTFLoader().load(`../blender/out/${file.replace(/[^a-z0-9_]/gi, "")}.glb`, 
   for (const p of products) {
     const d = p.userData, li = document.createElement("li");
     li.id = "li-" + p.uuid;
-    li.innerHTML = (d.pilepoil_url ? `<a href="${d.pilepoil_url}" target="_blank" rel="noopener">${d.pilepoil_name}</a>` : d.pilepoil_name) + `<div class="muted">${d.pilepoil_price_eur} €</div>`;
-    list.appendChild(li); total += d.pilepoil_price_eur;
+    li.innerHTML = (d.nester_url ? `<a href="${d.nester_url}" target="_blank" rel="noopener">${d.nester_name}</a>` : d.nester_name) + `<div class="muted">${d.nester_price_eur} €</div>`;
+    list.appendChild(li); total += d.nester_price_eur;
   }
   document.getElementById("total").textContent = `Total : ${total.toFixed(2)} €`;
   status.textContent = `Salon chargé en ${Math.round(performance.now() - t0)} ms · ${products.length} produits`;
-  window.__pilepoil = { loadedMs: Math.round(performance.now() - t0), products: products.length };
-}, undefined, (e) => { status.textContent = "Erreur de chargement : " + e.message; window.__pilepoil = { error: String(e) }; });
+  window.__nester = { loadedMs: Math.round(performance.now() - t0), products: products.length };
+}, undefined, (e) => { status.textContent = "Erreur de chargement : " + e.message; window.__nester = { error: String(e) }; });
 
 const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
 renderer.domElement.addEventListener("click", (ev) => {

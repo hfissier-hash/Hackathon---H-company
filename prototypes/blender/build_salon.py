@@ -1,4 +1,4 @@
-"""Construit un salon PilePoil dans Blender à partir d'un JSON et l'exporte en .glb.
+"""Construit un salon Nester dans Blender à partir d'un JSON et l'exporte en .glb.
 
 Usage (sans interface) :
     blender --background --factory-startup --python build_salon.py -- scene.json sortie.glb [rendu.png]
@@ -193,9 +193,9 @@ def build_products(products, W, L):
             # d'objet : sous Blender 5.3 elle pivotait autour du coin de la pièce).
             footprint = (size[1], size[0], size[2]) if rot in (90, 270) else size
             obj = box(f"P{i}_{p['category']}", footprint, center, mat)
-        obj["pilepoil_name"] = p["name"]
-        obj["pilepoil_url"] = p.get("url") or ""
-        obj["pilepoil_price_eur"] = p.get("price_eur") or 0
+        obj["nester_name"] = p["name"]
+        obj["nester_url"] = p.get("url") or ""
+        obj["nester_price_eur"] = p.get("price_eur") or 0
         entry.update(status="approximatif" if guessed else "ok", guessed=guessed)
         report.append(entry)
     return report
@@ -248,7 +248,7 @@ def main():
         bpy.ops.render.render(write_still=True)
         t_png = time.time() - t1
 
-    print("PILEPOIL_REPORT " + json.dumps({
+    print("NESTER_REPORT " + json.dumps({
         "glb": glb_path, "glb_seconds": round(t_glb, 2),
         "png": png_path, "png_seconds": round(t_png, 2) if t_png else None,
         "products": report,

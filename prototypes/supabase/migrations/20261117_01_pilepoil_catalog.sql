@@ -1,4 +1,4 @@
--- PilePoil : catalogue de produits (cache des agents H) + mesures des lancements d'agents.
+-- Nester : catalogue de produits (cache des agents H) + mesures des lancements d'agents.
 -- Appliquée le 17.11.2026 sur le projet Supabase « hfissier's Project ».
 create table public.catalog_products (
   id               bigint generated always as identity primary key,

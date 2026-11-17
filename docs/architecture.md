@@ -1,8 +1,8 @@
-# Architecture technique — PilePoil
+# Architecture technique — Nester
 
 *Mise à jour : 17.11.2026 · CTO : Hugo Fissier*
 
-PilePoil meuble un salon avec de vrais produits qui rentrent, affichés en 3D.
+Nester meuble un salon avec de vrais produits qui rentrent, affichés en 3D.
 Toutes les briques ci-dessous ont été testées le 17.11 sur des données réelles, sauf l'interface Next.js.
 
 ![Schéma d'architecture](architecture.png)
