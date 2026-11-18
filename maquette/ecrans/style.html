@@ -101,5 +101,12 @@ budget.addEventListener('input', function () {
   document.getElementById('budget-label').textContent = Number(budget.value).toLocaleString('fr-FR') + ' €';
 });
 </script>
+<script src="nestr.js"></script>
+<script>
+document.querySelector('a[href="envies.html"]').addEventListener('click', function () {
+  var card = document.querySelector('.style-card[aria-pressed="true"]');
+  Nestr.set({ style: card ? card.querySelector('p').textContent.trim() : 'Scandinave', budget_eur: Number(budget.value), projectId: null });
+});
+</script>
 </body>
 </html>

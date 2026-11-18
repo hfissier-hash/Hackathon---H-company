@@ -11,6 +11,19 @@ Hackathon *Build The Future* 2026 (Eugenia × H Company × Hugging Face × Verce
 Meubler un logement prend des heures : chaque enseigne a son format, il faut noter les cotes à la main,
 et le canapé finit par ne pas rentrer.
 
+## Lancer l'application (parcours complet)
+
+```bash
+python3 prototypes/server/app.py
+```
+
+Puis ouvrir http://127.0.0.1:8770/ : la maquette (`maquette/`) est branchée sur le parcours réel.
+Dimensions, style, budget et envies → critères (gpt-oss-120b) → catalogue Supabase « Nestr. » → salon construit par Blender →
+rendu 3D et liste d'achat. Il faut un fichier `.env` (voir `.env.example`), Blender dans `prototypes/tools/` et un jeton Hugging Face.
+Ouverte en simple fichier, la maquette garde son contenu d'exemple.
+
+Pas encore branché : appel d'un agent H en direct quand le catalogue ne suffit pas, écran Déco, bouton « Remplacer », vue Plan.
+
 ## La solution
 
 L'utilisateur décrit son salon (dimensions, porte, style, budget). Des **agents H Company** lisent les
