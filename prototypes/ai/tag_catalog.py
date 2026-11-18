@@ -1,6 +1,6 @@
 """Classe le catalogue Nester (vue `catalog_products`) avec gpt-oss-120b : style, famille de couleur, hors sujet.
 
-Usage : python3 tag_catalog.py sortie.json sortie.sql
+Usage : python3 tag_catalog.py sortie.json sortie.sql [missing]   (missing = seulement les produits non classés)
 Lit SUPABASE_URL et SUPABASE_ANON_KEY (fichier .env à la racine ou environnement).
 Écrit les réponses en JSON et un fichier SQL d'insertion dans `product_tags` (à passer côté serveur).
 """
@@ -21,8 +21,10 @@ def env(name):
     raise SystemExit(f"{name} manquant")
 
 
-def fetch():
+def fetch(only_missing=False):
     url = env("SUPABASE_URL") + "/rest/v1/catalog_products?select=id,url,category,name,color,material&order=id"
+    if only_missing:
+        url += "&color_family=is.null"
     key = env("SUPABASE_ANON_KEY")
     r = subprocess.run(["curl", "-sS", "--max-time", "60", url, "-H", "apikey: " + key], capture_output=True, check=True)
     return json.loads(r.stdout)
@@ -51,7 +53,7 @@ def tag_batch(batch):
 
 
 if __name__ == "__main__":
-    products = fetch()
+    products = fetch(len(sys.argv) > 3 and sys.argv[3] == "missing")
     t = time.time()
     batches = [products[i:i + BATCH] for i in range(0, len(products), BATCH)]
     with ThreadPoolExecutor(4) as ex:

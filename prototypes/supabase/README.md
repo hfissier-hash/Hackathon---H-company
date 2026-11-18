@@ -57,5 +57,26 @@ profondeur = plus grande mesure dépliée ; rendement peinture min = max = valeu
 | Écriture dans `product_tags` avec la clé publique | Refusée (RLS) |
 | Modification de `products` avec la clé publique | Sans effet (prix inchangé) |
 
-Limites connues : 10 produits non classés (lot gpt-oss en échec, à relancer), 9 peintures sans rendement,
-52 produits aux colis incomplets, `scraped_at` = date d'insertion, modèles 3D pas encore dans Storage.
+## Corrections du 18.11 (migration `20261118_02_unfolded_and_door_check.sql`)
+
+- **Déplié** : les mesures de la fiche sont celles du couchage. Vérifié sur ikea.com (GRUNNARP, FRIHETEN, SKÖNABÄCK).
+  Couchage qui tient dans la largeur du canapé : profondeur dépliée = petit côté (GRUNNARP 232 × 142).
+  Couchage étroit un peu plus long que le canapé : banquette, la largeur s'allonge (SKÖNABÄCK 190 × 75).
+  Sinon le lit sort vers l'avant (LYCKSELE 142 × 188, TORNSBORG 154 × 195).
+- **`door_verified`** (vue et `search_catalog`) : faux pour 6 meubles dont un colis a une mesure manquante
+  (LYCKSELE LÖVÅS ×4, POÄNG id 61, KVISTBRO id 140). Ils restent proposés, avec la mention « passage de porte non vérifié ».
+  Tapis (roulés) et peinture sont toujours vrais.
+- **Classement** : 303 produits sur 303 classés.
+- **Blender** (`build_salon.py`) : retire la plaque que TRELLIS crée à partir de l'ombre de la photo, redresse le modèle,
+  met le dossier contre le mur, et remplace le modèle par un volume simple si l'ajuster aux vraies dimensions
+  demande plus de 35 % de déformation (TRELLIS se trompe couramment de 30 % sur les proportions).
+
+## Reste à corriger à la source (collecte)
+
+- 6 meubles aux colis incomplets : relancer l'agent visuel sur ces fiches.
+- 9 peintures sans rendement : exclues de la recherche tant que la valeur manque.
+- Homonymes : « LYCKSELE LÖVÅS Canapé 2 places convertible » ×2 dans la vue (gris foncé, jaune) ; BILLY, LACK, HYLLIS,
+  SANDSBERG hors de la vue. Ajouter la couleur ou la taille au nom.
+- Marques erronées (« FEJKA », « STOCKHOLM », « CAFR », une vide) : sans effet sur l'application.
+- `scraped_at` = date d'insertion ; enregistrer la date de lecture de la page aux prochaines collectes.
+- Modèles 3D : 3 sur 22 générés (quota GPU gratuit Hugging Face), pas encore dans Storage.
