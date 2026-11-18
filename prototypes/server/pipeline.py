@@ -20,7 +20,11 @@ HEX = {"blanc": "#F2F0EA", "beige": "#D9C7A8", "gris": "#9A9A96", "noir": "#2B2B
        "bois_fonce": "#5A3E2B", "vert": "#6F8F72", "bleu": "#3E5F8A", "jaune": "#E0B84A", "orange": "#D9803C", "rouge": "#B4412F",
        "rose": "#D9A5A0", "terracotta": "#B8623F", "dore": "#C9A24A", "argente": "#B8B8B8", "multicolore": "#A88F6A"}
 # Part du budget par catégorie (le reste sert de marge).
-SHARES = [("canape", 0.50), ("table_basse", 0.12), ("tapis", 0.14), ("luminaire", 0.09), ("peinture", 0.10)]
+SHARES = [("canape", 0.42), ("fauteuil", 0.14), ("table_basse", 0.10), ("tapis", 0.12), ("luminaire", 0.08), ("peinture", 0.09)]
+LABELS = {"blanc": "Blanc", "beige": "Beige", "gris": "Gris", "noir": "Noir", "marron": "Marron", "bois_clair": "Bois clair",
+          "bois_fonce": "Bois foncé", "vert": "Vert", "bleu": "Bleu", "jaune": "Jaune", "orange": "Orange", "rouge": "Rouge",
+          "rose": "Rose", "terracotta": "Terracotta", "dore": "Doré", "argente": "Argenté", "multicolore": "Multicolore"}
+_CRITERIA_CACHE = {}
 
 
 def env(name):
@@ -49,6 +53,14 @@ def supabase(path, body=None):
 # ------------------------------------------------------------------ 1. critères
 
 def criteria(req):
+    """Critères de la demande, gardés en mémoire : l'écran Envies et la recherche posent la même question."""
+    key = (str(req.get("style", "")).lower(), str(req.get("text") or "").strip()[:600])
+    if key not in _CRITERIA_CACHE or not _CRITERIA_CACHE[key].get("llm"):
+        _CRITERIA_CACHE[key] = _criteria(req)
+    return dict(_CRITERIA_CACHE[key])
+
+
+def _criteria(req):
     """gpt-oss-120b traduit le texte libre en critères. Sortie vérifiée ; valeurs par défaut si elle est inutilisable."""
     base = STYLE_MAP.get(str(req.get("style", "")).lower(), ["moderne"])
     fallback = {"styles": base, "colors": ["beige", "gris"], "accent_color": "vert", "understood": [], "llm": False}
@@ -85,45 +97,54 @@ def has_model(pid):
     return os.path.exists(os.path.join(MODELS, f"{pid}.glb"))
 
 
-def pick(category, crit, room, budget_left, share_eur, extra=None):
-    """Meilleur produit de la catégorie : d'abord dans sa part de budget, sinon le moins cher qui tient dans le reste."""
+def rank(category, crit, room, share_eur, extra=None, keep=None):
+    """Produits de la catégorie, du meilleur choix au moins bon.
+    D'abord ceux qui tiennent dans la part de budget : meilleure correspondance, modèle 3D déjà généré,
+    puis celui qui utilise le mieux sa part. Ensuite les autres, du moins cher au plus cher."""
     args = {"p_category": category, "p_styles": crit["styles"], "p_colors": crit["colors"], "p_door_width_cm": room["door_cm"]}
     args.update(extra or {})
     rows = supabase("rpc/search_catalog", args)
-    rows = [r for r in rows if r["price_eur"] <= budget_left]
-    if not rows:
-        return None, 0
-    in_share = [r for r in rows if r["price_eur"] <= share_eur] or sorted(rows, key=lambda r: r["price_eur"])[:1]
-    # À correspondance égale, on préfère un produit dont le modèle 3D existe déjà,
-    # puis celui qui utilise le mieux sa part de budget.
-    best = max(in_share, key=lambda r: (r["match_score"], has_model(r["id"]), r["price_eur"]))
-    return best, len(rows)
+    if keep and any(keep(r) for r in rows):
+        rows = [r for r in rows if keep(r)]
+    for r in rows:
+        r["category"] = category
+    inside = sorted((r for r in rows if r["price_eur"] <= share_eur),
+                    key=lambda r: (r["match_score"], has_model(r["id"]), r["price_eur"]), reverse=True)
+    outside = sorted((r for r in rows if r["price_eur"] > share_eur), key=lambda r: r["price_eur"])
+    return inside + outside
 
 
 def select(req, crit, job):
     room, budget = req["room"], float(req["budget_eur"])
-    left, chosen, found = budget, [], {}
+    left, chosen, candidates = budget, [], {}
     W, L = room["width_cm"], room["length_cm"]
     limits = {"canape": {"p_max_width_cm": L - 60, "p_max_depth_cm": min(110, W * 0.4)},
+              "fauteuil": {"p_max_width_cm": 100, "p_max_depth_cm": 100},
               "table_basse": {"p_max_width_cm": 130, "p_max_depth_cm": 80},
               "tapis": {"p_max_width_cm": min(200, W - 150), "p_max_depth_cm": L - 60},
               "luminaire": {}}
     wants = req.get("wants") or {"meubles": True, "deco": True, "peinture": True}
+    sofa = None
     for cat, share in SHARES:
         group = "peinture" if cat == "peinture" else "deco" if cat in ("tapis", "luminaire") else "meubles"
         if not wants.get(group, True):
             continue
+        if cat == "fauteuil" and W * L < 120000:  # moins de 12 m² : pas la place pour un fauteuil
+            continue
         if cat == "peinture":
-            p, n = pick(cat, dict(crit, styles=["-"], colors=[crit["accent_color"]]), room, left, budget * share)
+            rows = rank(cat, dict(crit, styles=["-"], colors=[crit["accent_color"]]), room, budget * share)
+        elif cat == "tapis" and sofa:  # un tapis au moins aussi long que 80 % du canapé
+            rows = rank(cat, crit, room, budget * share, limits[cat], lambda r: r["depth_cm"] >= 0.8 * sofa["width_cm"])
         else:
-            p, n = pick(cat, crit, room, left, budget * share, limits[cat])
-        found[cat] = n
+            rows = rank(cat, crit, room, budget * share, limits[cat])
+        candidates[cat] = rows[:12]
+        p = next((r for r in candidates[cat] if r["price_eur"] <= left), None)
         if p:
-            p["category"] = cat
             chosen.append(p)
             left -= p["price_eur"]
-        job["last"] = p or job.get("last")
-    return chosen, found
+            sofa = p if cat == "canape" else sofa
+            job["last"] = p
+    return chosen, candidates
 
 
 def paint_plan(p, room):
@@ -132,7 +153,8 @@ def paint_plan(p, room):
     area = round(room["length_cm"] / 100 * room["height_cm"] / 100, 1)
     litres = round(area * 2 / float(row["coverage_m2_per_l_min"]), 1)
     pots = max(1, math.ceil(litres / float(row["volume_l"])))
-    return {"area_m2": area, "litres": litres, "pots": pots, "volume_l": float(row["volume_l"]), "color": row["color"]}
+    return {"area_m2": area, "litres": litres, "pots": pots, "volume_l": float(row["volume_l"]), "color": row["color"],
+            "wall_cm": [room["length_cm"], room["height_cm"]]}
 
 
 # ------------------------------------------------------------------ 3. salon 3D
@@ -145,13 +167,15 @@ def build_scene(req, crit, products, out_dir):
                       "window": {"wall": "north", "offset_cm": max(40, room["width_cm"] / 2 - 60), "width_cm": 120,
                                  "height_cm": 125, "sill_cm": 90}},
              "products": []}
+    ids = ",".join(str(int(p["id"])) for p in products)
+    shapes = {r["id"]: r["shape"] for r in supabase(f"catalog_products?select=id,shape&id=in.({ids})")}
     for p in products:
         if p["category"] == "peinture":
             scene["room"]["accent_wall"] = {"wall": "west", "color_hex": HEX.get(crit["accent_color"], "#6F8F72")}
             continue
         item = {"category": p["category"], "name": p["name"], "url": p["url"], "price_eur": p["price_eur"],
                 "width_cm": p["width_cm"], "depth_cm": p["depth_cm"], "height_cm": p["height_cm"],
-                "color_hex": HEX.get(p.get("color_family"), "#888888")}
+                "shape": shapes.get(p["id"], "rectangle"), "color_hex": HEX.get(p.get("color_family"), "#888888")}
         if p["category"] == "luminaire" and p["width_cm"] == p["depth_cm"]:
             item["diameter_cm"] = p["width_cm"]
         if has_model(p["id"]):
@@ -169,6 +193,55 @@ def build_scene(req, crit, products, out_dir):
 
 # ------------------------------------------------------------------ orchestration
 
+SAVED = ("id", "request", "criteria", "palette", "products", "candidates", "total_eur", "glb", "version", "steps", "seconds")
+
+
+def finalize(job):
+    """Peinture, total, salon 3D et enregistrement : après la recherche et après chaque remplacement."""
+    req, crit, products = job["request"], job["criteria"], job["products"]
+    for p in products:
+        if p["category"] == "peinture":
+            p["paint"] = paint_plan(p, req["room"])
+            p["unit_price_eur"] = p.get("unit_price_eur", p["price_eur"])
+            p["price_eur"] = round(p["unit_price_eur"] * p["paint"]["pots"], 2)
+    out_dir = os.path.join(OUT, job["id"])
+    os.makedirs(out_dir, exist_ok=True)
+    report = build_scene(req, crit, products, out_dir)
+    job["version"] = job.get("version", 0) + 1
+    job.update(report=report, total_eur=round(sum(p["price_eur"] for p in products), 2),
+               glb=f"/out/{job['id']}/salon.glb?v={job['version']}")
+    return report
+
+
+def save(job):
+    json.dump({k: job.get(k) for k in SAVED}, open(os.path.join(OUT, job["id"], "project.json"), "w", encoding="utf-8"),
+              ensure_ascii=False, indent=1)
+
+
+def replace(job, category):
+    """Remplace le produit d'une catégorie par le suivant de la recherche qui tient dans le budget."""
+    current = next((p for p in job["products"] if p["category"] == category), None)
+    options = job.get("candidates", {}).get(category, [])
+    if not current or len(options) < 2:
+        raise ValueError("Pas d'autre produit compatible dans cette catégorie.")
+    unit = lambda p: p.get("unit_price_eur", p["price_eur"])
+    room_left = float(job["request"]["budget_eur"]) - job["total_eur"] + current["price_eur"]
+    start = next((i for i, o in enumerate(options) if o["id"] == current["id"]), -1)
+    slot = job["products"].index(current)
+    for k in range(1, len(options)):
+        nxt = dict(options[(start + k) % len(options)])
+        if nxt["id"] == current["id"] or unit(nxt) > room_left:
+            continue
+        job["products"][slot] = nxt
+        finalize(job)
+        if job["total_eur"] <= float(job["request"]["budget_eur"]):  # peinture : le total dépend du nombre de pots
+            save(job)
+            return nxt
+    job["products"][slot] = current
+    finalize(job)
+    raise ValueError("Aucun autre produit ne tient dans le budget.")
+
+
 def run(job):
     req, t0 = job["request"], time.time()
     steps = job["steps"]
@@ -180,37 +253,31 @@ def run(job):
         step("criteria", status="running"); t = time.time()
         crit = criteria(req)
         job["criteria"] = crit
+        job["palette"] = [{"name": LABELS[c], "hex": HEX[c], "accent": c == crit["accent_color"]}
+                          for c in dict.fromkeys(["blanc", crit["accent_color"]] + crit["colors"])][:5]
         step("criteria", status="done", seconds=round(time.time() - t, 1),
              detail="gpt-oss-120b" if crit.get("llm") else "style choisi (texte non analysé)")
 
         step("catalog", status="running"); t = time.time()
-        products, found = select(req, crit, job)
+        products, candidates = select(req, crit, job)
+        job["candidates"] = candidates
         furniture = [p for p in products if p["category"] != "peinture"]
         paint = next((p for p in products if p["category"] == "peinture"), None)
         step("catalog", status="done", seconds=round(time.time() - t, 1),
-             detail=f"{sum(v for k, v in found.items() if k != 'peinture')} produits compatibles · {len(furniture)} retenus")
-        if paint:
-            paint["paint"] = paint_plan(paint, req["room"])
-            paint["unit_price_eur"] = paint["price_eur"]
-            paint["price_eur"] = round(paint["price_eur"] * paint["paint"]["pots"], 2)
-        step("paint", status="done" if "peinture" in found else "skipped",
-             detail=f"{found.get('peinture', 0)} peintures {crit['accent_color']} · {1 if paint else 0} retenue" if "peinture" in found else "non demandée")
+             detail=f"{len(furniture)} produits retenus")
+        step("paint", status="done" if "peinture" in candidates else "skipped",
+             detail=(f"Peinture {LABELS[crit['accent_color']].lower()} · {1 if paint else 0} retenue") if "peinture" in candidates else "non demandée")
         if not furniture:
             raise RuntimeError("Aucun meuble du catalogue ne rentre dans cette pièce et ce budget.")
 
         step("build", status="running"); t = time.time()
-        out_dir = os.path.join(OUT, job["id"])
-        os.makedirs(out_dir, exist_ok=True)
-        report = build_scene(req, crit, products, out_dir)
+        job["products"] = products
+        report = finalize(job)
         with_model = sum(1 for e in report["products"] if e.get("model") and not e["model"].get("rejected"))
         step("build", status="done", seconds=round(time.time() - t, 1),
              detail=f"Blender · {with_model} modèle(s) 3D sur {len(report['products'])} meubles")
-
-        total = round(sum(p["price_eur"] for p in products), 2)
-        job.update(status="done", products=products, total_eur=total, glb=f"/out/{job['id']}/salon.glb",
-                   report=report, seconds=round(time.time() - t0, 1))
-        json.dump({k: job[k] for k in ("id", "request", "criteria", "products", "total_eur", "glb", "steps", "seconds")},
-                  open(os.path.join(out_dir, "project.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        job.update(status="done", seconds=round(time.time() - t0, 1))
+        save(job)
     except Exception as e:
         for s in steps.values():
             if s["status"] == "running":

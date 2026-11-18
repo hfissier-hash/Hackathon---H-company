@@ -8,7 +8,6 @@ const job = Nestr.live ? await Nestr.project() : null;
 if (job && job.status === 'done') {
   const main = document.body.firstElementChild.children[0];
   const header = main.children[0], view = main.children[1], card = main.children[3];
-  header.querySelector('p').textContent = job.request.style + ' · ' + job.products.length + ' produits';
 
   // La vue : on retire l'image et les cotes d'exemple, on garde les boutons.
   const buttons = view.lastElementChild;
@@ -43,11 +42,12 @@ if (job && job.status === 'done') {
   resize();
 
   // Fiche produit.
-  const byUrl = Object.fromEntries(job.products.map((p) => [p.url, p]));
+  const byUrl = {};
   const img = card.querySelector('img'), texts = card.children[0].children[1].children;
   const price = card.children[0].children[2], chips = card.children[1], link = card.children[2].querySelector('a');
   const chipTpl = chips.children[0].cloneNode(true);
   function select(p) {
+    selected = p;
     img.removeAttribute('data-img'); img.src = p.image_url; img.alt = p.name;
     texts[0].textContent = p.name.split(',')[0];
     texts[1].textContent = Nestr.retailer(p) + ' · ' + Nestr.dims(p);
@@ -61,24 +61,58 @@ if (job && job.status === 'done') {
     }
     link.href = p.url; link.target = '_blank'; link.rel = 'noopener';
   }
+  const meshes = [];
+  let current = null, selected = job.products[0], firstLoad = true;
+  function load(project) {
+    for (const k of Object.keys(byUrl)) delete byUrl[k];
+    for (const p of project.products) byUrl[p.url] = p;
+    header.querySelector('p').textContent = project.request.style + ' · ' + project.products.length + ' produits';
+    return new Promise((resolve, reject) => new GLTFLoader().load(project.glb, (gltf) => {
+      if (current) scene.remove(current);
+      current = gltf.scene;
+      scene.add(current);
+      meshes.length = 0;
+      current.traverse((o) => {
+        if (!o.isMesh) return;
+        if (o.name === 'Mur_south' || o.name === 'Mur_east') o.visible = false; // murs côté caméra
+        if (o.userData.nester_url && byUrl[o.userData.nester_url]) meshes.push(o);
+      });
+      if (firstLoad) {
+        const box = new THREE.Box3().setFromObject(current), c = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        const d = Math.max(size.x, size.z) * 1.25;
+        camera.position.set(c.x + d * 0.75, d * 0.95, c.z + d * 0.9);
+        controls.target.set(c.x, 0.5, c.z);
+        controls.update();
+        firstLoad = false;
+      }
+      window.__nester = { products: meshes.length, version: project.version };
+      resolve();
+    }, undefined, (e) => { window.__nester = { error: String(e.message || e) }; reject(e); }));
+  }
+  load(job);
   select(job.products[0]);
 
-  const meshes = [];
-  new GLTFLoader().load(job.glb, (gltf) => {
-    scene.add(gltf.scene);
-    gltf.scene.traverse((o) => {
-      if (!o.isMesh) return;
-      if (o.name === 'Mur_south' || o.name === 'Mur_east') o.visible = false; // murs côté caméra
-      if (o.userData.nester_url && byUrl[o.userData.nester_url]) meshes.push(o);
-    });
-    const box = new THREE.Box3().setFromObject(gltf.scene), c = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const d = Math.max(size.x, size.z) * 1.25;
-    camera.position.set(c.x + d * 0.75, d * 0.95, c.z + d * 0.9);
-    controls.target.set(c.x, 0.5, c.z);
-    controls.update();
-    window.__nester = { products: meshes.length };
-  }, undefined, (e) => { window.__nester = { error: String(e.message || e) }; });
+  // « Remplacer » : produit suivant de la recherche, le serveur reconstruit le salon.
+  const replaceBtn = card.children[2].querySelector('button');
+  replaceBtn.addEventListener('click', async () => {
+    const label = replaceBtn.textContent;
+    replaceBtn.disabled = true;
+    replaceBtn.textContent = 'Recherche…';
+    try {
+      const r = await fetch('/api/projects/' + job.id + '/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                                      body: JSON.stringify({ category: selected.category }) });
+      const next = await r.json();
+      if (!r.ok) throw new Error(next.error);
+      await load(next);
+      select(next.products.find((p) => p.category === selected.category));
+      replaceBtn.textContent = label;
+    } catch (e) {
+      replaceBtn.textContent = 'Pas d\'autre choix';
+      setTimeout(() => { replaceBtn.textContent = label; }, 2500);
+    }
+    replaceBtn.disabled = false;
+  });
 
   const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
   let down = null;

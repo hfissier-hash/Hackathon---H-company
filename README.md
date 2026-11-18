@@ -22,7 +22,7 @@ Dimensions, style, budget et envies → critères (gpt-oss-120b) → catalogue S
 rendu 3D et liste d'achat. Il faut un fichier `.env` (voir `.env.example`), Blender dans `prototypes/tools/` et un jeton Hugging Face.
 Ouverte en simple fichier, la maquette garde son contenu d'exemple.
 
-Pas encore branché : appel d'un agent H en direct quand le catalogue ne suffit pas, écran Déco, bouton « Remplacer », vue Plan.
+Pas encore branché : appel d'un agent H en direct quand le catalogue ne suffit pas, vue Plan, photos d'inspiration et critères de l'écran Envies.
 
 ## La solution
 
