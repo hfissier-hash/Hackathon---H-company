@@ -23,6 +23,9 @@ DEFAULTS_CM = {  # utilisé seulement si l'agent n'a pas trouvé la dimension
     "tapis": {"height_cm": 1},
 }
 WALL_THICKNESS = 0.10  # m
+# Au-delà de cet écart entre les échelles x, y, z, le modèle 3D ne correspond pas au produit
+# (ex. même photo pour deux tailles) : on le remplace par un volume simple.
+MAX_DEFORMATION = 0.35
 
 
 def hex_to_rgba(hex_color, alpha=1.0):
@@ -159,6 +162,40 @@ def import_model(path, footprint, center, name):
         vs = [v.co for v in obj.data.vertices]
         return [min(v[i] for v in vs) for i in range(3)], [max(v[i] for v in vs) for i in range(3)]
 
+    def coords():
+        import numpy as np
+        a = np.empty(len(obj.data.vertices) * 3)
+        obj.data.vertices.foreach_get("co", a)
+        return a.reshape(-1, 3)
+
+    # L'ombre de la photo devient parfois une plaque sous le meuble : on la retire
+    # (tranche basse dont l'emprise dépasse nettement celle du reste).
+    import bmesh
+    import numpy as np
+    co = coords()
+    z0, zh = co[:, 2].min(), np.ptp(co[:, 2])
+    low = co[:, 2] < z0 + 0.03 * zh
+    plate_removed = False
+    if low.any() and (~low).any():
+        emprise = lambda pts: np.ptp(pts[:, 0]) * np.ptp(pts[:, 1])
+        if emprise(co[low]) > 1.3 * emprise(co[~low]):
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bmesh.ops.delete(bm, geom=[v for v, is_low in zip(bm.verts, low) if is_low], context="VERTS")
+            bm.to_mesh(obj.data)
+            bm.free()
+            plate_removed = True
+
+    # Les photos produit sont souvent de trois quarts : TRELLIS rend alors le meuble tourné.
+    # On le redresse en cherchant l'angle qui donne la plus petite emprise au sol.
+    xy = coords()[::max(1, len(obj.data.vertices) // 20000), :2]
+    def area(deg):
+        c, s_ = np.cos(np.radians(deg)), np.sin(np.radians(deg))
+        return np.ptp(c * xy[:, 0] - s_ * xy[:, 1]) * np.ptp(s_ * xy[:, 0] + c * xy[:, 1])
+    straighten = min(range(90), key=area)
+    if straighten:
+        obj.data.transform(mathutils.Matrix.Rotation(np.radians(straighten), 4, "Z"))
+
     mn, mx = bounds()
     if (mx[0] - mn[0]) > (mx[1] - mn[1]):  # longueur sur x -> quart de tour (face avant -y -> +x)
         obj.data.transform(mathutils.Matrix.Rotation(1.5707963, 4, "Z"))
@@ -167,8 +204,13 @@ def import_model(path, footprint, center, name):
     c = [(mn[i] + mx[i]) / 2 for i in range(3)]
     obj.data.transform(mathutils.Matrix.Translation((-c[0], -c[1], -c[2])))
     obj.data.transform(mathutils.Matrix.Diagonal((sx, sy, sz, 1)))
+    # Dossier contre le mur : le côté le plus haut en moyenne doit être en -x.
+    co = coords()
+    front, back = co[co[:, 0] > 0][:, 2], co[co[:, 0] < 0][:, 2]
+    if len(front) and len(back) and front.mean() > back.mean() + 0.02:
+        obj.data.transform(mathutils.Matrix.Rotation(3.14159265, 4, "Z"))
     obj.data.transform(mathutils.Matrix.Translation(center))
-    return obj, (round(sx, 3), round(sy, 3), round(sz, 3))
+    return obj, (round(sx, 3), round(sy, 3), round(sz, 3)), {"straighten_deg": int(straighten), "plate_removed": plate_removed}
 
 
 def build_products(products, W, L):
@@ -184,8 +226,13 @@ def build_products(products, W, L):
         mat = material(f"Mat_{i}", p.get("color_hex", "#888888"))
         footprint = (size[1], size[0], size[2]) if rot in (90, 270) else size
         if p.get("model_glb"):
-            obj, scale = import_model(p["model_glb"], footprint, center, f"P{i}_{p['category']}")
-            entry["model"] = {"file": p["model_glb"], "scale_xyz": scale}
+            obj, scale, fixes = import_model(p["model_glb"], footprint, center, f"P{i}_{p['category']}")
+            deformation = round(max(scale) / min(scale) - 1, 2)
+            entry["model"] = {"file": p["model_glb"], "scale_xyz": scale, "deformation": deformation, **fixes}
+            if deformation > MAX_DEFORMATION:
+                bpy.data.objects.remove(obj, do_unlink=True)
+                obj = box(f"P{i}_{p['category']}", footprint, center, mat)
+                entry["model"]["rejected"] = True
         elif p["category"] == "luminaire":
             obj = cylinder(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
         else:
@@ -196,7 +243,7 @@ def build_products(products, W, L):
         obj["nester_name"] = p["name"]
         obj["nester_url"] = p.get("url") or ""
         obj["nester_price_eur"] = p.get("price_eur") or 0
-        entry.update(status="approximatif" if guessed else "ok", guessed=guessed)
+        entry.update(status="approximatif" if guessed or entry.get("model", {}).get("rejected") else "ok", guessed=guessed)
         report.append(entry)
     return report
 
