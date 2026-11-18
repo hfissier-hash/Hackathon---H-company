@@ -23,4 +23,4 @@ prototypes/models3d/input/
 prototypes/models3d/out/catalog/
 
 # Salons générés par le serveur local
-prototypes/server/out/
+worker/out/

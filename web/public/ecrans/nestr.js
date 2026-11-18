@@ -1,5 +1,5 @@
-// Lien entre la maquette et le serveur local Nester (prototypes/server/app.py).
-// Ouverte en simple fichier, la maquette garde son contenu d'exemple : Nestr.live vaut false.
+// Lien entre les écrans et l'application Nester (routes /api de Next.js, traitées par le worker).
+// Ouverts en simple fichier, les écrans gardent leur contenu d'exemple : Nestr.live vaut false.
 window.Nestr = (function () {
   var KEY = 'nestr-projet';
   function get() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
@@ -28,9 +28,12 @@ window.Nestr = (function () {
   function retailer(p) { return RETAILERS[p.retailer] || p.retailer; }
   // Contrôles réellement faits par la recherche : dimensions de la pièce, colis et porte.
   function checks(p) {
-    if (p.category === 'peinture') return [['✓ ' + p.paint.pots + ' pot' + (p.paint.pots > 1 ? 's' : '') + ' suffi' + (p.paint.pots > 1 ? 'sen' : '') + 't', true]];
+    if (p.category === 'peinture') return !p.paint ? [] : [['✓ ' + p.paint.pots + ' pot' + (p.paint.pots > 1 ? 's' : '') + ' suffi' + (p.paint.pots > 1 ? 'sen' : '') + 't', true]];
     return [['✓ Rentre', true], p.door_verified ? ['✓ Passe la porte', true] : ['Porte non vérifiée', false]];
   }
+  // Lien partageable : ?p=<identifiant> ouvre un projet enregistré.
+  var shared = new URLSearchParams(location.search).get('p');
+  if (shared && /^[0-9a-f-]{36}$/.test(shared)) set({ projectId: shared });
   function project() {
     var id = get().projectId;
     if (!id) return Promise.resolve(null);
