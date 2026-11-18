@@ -80,7 +80,9 @@
     } else if (job.status === 'failed') {
       title.textContent = 'La recherche a échoué';
       subtitle.textContent = job.error || 'Erreur inconnue.';
-      cta.textContent = 'Modifier ma demande';
+      rows.style.display = 'none'; // rien n'a tourné : on laisse la place au message et au bouton
+      card.style.display = 'none';
+      cta.textContent = 'Corriger ma demande';
       cta.href = 'pieces.html';
       cta.style.opacity = '1';
       cta.style.pointerEvents = 'auto';
