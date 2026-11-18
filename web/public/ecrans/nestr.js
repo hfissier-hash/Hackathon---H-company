@@ -52,6 +52,15 @@ window.Nestr = (function () {
   document.addEventListener('DOMContentLoaded', function () {
     var nav = document.querySelector('nav[aria-label="Navigation principale"]');
     if (!nav || nav.querySelector('a[href="agents.html"]')) return;
+    // Retour vers la saisie (pièce, style, budget, envies) depuis les écrans du projet.
+    var title = document.querySelector('h2');
+    if (title) {
+      var back = document.createElement('a');
+      back.href = 'pieces.html';
+      back.textContent = '← Nouveau salon';
+      back.style.cssText = 'display:inline-block;margin:0 0 8px;padding:6px 12px;border-radius:999px;background:#F4F3F0;color:#111111;font-size:13px;font-weight:600;text-decoration:none';
+      title.parentNode.insertBefore(back, title);
+    }
     var tab = nav.lastElementChild.cloneNode(true), here = /agents\.html$/.test(location.pathname);
     tab.href = 'agents.html';
     tab.removeAttribute('aria-current');
