@@ -18,3 +18,6 @@ prototypes/models3d/out/hunyuan3d_2_shape.glb
 prototypes/models3d/rotera.json
 # Photos produits des enseignes : non redistribuées
 prototypes/models3d/input/
+
+# Modèles 3D générés par lot (lourds)
+prototypes/models3d/out/catalog/
