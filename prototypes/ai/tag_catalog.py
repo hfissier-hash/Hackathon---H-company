@@ -66,4 +66,16 @@ if __name__ == "__main__":
         "insert into public.product_tags (product_id, style_tags, color_family, off_topic) values " + rows +
         " on conflict (product_id) do update set style_tags = excluded.style_tags, color_family = excluded.color_family,"
         " off_topic = excluded.off_topic, tagged_at = now();\n")
+    # Avec la clé secrète dans .env, les classements sont écrits directement dans `product_tags`.
+    try:
+        key = env("SUPABASE_SERVICE_ROLE_KEY")
+    except SystemExit:
+        key = ""
+    if key.startswith("sb_secret_") and tags:
+        body = json.dumps([{"product_id": x["id"], "style_tags": x["style_tags"], "color_family": x["color_family"],
+                            "off_topic": x["off_topic"]} for x in tags]).encode()
+        r = subprocess.run(["curl", "-sS", "--fail-with-body", env("SUPABASE_URL") + "/rest/v1/product_tags?on_conflict=product_id",
+                            "-H", "apikey: " + key, "-H", "Authorization: Bearer " + key, "-H", "Content-Type: application/json",
+                            "-H", "Prefer: resolution=merge-duplicates", "--data-binary", "@-"], input=body, capture_output=True)
+        print("écriture dans product_tags :", "ok" if r.returncode == 0 else r.stdout.decode()[:200])
     print(f"{len(tags)}/{len(products)} classés en {dt:.0f} s, hors sujet : {sum(x['off_topic'] for x in tags)}")

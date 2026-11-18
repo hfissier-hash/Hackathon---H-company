@@ -1,13 +1,16 @@
 // Écran « Liste d'achat » : produits, sous-totaux et total réels du projet.
 (function () {
   if (!Nestr.live) return;
-  Nestr.project().then(function (job) {
+  var content = document.body.firstElementChild.children[0];
+  var count = content.children[1], total = content.children[2], groups = content.children[3];
+  var button = content.children[4], note = content.children[5];
+  var groupTpl = groups.children[0].cloneNode(true), rowTpl = groupTpl.children[1].cloneNode(true);
+  while (groupTpl.children.length > 1) groupTpl.removeChild(groupTpl.lastElementChild);
+  var links = [];
+  button.addEventListener('click', function () { links.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); });
+
+  function show(job) {
     if (!job || job.status !== 'done') return;
-    var content = document.body.firstElementChild.children[0];
-    var count = content.children[1], total = content.children[2], groups = content.children[3];
-    var button = content.children[4], note = content.children[5];
-    var groupTpl = groups.children[0].cloneNode(true), rowTpl = groupTpl.children[1].cloneNode(true);
-    while (groupTpl.children.length > 1) groupTpl.removeChild(groupTpl.lastElementChild);
 
     var by = {};
     job.products.forEach(function (p) { (by[Nestr.retailer(p)] = by[Nestr.retailer(p)] || []).push(p); });
@@ -32,6 +35,12 @@
         img.removeAttribute('data-img'); img.src = p.image_url; img.alt = p.name;
         row.children[1].children[0].textContent = p.name.split(',')[0];
         row.children[1].children[1].textContent = Nestr.dims(p);
+        if (p.live || p.found_by_agent) { // ce que les agents H ont fait sur ce produit
+          var tag = document.createElement('p');
+          tag.style.cssText = 'margin:3px 0 0;font-size:12px;font-weight:500;color:' + (p.live && p.live.changed ? '#B84F2C' : '#1F7A4A');
+          tag.textContent = (p.found_by_agent ? 'Trouvé par un agent H' : '') + (p.found_by_agent && p.live ? ' · ' : '') + (p.live ? Nestr.live(p)[0] : '');
+          row.children[1].appendChild(tag);
+        }
         row.children[2].textContent = Nestr.euro(p.price_eur);
         row.style.cursor = 'pointer';
         row.addEventListener('click', function () { window.open(p.url, '_blank', 'noopener'); });
@@ -41,10 +50,12 @@
     });
 
     button.textContent = 'Ouvrir les ' + job.products.length + ' liens';
-    button.addEventListener('click', function () {
-      job.products.forEach(function (p) { window.open(p.url, '_blank', 'noopener'); });
-    });
+    links = job.products.map(function (p) { return p.url; });
     var d = new Date(job.products[0].scraped_at);
-    note.textContent = 'Prix relevés par les agents H le ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
-  });
+    var verify = (job.steps || {}).verify;
+    note.textContent = verify ? verify.detail : 'Prix relevés par les agents H le ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+    // Tant que les agents vérifient les prix, la liste se met à jour toute seule.
+    if (verify && verify.status === 'running') setTimeout(function () { Nestr.project().then(show); }, 3000);
+  }
+  Nestr.project().then(show);
 })();

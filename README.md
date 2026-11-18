@@ -33,7 +33,16 @@ Il faut : le fichier `.env` (voir `.env.example`), Blender dans `prototypes/tool
 et la commande `holo` connectée (`holo login`). Le worker tourne sur une machine qui a Blender ; l'application peut être
 déployée sur Vercel (dossier racine `web`, variables `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY`).
 
-Pas encore branché : vue Plan, photos d'inspiration et critères de l'écran Envies, modèles 3D au-delà des 3 générés.
+**Les agents H Company dans l'application**
+
+- Collecte du catalogue (633 fiches, en amont).
+- Recherche en direct quand rien ne rentre dans la pièce pour une catégorie.
+- Vérification du prix et de la disponibilité des 5 produits IKEA les plus chers après chaque salon (désactivable : `NESTER_VERIFY=0`).
+- « Remplacer » avec ses mots (« en velours vert ») : catalogue d'abord, sinon un agent cherche sur ikea.com.
+- Écran « Agents » : lancements, taux de réussite, durée médiane, cas d'échec (table `agent_runs`).
+
+Pas encore branché : vue Plan, photos d'inspiration et critères de l'écran Envies, coussins, modèles 3D au-delà des 9 générés
+(les autres produits sont dessinés en formes simples par Blender).
 
 ## La solution
 

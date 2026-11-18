@@ -39,7 +39,7 @@
       info.addEventListener('click', function () { window.open(paint.url, '_blank', 'noopener'); });
     }
 
-    var deco = job.products.filter(function (p) { return p.category === 'tapis' || p.category === 'luminaire'; });
+    var deco = job.products.filter(function (p) { return ['tapis', 'luminaire', 'suspension', 'miroir', 'cadre', 'plante', 'rideau'].indexOf(p.category) >= 0; });
     var tpl = tips.children[0].cloneNode(true);
     tips.textContent = '';
     tipsTitle.textContent = 'Déco retenue';

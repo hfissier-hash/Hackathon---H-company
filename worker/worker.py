@@ -6,7 +6,7 @@ kind = project     nouvelle demande de salon
 kind = replace     remplacer le produit d'une catégorie dans un projet (parent_id)
 kind = understand  ce que l'IA a compris d'un texte (écran Envies)
 """
-import json, time, traceback
+import json, os, threading, time, traceback
 import pipeline
 
 POLL_SECONDS = 0.7
@@ -35,7 +35,18 @@ def do_project(row):
            "steps": {k: {"status": "pending"} for k in ("criteria", "catalog", "paint", "build")}}
     pipeline.run(job, lambda: patch(row["id"], {"steps": job["steps"], "result": result_of(job)}))
     patch(row["id"], {"status": job["status"], "steps": job["steps"], "result": result_of(job), "error": job.get("error")})
+    if job["status"] == "done" and os.environ.get("NESTER_VERIFY", "1") != "0":
+        # Le salon est livré ; les agents H vérifient les prix en arrière-plan, sans bloquer les demandes suivantes.
+        threading.Thread(target=safe_verify, args=(row["id"],), daemon=True).start()
     return job["status"], job.get("seconds")
+
+
+def safe_verify(request_id):
+    try:
+        pipeline.verify(request_id)
+        print(f"verify     {request_id[:8]} terminé", flush=True)
+    except Exception:
+        traceback.print_exc()
 
 
 def do_replace(row):
@@ -43,7 +54,7 @@ def do_replace(row):
     if not parent or parent[0]["status"] != "done":
         raise ValueError("projet introuvable ou pas encore prêt")
     job = dict(parent[0]["result"], id=parent[0]["id"], request=parent[0]["payload"])
-    pipeline.replace(job, str(row["payload"].get("category")))
+    pipeline.replace(job, str(row["payload"].get("category")), str(row["payload"].get("wish") or ""))
     patch(parent[0]["id"], {"result": result_of(job)})
     patch(row["id"], {"status": "done"})
     return "done", None
