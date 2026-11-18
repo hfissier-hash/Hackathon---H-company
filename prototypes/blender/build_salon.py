@@ -142,22 +142,26 @@ def dims_m(p):
     return (d["width_cm"] / 100, d["depth_cm"] / 100, d["height_cm"] / 100), guessed, []
 
 
-def place(p, size, W, L):
-    """Règles simples de placement pour un salon (prototype)."""
+def place(p, size, W, L, sofa_depth=0.90, table_depth=0.60):
+    """Règles de placement pour un salon. Renvoie (centre, rotation) ; 90 = dos au mur ouest, 270 = dos à l'est.
+    Le canapé est contre le mur ouest ; table et tapis se placent par rapport à sa profondeur réelle."""
     w, dpt, h = size
     cat = p["category"]
     if cat == "canape":  # contre le mur ouest, face à l'est
         return (dpt / 2 + 0.02, L / 2, h / 2), 90
-    if cat == "tapis":
-        return (0.50 + dpt / 2, L / 2, h / 2), 90  # tourné : son côté court part de 50 cm du mur
-    if cat == "table_basse":
-        return (0.93 + 0.45 + dpt / 2, L / 2, h / 2), 90
+    if cat == "tapis":  # glissé de 30 cm sous l'avant du canapé, grand côté parallèle au canapé
+        return (max(sofa_depth - 0.30, 0.20) + w / 2, L / 2, h / 2), 0
+    if cat == "table_basse":  # 40 cm devant le canapé
+        return (sofa_depth + 0.02 + 0.40 + dpt / 2, L / 2, h / 2), 90
+    if cat == "fauteuil":  # en face du canapé, décalé vers la fenêtre, tourné vers le canapé
+        x = min(W - dpt / 2 - 0.35, sofa_depth + 0.42 + table_depth + 0.70 + dpt / 2)
+        return (x, min(L - w / 2 - 0.40, L / 2 + 0.85), h / 2), 270
     if cat == "luminaire":  # coin nord-ouest
         return (0.30, L - 0.30, h / 2), 0
     return (W / 2, L / 2, h / 2), 0
 
 
-def import_model(path, footprint, center, name):
+def import_model(path, footprint, center, name, back=-1):
     """Importe un .glb produit, le tourne pour que sa longueur suive l'axe y
     (canapé contre le mur ouest), puis le met exactement aux dimensions réelles."""
     import mathutils
@@ -234,10 +238,10 @@ def import_model(path, footprint, center, name):
     c = [(mn[i] + mx[i]) / 2 for i in range(3)]
     obj.data.transform(mathutils.Matrix.Translation((-c[0], -c[1], -c[2])))
     obj.data.transform(mathutils.Matrix.Diagonal((sx, sy, sz, 1)))
-    # Dossier contre le mur : le côté le plus haut en moyenne doit être en -x.
+    # Le dossier est le côté le plus haut en moyenne : on le met en -x (back=-1) ou en +x (back=1).
     co = coords()
-    front, back = co[co[:, 0] > 0][:, 2], co[co[:, 0] < 0][:, 2]
-    if len(front) and len(back) and front.mean() > back.mean() + 0.02:
+    side_a, side_b = co[co[:, 0] * back < 0][:, 2], co[co[:, 0] * back > 0][:, 2]
+    if len(side_a) and len(side_b) and side_a.mean() > side_b.mean() + 0.02:
         obj.data.transform(mathutils.Matrix.Rotation(3.14159265, 4, "Z"))
     obj.data.transform(mathutils.Matrix.Translation(center))
     return obj, (round(sx, 3), round(sy, 3), round(sz, 3)), {"straighten_deg": int(straighten), "plate_removed": plate_removed}
@@ -245,6 +249,8 @@ def import_model(path, footprint, center, name):
 
 def build_products(products, W, L):
     report = []
+    depth_of = lambda cat, default: next((dims_m(q)[0][1] for q in products if q["category"] == cat and dims_m(q)[0]), default)
+    sofa_depth, table_depth = depth_of("canape", 0.90), depth_of("table_basse", 0.60)
     for i, p in enumerate(products):
         size, guessed, missing = dims_m(p)
         entry = {"name": p["name"], "category": p["category"]}
@@ -252,17 +258,19 @@ def build_products(products, W, L):
             entry.update(status="ignoré", missing=missing)
             report.append(entry)
             continue
-        center, rot = place(p, size, W, L)
+        center, rot = place(p, size, W, L, sofa_depth, table_depth)
         mat = material(f"Mat_{i}", p.get("color_hex", "#888888"))
         footprint = (size[1], size[0], size[2]) if rot in (90, 270) else size
         if p.get("model_glb"):
-            obj, scale, fixes = import_model(p["model_glb"], footprint, center, f"P{i}_{p['category']}")
+            obj, scale, fixes = import_model(p["model_glb"], footprint, center, f"P{i}_{p['category']}", back=1 if rot == 270 else -1)
             deformation = round(max(scale) / min(scale) - 1, 2)
             entry["model"] = {"file": p["model_glb"], "scale_xyz": scale, "deformation": deformation, **fixes}
             if deformation > MAX_DEFORMATION:
                 bpy.data.objects.remove(obj, do_unlink=True)
                 obj = box(f"P{i}_{p['category']}", footprint, center, mat)
                 entry["model"]["rejected"] = True
+        elif p["category"] == "table_basse" and p.get("shape") == "rond":
+            obj = cylinder(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
         elif p["category"] == "luminaire":
             obj = floor_lamp(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
         else:

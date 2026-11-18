@@ -114,6 +114,28 @@ refreshCta();
 <script src="nestr.js"></script>
 <script>
 // « Lancer la recherche » et « Passer » enregistrent la demande et démarrent un nouveau projet.
+// « Nestr a compris » : libellés extraits du texte par l'IA (gpt-oss-120b), mis à jour après la saisie.
+if (Nestr.live) {
+  var smart = document.getElementById('smart'), label = smart.nextElementSibling, chips = label.nextElementSibling;
+  var chipTpl = chips.children[0].cloneNode(true), timer = null, asked = 0;
+  var understand = function () {
+    var mine = ++asked, text = smart.value.trim();
+    if (!text) { label.textContent = 'Décrivez votre salon idéal.'; chips.textContent = ''; return; }
+    label.textContent = 'Nestr lit votre demande…';
+    fetch('/api/understand', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify({ text: text, style: Nestr.get().style || 'Scandinave' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (mine !== asked) return; // une saisie plus récente est en cours
+        chips.textContent = '';
+        (j.understood || []).forEach(function (u) { var c = chipTpl.cloneNode(true); c.textContent = u; chips.appendChild(c); });
+        label.textContent = j.llm && chips.children.length ? 'Nestr a compris :' : "Nestr n'a pas pu lire ce texte ; le style choisi sera utilisé.";
+      })
+      .catch(function () { if (mine === asked) { label.textContent = 'Serveur Nester injoignable.'; chips.textContent = ''; } });
+  };
+  smart.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(understand, 900); });
+  understand();
+}
 document.querySelectorAll('a[href="agent.html"]').forEach(function (a) {
   a.addEventListener('click', function () {
     var on = function (label) { var p = document.querySelector('.pill[data-label="' + label + '"]'); return !p || p.getAttribute('aria-pressed') === 'true'; };

@@ -2,8 +2,10 @@
 
     python3 prototypes/server/app.py        puis ouvrir http://127.0.0.1:8770/
 
-POST /api/projects        {room:{width_cm,length_cm,height_cm,door_cm}, style, budget_eur, text, wants}
-GET  /api/projects/<id>   avancement puis résultat (produits, total, URL du .glb)
+POST /api/projects                {room:{width_cm,length_cm,height_cm,door_cm}, style, budget_eur, text, wants}
+GET  /api/projects/<id>           avancement puis résultat (produits, total, URL du .glb)
+POST /api/projects/<id>/replace   {category} : produit suivant de la recherche, salon reconstruit
+POST /api/understand              {style, text} : ce que l'IA a compris de la demande
 """
 import json, os, re, threading, uuid
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -11,6 +13,17 @@ import pipeline
 
 MAQUETTE = os.path.join(pipeline.ROOT, "maquette")
 JOBS = {}
+LOCK = threading.Lock()  # un seul remplacement à la fois (Blender réécrit le même fichier)
+HIDDEN = ("report", "candidates")
+
+
+def load(job_id):
+    """Projet en mémoire, ou relu sur le disque après un redémarrage du serveur."""
+    if job_id not in JOBS:
+        saved = os.path.join(pipeline.OUT, job_id, "project.json")
+        if os.path.exists(saved):
+            JOBS[job_id] = dict(json.load(open(saved, encoding="utf-8")), status="done")
+    return JOBS.get(job_id)
 
 
 def number(v, lo, hi, name):
@@ -40,7 +53,7 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*a, directory=MAQUETTE, **kw)
 
     def translate_path(self, path):
-        m = re.fullmatch(r"/out/([0-9a-f]{12})/salon\.glb", path.split("?")[0])
+        m = re.fullmatch(r"/out/([0-9a-f]{12})/salon\.glb", path.split("?")[0].split("#")[0])
         if m:  # seuls les salons générés sont servis hors de la maquette
             return os.path.join(pipeline.OUT, m.group(1), "salon.glb")
         return super().translate_path(path)
@@ -54,30 +67,49 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def public(self, job):
+        return {k: v for k, v in job.items() if k not in HIDDEN}
+
+    def body(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        if length > 20000:
+            raise ValueError("demande trop longue")
+        data = json.loads(self.rfile.read(length) or b"{}")
+        if not isinstance(data, dict):
+            raise ValueError("objet JSON attendu")
+        return data
+
     def do_GET(self):
         m = re.fullmatch(r"/api/projects/([0-9a-f]{12})", self.path)
         if m:
-            job = JOBS.get(m.group(1))
-            if not job:  # serveur relancé : on relit le résultat enregistré
-                saved = os.path.join(pipeline.OUT, m.group(1), "project.json")
-                if os.path.exists(saved):
-                    return self.send_json(200, dict(json.load(open(saved, encoding="utf-8")), status="done"))
-                return self.send_json(404, {"error": "projet inconnu"})
-            return self.send_json(200, {k: v for k, v in job.items() if k != "report"})
+            job = load(m.group(1))
+            return self.send_json(200, self.public(job)) if job else self.send_json(404, {"error": "projet inconnu"})
         if self.path.startswith("/api/"):
             return self.send_json(404, {"error": "adresse inconnue"})
         return super().do_GET()
 
     def do_POST(self):
-        if self.path != "/api/projects":
-            return self.send_json(404, {"error": "adresse inconnue"})
         try:
-            length = int(self.headers.get("Content-Length") or 0)
-            if length > 20000:
-                raise ValueError("demande trop longue")
-            req = validate(json.loads(self.rfile.read(length) or b"{}"))
+            data = self.body()
+            m = re.fullmatch(r"/api/projects/([0-9a-f]{12})/replace", self.path)
+            if m:
+                job = load(m.group(1))
+                if not job or job.get("status") != "done":
+                    return self.send_json(404, {"error": "projet inconnu ou pas encore prêt"})
+                category = str(data.get("category"))
+                with LOCK:
+                    pipeline.replace(job, category)
+                return self.send_json(200, self.public(job))
+            if self.path == "/api/understand":
+                crit = pipeline.criteria({"style": str(data.get("style") or "")[:30], "text": str(data.get("text") or "")[:600]})
+                return self.send_json(200, {"understood": crit["understood"], "llm": crit.get("llm", False)})
+            if self.path != "/api/projects":
+                return self.send_json(404, {"error": "adresse inconnue"})
+            req = validate(data)
         except (ValueError, json.JSONDecodeError) as e:
             return self.send_json(400, {"error": str(e)})
+        except Exception as e:
+            return self.send_json(500, {"error": str(e)[:200]})
         job = {"id": uuid.uuid4().hex[:12], "status": "running", "request": req,
                "steps": {k: {"status": "pending"} for k in ("criteria", "catalog", "paint", "build")}}
         JOBS[job["id"]] = job
