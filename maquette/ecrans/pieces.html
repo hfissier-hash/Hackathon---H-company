@@ -90,5 +90,14 @@ a{color:#111111}a:hover{color:#444444}
   <a href="style.html" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: #111111; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 600">Continuer</a>
 </div>
 
+<script src="nestr.js"></script>
+<script>
+// Enregistre les dimensions pour la recherche (longueur = côté de 4,20 m sur le plan).
+document.querySelector('a[href="style.html"]').addEventListener('click', function () {
+  var v = function (id, d) { return Nestr.num(document.getElementById(id).value, d); };
+  Nestr.set({ room: { width_cm: Math.round(v('f-long', 4.2) * 100), length_cm: Math.round(v('f-larg', 3.6) * 100),
+                      height_cm: Math.round(v('f-haut', 2.5) * 100), door_cm: Math.round(v('f-porte', 83)) }, projectId: null });
+});
+</script>
 </body>
 </html>

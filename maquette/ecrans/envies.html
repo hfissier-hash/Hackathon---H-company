@@ -111,5 +111,16 @@ document.querySelectorAll('.pill').forEach(function (p) {
 });
 refreshCta();
 </script>
+<script src="nestr.js"></script>
+<script>
+// « Lancer la recherche » et « Passer » enregistrent la demande et démarrent un nouveau projet.
+document.querySelectorAll('a[href="agent.html"]').forEach(function (a) {
+  a.addEventListener('click', function () {
+    var on = function (label) { var p = document.querySelector('.pill[data-label="' + label + '"]'); return !p || p.getAttribute('aria-pressed') === 'true'; };
+    Nestr.set({ text: document.getElementById('smart').value, projectId: null,
+                wants: { meubles: on('Meubles'), deco: on('Déco'), peinture: on('Peinture') } });
+  });
+});
+</script>
 </body>
 </html>

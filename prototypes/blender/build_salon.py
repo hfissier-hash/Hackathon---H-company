@@ -61,6 +61,24 @@ def cylinder(name, radius_m, height_m, center_m, mat):
     return obj
 
 
+def floor_lamp(name, radius_m, height_m, center_m, mat):
+    """Lampadaire sans modèle 3D : socle, tige fine et abat-jour (au lieu d'un cylindre plein)."""
+    x, y = center_m[0], center_m[1]
+    radius_m = min(radius_m, 0.22)  # lampes à arc : la largeur de la fiche inclut le bras
+    shade_h = min(0.28, height_m * 0.2)
+    parts = [cylinder(name + "_socle", radius_m * 0.8, 0.03, (x, y, 0.015), mat),
+             cylinder(name + "_tige", 0.012, height_m - shade_h, (x, y, (height_m - shade_h) / 2), mat),
+             cylinder(name, radius_m, shade_h, (x, y, height_m - shade_h / 2), mat)]
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in parts:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = parts[-1]
+    bpy.ops.object.join()
+    obj = bpy.context.view_layer.objects.active
+    obj.name = name
+    return obj
+
+
 # ---------------------------------------------------------------- pièce
 
 def build_room(room):
@@ -77,6 +95,10 @@ def build_room(room):
         "east": ((t, L, H), (W + t / 2, L / 2, H / 2)),
     }
     objs = {k: box(f"Mur_{k}", *v, wall_mat) for k, v in walls.items()}
+
+    accent = room.get("accent_wall")  # mur peint : {"wall": "west", "color_hex": "#..."}
+    if accent and accent.get("wall") in objs:
+        objs[accent["wall"]].data.materials[0] = material("Mur_accent", accent["color_hex"])
 
     # Ouvertures (porte, fenêtre) : on creuse le mur avec un booléen.
     for kind in ("door", "window"):
@@ -157,6 +179,14 @@ def import_model(path, footprint, center, name):
         bpy.ops.object.join()
     obj = bpy.context.view_layer.objects.active
     obj.name = name
+    # TRELLIS exporte ses matériaux en « métal » : un tissu ressort alors noir dans le navigateur.
+    for m in obj.data.materials:
+        bsdf = m.node_tree.nodes.get("Principled BSDF") if m and m.use_nodes else None
+        if bsdf:
+            for key, value in (("Metallic", 0.0), ("Roughness", 0.85)):
+                for link in list(bsdf.inputs[key].links):
+                    m.node_tree.links.remove(link)
+                bsdf.inputs[key].default_value = value
 
     def bounds():
         vs = [v.co for v in obj.data.vertices]
@@ -234,7 +264,7 @@ def build_products(products, W, L):
                 obj = box(f"P{i}_{p['category']}", footprint, center, mat)
                 entry["model"]["rejected"] = True
         elif p["category"] == "luminaire":
-            obj = cylinder(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
+            obj = floor_lamp(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
         else:
             # Quart de tour = on échange largeur et profondeur (pas de rotation
             # d'objet : sous Blender 5.3 elle pivotait autour du coin de la pièce).

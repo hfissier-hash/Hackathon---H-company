@@ -21,3 +21,6 @@ prototypes/models3d/input/
 
 # Modèles 3D générés par lot (lourds)
 prototypes/models3d/out/catalog/
+
+# Salons générés par le serveur local
+prototypes/server/out/
