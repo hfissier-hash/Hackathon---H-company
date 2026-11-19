@@ -35,10 +35,17 @@ def do_project(row):
            "steps": {k: {"status": "pending"} for k in ("criteria", "catalog", "paint", "build")}}
     pipeline.run(job, lambda: patch(row["id"], {"steps": job["steps"], "result": result_of(job)}))
     patch(row["id"], {"status": job["status"], "steps": job["steps"], "result": result_of(job), "error": job.get("error")})
-    if job["status"] == "done" and os.environ.get("NESTER_VERIFY", "1") != "0":
+    if job["status"] == "done":
         # Le salon est livré ; les agents H vérifient les prix en arrière-plan, sans bloquer les demandes suivantes.
         threading.Thread(target=safe_verify, args=(row["id"],), daemon=True).start()
     return job["status"], job.get("seconds")
+
+
+LOCKS = {}  # un verrou par projet : remplacement et régénération 3D ne réécrivent pas le salon en même temps
+
+
+def lock_of(project_id):
+    return LOCKS.setdefault(project_id, threading.Lock())
 
 
 def safe_verify(request_id):
@@ -47,15 +54,23 @@ def safe_verify(request_id):
         print(f"verify     {request_id[:8]} terminé", flush=True)
     except Exception:
         traceback.print_exc()
+    if os.environ.get("NESTER_3D_ON_DEMAND", "1") != "0":
+        try:
+            pipeline.models_on_demand(request_id, lock_of(request_id))
+            print(f"modèles 3D {request_id[:8]} terminé", flush=True)
+        except Exception:
+            traceback.print_exc()
 
 
 def do_replace(row):
     parent = pipeline.admin(f"requests?id=eq.{row['parent_id']}&select=id,payload,result,status")
     if not parent or parent[0]["status"] != "done":
         raise ValueError("projet introuvable ou pas encore prêt")
-    job = dict(parent[0]["result"], id=parent[0]["id"], request=parent[0]["payload"])
-    pipeline.replace(job, str(row["payload"].get("category")), str(row["payload"].get("wish") or ""))
-    patch(parent[0]["id"], {"result": result_of(job)})
+    with lock_of(parent[0]["id"]):
+        parent = pipeline.admin(f"requests?id=eq.{row['parent_id']}&select=id,payload,result,status")
+        job = dict(parent[0]["result"], id=parent[0]["id"], request=parent[0]["payload"])
+        pipeline.replace(job, str(row["payload"].get("category")), str(row["payload"].get("wish") or ""))
+        patch(parent[0]["id"], {"result": result_of(job)})
     patch(row["id"], {"status": "done"})
     return "done", None
 

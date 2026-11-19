@@ -54,3 +54,6 @@ for p in json.load(open(sys.argv[1], encoding="utf-8")):
     row["duration_s"] = round(time.time() - t, 1)
     print(json.dumps(row, ensure_ascii=False), flush=True)
     open(os.path.join(OUT, "report.jsonl"), "a", encoding="utf-8").write(json.dumps(row, ensure_ascii=False) + "\n")
+    if "quota" in row.get("error", "").lower() or "runs limit" in row.get("error", "").lower():
+        print("Quota GPU épuisé : arrêt (relancer la commande reprendra ici).", flush=True)
+        break
