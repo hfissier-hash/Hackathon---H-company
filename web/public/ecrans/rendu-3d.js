@@ -76,7 +76,9 @@ if (job && job.status === 'done') {
       current.traverse((o) => {
         if (!o.isMesh) return;
         if (o.name === 'Mur_south' || o.name === 'Mur_east') o.visible = false; // murs côté caméra
-        if (o.userData.nester_url && byUrl[o.userData.nester_url]) meshes.push(o);
+        // Un modèle à plusieurs matières arrive en groupe : l'adresse du produit est alors sur le parent.
+        const url = o.userData.nester_url || (o.parent && o.parent.userData.nester_url);
+        if (url && byUrl[url]) { o.userData.nester_url = url; meshes.push(o); }
       });
       if (firstLoad) {
         const box = new THREE.Box3().setFromObject(current), c = box.getCenter(new THREE.Vector3());

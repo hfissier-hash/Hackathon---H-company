@@ -44,7 +44,9 @@ déployée sur Vercel (dossier racine `web`, variables `SUPABASE_URL` et `SUPABA
 **Photos d'inspiration** : sur l'écran Envies, un modèle de vision (`google/gemma-4-31B-it`, Hugging Face Inference Providers) lit jusqu'à
 3 photos ; les couleurs et styles détectés guident le choix des produits et du mur d'accent.
 
-**Modèles 3D** : TRELLIS génère à la demande les meubles sans modèle (3 par salon) ; sinon Blender dessine une forme simple.
+**Modèles 3D**, par ordre de préférence : le modèle officiel du fabricant déposé dans Supabase Storage (`models/ikea/<numéro d'article>.glb`,
+439 fichiers, déjà aux vraies dimensions) ; sinon un modèle généré par TRELLIS depuis la photo (à la demande, 3 par salon) ;
+sinon une forme simple dessinée par Blender.
 
 Pas encore branché : vue Plan, critères de l'écran Envies (seconde main, animaux…), coussins.
 
