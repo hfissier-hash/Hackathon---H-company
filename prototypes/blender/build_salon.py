@@ -422,11 +422,50 @@ def lift(obj, dz):
 
 
 def shrink_textures(limit=768):
-    """Les textures du fabricant sont parfois très grandes : on les ramène à 768 px pour un salon léger."""
-    for img in bpy.data.images:
+    """Textures légères pour le salon affiché dans le navigateur (elles font l'essentiel du poids du fichier) :
+    - on retire les cartes de relief et d'occlusion des modèles du fabricant, invisibles à cette échelle ;
+    - les images sont ramenées à 768 px ;
+    - celles qui n'ont pas de transparence sont enregistrées en JPEG (le feuillage des plantes reste en PNG)."""
+    import os
+    import tempfile
+    import numpy as np
+    for mat in bpy.data.materials:
+        if not mat.use_nodes:
+            continue
+        nt = mat.node_tree
+        bsdf = nt.nodes.get("Principled BSDF")
+        if bsdf:
+            for link in list(bsdf.inputs["Normal"].links):
+                nt.links.remove(link)
+        for node in list(nt.nodes):  # groupe « glTF Material Output » : carte d'occlusion
+            if node.type == "GROUP" and node.node_tree and "glTF" in node.node_tree.name:
+                nt.nodes.remove(node)
+    used = {n.image for m in bpy.data.materials if m.use_nodes for n in m.node_tree.nodes
+            if n.type == "TEX_IMAGE" and n.image and n.outputs["Color"].links}
+    tmp = tempfile.mkdtemp(prefix="nester_tex_")
+    for i, img in enumerate(bpy.data.images):
+        if img not in used or not img.size[0] or not img.size[1]:
+            continue
         if img.size[0] > limit or img.size[1] > limit:
             k = limit / max(img.size)
             img.scale(max(1, int(img.size[0] * k)), max(1, int(img.size[1] * k)))
+        try:
+            px = np.empty(img.size[0] * img.size[1] * 4, dtype=np.float32)
+            img.pixels.foreach_get(px)
+            opaque = float(px[3::4].min()) > 0.98
+        except Exception:
+            opaque = False
+        if opaque:
+            try:
+                path = os.path.join(tmp, f"tex_{i}.jpg")
+                img.filepath_raw, img.file_format = path, "JPEG"
+                img.save()
+                if img.packed_file:
+                    img.unpack(method="REMOVE")
+                img.source, img.filepath = "FILE", path
+                img.reload()
+            except Exception:
+                pass  # en cas d'échec, l'image part telle quelle
 
 
 def build_products(products, W, L, H, room):
