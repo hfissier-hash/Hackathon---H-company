@@ -46,10 +46,11 @@ export async function GET() {
   try {
     const user = await currentUser();
     if (!user) return json({ error: 'non connecté' }, 401);
-    const rows = await db(`requests?user_id=eq.${user.id}&kind=eq.project&status=eq.done&select=id,created_at,payload,result&order=created_at.desc&limit=30`);
+    const rows = await db(`requests?user_id=eq.${user.id}&kind=eq.project&status=eq.done&select=id,created_at,payload,result&order=created_at.desc&limit=60`);
     return json({ projects: rows.map((r) => {
       const res = r.result || {}, products = res.products || [];
-      return { id: r.id, created_at: r.created_at, style: r.payload?.style, budget_eur: r.payload?.budget_eur, text: String(r.payload?.text || '').slice(0, 120),
+      return { id: r.id, created_at: r.created_at, saved: Boolean(r.payload?.saved_at), saved_at: r.payload?.saved_at || null,
+               name: r.payload?.name || null, glb: res.glb || null, style: r.payload?.style, budget_eur: r.payload?.budget_eur, text: String(r.payload?.text || '').slice(0, 120),
                room: { width_cm: r.payload?.room?.width_cm, length_cm: r.payload?.room?.length_cm },
                total_eur: res.total_eur, count: products.length, palette: (res.palette || []).map((c) => c.hex).slice(0, 5),
                photo: res.photo?.url || null, images: products.slice(0, 4).map((p) => p.image_url).filter(Boolean) };

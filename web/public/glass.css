@@ -135,7 +135,7 @@ body > div:first-of-type > nav { animation: none; }
   backdrop-filter: var(--blur);
   box-shadow: var(--glass-rim), var(--glass-drop);
 }
-a[href="salons.html"][style*="inline-block"] { align-self: flex-start; }
+a[href="profil.html"][style*="inline-block"] { align-self: flex-start; }
 
 /* bordures opaques de la maquette → liserés de verre */
 [style*="solid var(--birch)"], .style-card[aria-pressed="false"] { border-color: rgba(255, 255, 255, 0.55) !important; }

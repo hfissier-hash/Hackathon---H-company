@@ -57,27 +57,27 @@ window.Nestr = (function () {
   }).then(function (user) {
     if (!user) return null;
     var s = get();
-    if (s.owner !== user.email) { try { localStorage.removeItem(KEY); } catch (e) {} s = {}; } // un autre compte sur cet appareil : on repart de zéro
+    if (s.owner && s.owner !== user.email) { try { localStorage.removeItem(KEY); } catch (e) {} s = {}; } // un autre compte sur cet appareil : on repart de zéro
     if (!s.owner || (!s.room && user.room)) set({ owner: user.email, room: s.room || user.room || undefined });
     return user;
   }).catch(function () { return null; });
-  // Onglet « Agents » ajouté à la barre de navigation des écrans du projet.
   document.addEventListener('DOMContentLoaded', function () {
     var nav = document.querySelector('nav[aria-label="Navigation principale"]');
-    if (!nav || nav.querySelector('a[href="agents.html"]')) return;
+    if (!nav || nav.querySelector('a[href="profil.html"]')) return;
     // Retour vers la saisie (pièce, style, budget, envies) depuis les écrans du projet.
     var title = document.querySelector('h2');
-    if (title) {
+    if (title && !/profil\.html$/.test(location.pathname)) {
       var back = document.createElement('a');
-      back.href = 'salons.html';
+      back.href = 'profil.html';
       back.textContent = '← Mes salons';
       back.style.cssText = 'display:inline-block;margin:0 0 8px;padding:6px 12px;border-radius:999px;background:var(--birch);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none';
       title.parentNode.insertBefore(back, title);
     }
-    var tab = nav.lastElementChild.cloneNode(true), here = /agents\.html$/.test(location.pathname);
-    tab.href = 'agents.html';
+    // Onglet « Profil » : informations du compte et salons enregistrés.
+    var tab = nav.lastElementChild.cloneNode(true), here = /profil\.html$/.test(location.pathname);
+    tab.href = 'profil.html';
     tab.removeAttribute('aria-current');
-    tab.lastChild.textContent = 'Agents';
+    tab.lastChild.textContent = 'Profil';
     tab.querySelector('svg').innerHTML = '<circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>';
     tab.style.color = here ? 'var(--ink)' : 'var(--ink-muted)';
     tab.style.fontWeight = here ? '600' : '500';

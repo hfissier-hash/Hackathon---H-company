@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nestr — Mon profil</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&amp;family=Figtree:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+h1, h2, h3 { font-family: var(--display); }
+.data { font-family: var(--data); font-weight: 500; letter-spacing: -0.02em; font-size: 0.92em; }
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--birch)}
+a{color:var(--ink)}a:hover{color:var(--ink-muted)}
+input[type=range]{accent-color:var(--ink)}
+</style>
+<link rel="stylesheet" href="../glass.css">
+<script src="../glass.js" defer></script>
+<style>
+.bloc { margin-top: 14px; padding: 14px 16px; border-radius: 20px; background: rgba(255,255,255,0.10); box-shadow: var(--glass-rim), var(--glass-drop); }
+.bloc h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--ink-muted); font-family: var(--body); }
+.ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; font-size: 15px; }
+.ligne + .ligne { border-top: 1px solid var(--line); }
+.ligne span:first-child { color: var(--ink-muted); font-size: 14px; flex-shrink: 0; }
+.ligne b { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.petit { height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 12.5px var(--body); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap; }
+.titre { display: flex; align-items: baseline; justify-content: space-between; margin: 22px 2px 10px; }
+.titre h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.4px; }
+.titre p { margin: 0; font-size: 13px; color: var(--ink-muted); }
+.salon { position: relative; margin-bottom: 12px; border-radius: 22px; overflow: hidden; background: rgba(255,255,255,0.10); box-shadow: var(--glass-rim), var(--glass-drop); animation: arrive 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.salon > a { display: block; text-decoration: none; color: var(--ink); }
+.salon .visuel { position: relative; height: 112px; display: flex; gap: 2px; background: linear-gradient(120deg, #3F836D, #14332A); }
+.salon .visuel img { flex: 1; min-width: 0; height: 100%; object-fit: cover; background: #fff; }
+.salon .palette { position: absolute; left: 12px; bottom: 10px; display: flex; }
+.salon .palette i { width: 18px; height: 18px; border-radius: 50%; margin-right: -5px; box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,0.3); }
+.salon .marque { position: absolute; right: 10px; top: 10px; padding: 4px 10px; border-radius: 999px; background: var(--pine); color: var(--surface); font-size: 11px; font-weight: 600; }
+.salon .texte { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px 4px; }
+.salon h4 { margin: 0; font-family: var(--display); font-size: 16px; font-weight: 700; letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.salon .texte p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-muted); }
+.salon .actions { display: flex; gap: 6px; padding: 6px 12px 12px; flex-wrap: wrap; }
+.recent { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 8px; margin-bottom: 8px; border-radius: 18px; background: rgba(255,255,255,0.10); box-shadow: var(--glass-rim), var(--glass-drop); }
+.recent a.ouvrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.recent img { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; background: #fff; flex-shrink: 0; }
+.recent b { display: block; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent small { font-size: 12px; color: var(--ink-muted); }
+.vide { margin: 4px 4px 0; padding: 18px 16px; border-radius: 18px; border: 1.5px dashed var(--line); font-size: 14px; line-height: 1.5; color: var(--ink-muted); text-align: center; }
+#avatar { width: 54px; height: 54px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font: 800 22px var(--display); color: var(--surface);
+  background: linear-gradient(140deg, #3F836D, #14332A); box-shadow: var(--glass-rim-dark), 0 10px 22px -10px rgba(20,51,42,0.7); }
+@keyframes arrive { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; overflow: hidden">
+  <div id="page" style="flex: 1; min-height: 0; overflow-y: auto; padding: 20px 20px 24px">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <div id="avatar" aria-hidden="true">·</div>
+      <div style="min-width: 0; flex: 1">
+        <h2 id="bonjour" style="margin: 0; font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -0.7px">Mon profil</h2>
+        <p id="mail" style="margin: 3px 0 0; font-size: 13.5px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">&nbsp;</p>
+      </div>
+    </div>
+
+    <a id="nouveau" href="style.html" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 52px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 16px; font-weight: 600">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nouveau salon</a>
+
+    <div class="titre"><h3>Mes salons enregistrés</h3><p id="nb-enregistres"></p></div>
+    <div id="enregistres" aria-live="polite"><p class="vide">Chargement…</p></div>
+
+    <div id="bloc-recents" hidden>
+      <div class="titre"><h3>Derniers salons générés</h3><p>non enregistrés</p></div>
+      <div id="recents"></div>
+    </div>
+
+    <div class="titre"><h3>Mes informations</h3></div>
+    <div class="bloc" style="margin-top: 0">
+      <div class="ligne"><span>Prénom</span><b id="i-prenom"></b><button id="changer-prenom" type="button" class="petit">Modifier</button></div>
+      <div class="ligne"><span>Adresse mail</span><b id="i-mail"></b></div>
+    </div>
+    <div class="bloc">
+      <h3>Mon logement</h3>
+      <div class="ligne"><span>Salon</span><b id="i-salon" class="data">à renseigner</b><a href="pieces.html" class="petit">Modifier</a></div>
+      <div class="ligne"><span>Hauteur sous plafond</span><b id="i-hauteur" class="data">–</b></div>
+      <div class="ligne"><span>Porte et fenêtres</span><b id="i-ouvertures" class="data">–</b></div>
+    </div>
+
+    <a href="agents.html" class="bloc" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; text-decoration: none; color: var(--ink)">
+      <span style="min-width: 0"><b style="display: block; font-size: 15px">Les agents H Company</b><span style="font-size: 13px; color: var(--ink-muted)">Ce qu'ils ont cherché et vérifié pour toi</span></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+
+    <button id="sortir" type="button" style="margin-top: 16px; width: 100%; height: 48px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 15px var(--body); cursor: pointer">Se déconnecter</button>
+  </div>
+  <nav aria-label="Navigation principale" style="display: flex; height: 72px; flex-shrink: 0; border-top: 1px solid var(--line); background: var(--surface)">
+    <a href="rendu-3d.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: var(--ink-muted); font-size: 12px; font-weight: 500">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>3D
+    </a>
+    <a href="deco.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: var(--ink-muted); font-size: 12px; font-weight: 500">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.6 0-.9-.6-1.4-.6-2.2 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></svg>Déco
+    </a>
+    <a href="liste.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: var(--ink-muted); font-size: 12px; font-weight: 500">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Liste
+    </a>
+  </nav>
+</div>
+<script src="nestr.js"></script>
+<script>
+// Écran « Profil » : informations du compte, logement, salons enregistrés et derniers salons générés.
+(function () {
+  var saved = document.getElementById('enregistres'), recent = document.getElementById('recents'), nav = document.querySelector('nav');
+  // Sans salon ouvert, les onglets 3D / Déco / Liste n'ont rien à montrer : la barre reste masquée.
+  if (!Nestr.get().projectId) nav.style.display = 'none';
+  var metres = function (cm) { return (cm / 100).toFixed(2).replace('.', ','); };
+
+  Nestr.me.then(function (user) {
+    if (!user) return;
+    var show = function () {
+      document.getElementById('bonjour').textContent = user.first_name ? 'Bonjour ' + user.first_name : 'Mon profil';
+      document.getElementById('avatar').textContent = (user.first_name || user.email).charAt(0).toUpperCase();
+      document.getElementById('i-prenom').textContent = user.first_name || '–';
+    };
+    show();
+    document.getElementById('mail').textContent = user.email;
+    document.getElementById('i-mail').textContent = user.email;
+    var r = user.room;
+    if (r) {
+      document.getElementById('i-salon').textContent = metres(r.width_cm) + ' × ' + metres(r.length_cm) + ' m · ' + (r.width_cm * r.length_cm / 10000).toFixed(1).replace('.', ',') + ' m²';
+      document.getElementById('i-hauteur').textContent = metres(r.height_cm) + ' m';
+      var n = (r.windows || []).length;
+      document.getElementById('i-ouvertures').textContent = 'porte ' + r.door_cm + ' cm · ' + n + ' fenêtre' + (n > 1 ? 's' : '');
+    } else document.getElementById('nouveau').href = 'pieces.html?compte=1';
+    document.getElementById('changer-prenom').addEventListener('click', function () {
+      var name = window.prompt('Ton prénom', user.first_name || '');
+      if (name === null || !name.trim()) return;
+      fetch('/api/me', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ first_name: name }) })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (j) { if (j) { user.first_name = j.user.first_name; show(); } });
+    });
+  });
+
+  document.getElementById('nouveau').addEventListener('click', function () {
+    // Un nouveau salon repart du logement enregistré, sans reprendre les choix du précédent.
+    var s = Nestr.get();
+    try { localStorage.setItem('nestr-projet', JSON.stringify({ room: s.room, owner: s.owner })); sessionStorage.removeItem('nestr-inspirations'); sessionStorage.removeItem('nestr-envie'); } catch (e) {}
+  });
+  document.getElementById('sortir').addEventListener('click', function () {
+    fetch('/api/auth/logout', { method: 'POST' }).catch(function () {}).then(function () {
+      try { localStorage.removeItem('nestr-projet'); sessionStorage.clear(); } catch (e) {}
+      location.href = 'accueil.html';
+    });
+  });
+
+  function patch(id, body) {
+    return fetch('/api/projects/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); });
+  }
+  function label(p) { return p.name || 'Salon ' + String(p.style || '').toLowerCase(); }
+  function date(iso) { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }); }
+  function button(text, action) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'petit'; b.textContent = text;
+    b.addEventListener('click', action);
+    return b;
+  }
+  function card(p, i) {
+    var box = document.createElement('div'), open = document.createElement('a'), visual = document.createElement('div');
+    box.className = 'salon'; box.style.animationDelay = Math.min(i, 8) * 0.06 + 's';
+    open.href = 'rendu-3d.html?p=' + p.id;
+    visual.className = 'visuel';
+    (p.photo ? [p.photo] : p.images).forEach(function (src) {
+      var img = document.createElement('img');
+      img.src = src; img.alt = ''; img.loading = 'lazy';
+      img.onerror = function () { img.remove(); };
+      visual.appendChild(img);
+    });
+    var pal = document.createElement('div'); pal.className = 'palette';
+    (p.palette || []).forEach(function (hex) { if (/^#[0-9a-f]{6}$/i.test(hex)) { var d = document.createElement('i'); d.style.background = hex; pal.appendChild(d); } });
+    var mark = document.createElement('span'); mark.className = 'marque'; mark.textContent = 'Modèle 3D enregistré';
+    visual.append(pal, mark);
+    var text = document.createElement('div'), left = document.createElement('div'), title = document.createElement('h4'), sub = document.createElement('p'), price = document.createElement('p');
+    title.textContent = label(p);
+    sub.textContent = date(p.created_at) + ' · ' + p.count + ' produits · ' + String(p.style || '').toLowerCase();
+    price.className = 'data'; price.style.cssText = 'margin:0;font-size:15px;color:var(--ink);white-space:nowrap';
+    price.textContent = Nestr.euro(p.total_eur);
+    left.style.minWidth = '0'; left.append(title, sub);
+    text.className = 'texte'; text.append(left, price);
+    open.append(visual, text);
+    var actions = document.createElement('div'); actions.className = 'actions';
+    var see = document.createElement('a'); see.className = 'petit'; see.href = open.href; see.textContent = 'Ouvrir en 3D';
+    see.style.cssText = 'background:var(--pine);color:var(--surface);border-color:transparent';
+    actions.append(see,
+      button('Renommer', function () {
+        var name = window.prompt('Nom du salon', label(p));
+        if (name === null) return;
+        patch(p.id, { name: name }).then(function (j) { p.name = j.name; title.textContent = label(p); }).catch(function () {});
+      }),
+      button('Retirer', function () { patch(p.id, { saved: false }).then(load).catch(function () {}); }));
+    if (p.glb) { var dl = document.createElement('a'); dl.className = 'petit'; dl.href = p.glb; dl.download = 'salon-nestr.glb'; dl.textContent = 'Télécharger'; actions.appendChild(dl); }
+    box.append(open, actions);
+    return box;
+  }
+  function row(p) {
+    var box = document.createElement('div'), open = document.createElement('a'), img = document.createElement('img'), text = document.createElement('span');
+    box.className = 'recent'; open.className = 'ouvrir'; open.href = 'rendu-3d.html?p=' + p.id;
+    img.src = p.images[0] || ''; img.alt = ''; img.loading = 'lazy'; img.onerror = function () { img.style.visibility = 'hidden'; };
+    text.style.minWidth = '0';
+    var b = document.createElement('b'), small = document.createElement('small');
+    b.textContent = label(p);
+    small.textContent = date(p.created_at) + ' · ' + p.count + ' produits · ' + Nestr.euro(p.total_eur);
+    text.append(b, small);
+    open.append(img, text);
+    box.append(open, button('Enregistrer', function () { patch(p.id, { saved: true }).then(load).catch(function () {}); }));
+    return box;
+  }
+  function load() {
+    return fetch('/api/projects').then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); }).then(function (j) {
+      var kept = j.projects.filter(function (p) { return p.saved; }).sort(function (a, b) { return a.saved_at < b.saved_at ? 1 : -1; });
+      var others = j.projects.filter(function (p) { return !p.saved; }).slice(0, 6);
+      document.getElementById('nb-enregistres').textContent = kept.length ? kept.length + ' salon' + (kept.length > 1 ? 's' : '') : '';
+      saved.textContent = '';
+      if (!kept.length) {
+        var empty = document.createElement('p'); empty.className = 'vide';
+        empty.textContent = others.length ? 'Aucun salon enregistré. Garde ceux qui te plaisent avec « Enregistrer ».' : 'Aucun salon pour l’instant. Crée le premier, puis enregistre-le depuis le rendu 3D.';
+        saved.appendChild(empty);
+      }
+      kept.forEach(function (p, i) { saved.appendChild(card(p, i)); });
+      recent.textContent = '';
+      others.forEach(function (p) { recent.appendChild(row(p)); });
+      document.getElementById('bloc-recents').hidden = !others.length;
+    }).catch(function (status) {
+      if (status === 401) return;
+      saved.textContent = '';
+      var p = document.createElement('p'); p.className = 'vide'; p.textContent = 'Tes salons n’ont pas pu être chargés. Réessaie dans un instant.';
+      saved.appendChild(p);
+    });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

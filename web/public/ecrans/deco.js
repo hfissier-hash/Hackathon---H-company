@@ -5,7 +5,7 @@
     if (!job || job.status !== 'done') return;
     var c = document.body.firstElementChild.children[0];
     // Le lien « ← Mes salons » ajouté par nestr.js ne compte pas dans l'ordre des blocs.
-    var k = [].filter.call(c.children, function (e) { return e.getAttribute('href') !== 'salons.html'; });
+    var k = [].filter.call(c.children, function (e) { return e.getAttribute('href') !== 'profil.html'; });
     var subtitle = k[1], swatches = k[2], accent = k[3], others = k[4];
     var tipsTitle = k[5], tips = k[6];
     var fr = function (n) { return String(n).replace('.', ','); };

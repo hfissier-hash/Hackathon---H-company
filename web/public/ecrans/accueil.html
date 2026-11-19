@@ -83,10 +83,10 @@ a.suite + a.suite { animation-delay: 1.3s !important; }
 fetch('/api/me').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
   if (!j || !j.user) return;
   var go = document.getElementById('go'), other = document.getElementById('deja');
-  go.href = 'salons.html';
-  go.firstChild.textContent = 'Mes salons ';
+  go.href = 'profil.html';
+  go.firstChild.textContent = 'Mon espace ';
   other.textContent = j.user.first_name ? 'Connecté : ' + j.user.first_name : 'Connecté';
-  other.href = 'salons.html';
+  other.href = 'profil.html';
 }).catch(function () {});
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>

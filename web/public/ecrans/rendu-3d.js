@@ -128,6 +128,35 @@ if (job && job.status === 'done') {
   load(job);
   select(job.products[0]);
 
+  // « Enregistrer » : le salon et son modèle 3D rejoignent le profil (onglet Profil, « Mes salons enregistrés »).
+  const keep = document.createElement('button');
+  keep.type = 'button';
+  keep.style.cssText = 'position:absolute;right:12px;top:12px;height:36px;padding:0 14px 0 11px;border-radius:18px;border:0;display:flex;align-items:center;gap:6px;font:600 13px var(--body);cursor:pointer;z-index:2';
+  let isSaved = Boolean(job.request && job.request.saved_at);
+  function showSaved() {
+    keep.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="' + (isSaved ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4z"/></svg>';
+    keep.append(isSaved ? 'Enregistré' : 'Enregistrer');
+    keep.setAttribute('aria-pressed', isSaved ? 'true' : 'false');
+    keep.title = isSaved ? 'Ce salon est dans ton profil. Clique pour le retirer.' : 'Garder ce salon et son modèle 3D dans ton profil';
+    keep.classList.toggle('garde', isSaved);
+  }
+  showSaved();
+  keep.addEventListener('click', async () => {
+    keep.disabled = true;
+    try {
+      const r = await fetch('/api/projects/' + job.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ saved: !isSaved }) });
+      if (r.status === 401) { location.href = 'compte.html#connexion'; return; }
+      if (!r.ok) throw new Error();
+      isSaved = (await r.json()).saved;
+      showSaved();
+    } catch (e) {
+      keep.lastChild.textContent = 'Impossible';
+      setTimeout(showSaved, 2500);
+    }
+    keep.disabled = false;
+  });
+  view.appendChild(keep);
+
   // « Remplacer » : produit suivant de la recherche, ou produit décrit avec ses mots.
   // Avec une envie, le worker cherche dans le catalogue puis envoie un agent H sur le site de l'enseigne.
   const wish = document.createElement('input');
