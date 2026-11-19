@@ -37,10 +37,13 @@
       var holder = document.createElement('div');
       holder.setAttribute('aria-hidden', 'true');
       holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
-      holder.innerHTML = '<svg width="0" height="0"><filter id="lg-liquid" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">' +
-        '<feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="7" result="n"/>' +
-        '<feGaussianBlur in="n" stdDeviation="3" result="s"/>' +
-        '<feDisplacementMap in="SourceGraphic" in2="s" scale="38" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
+      // Même recette que le bouton « liquid glass » de référence : bruit, déplacement, léger flou.
+      holder.innerHTML = '<svg width="0" height="0"><defs><filter id="lg-liquid" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">' +
+        '<feTurbulence type="fractalNoise" baseFrequency="0.05 0.05" numOctaves="1" seed="1" result="turbulence"/>' +
+        '<feGaussianBlur in="turbulence" stdDeviation="2" result="blurredNoise"/>' +
+        '<feDisplacementMap in="SourceGraphic" in2="blurredNoise" scale="70" xChannelSelector="R" yChannelSelector="B" result="displaced"/>' +
+        '<feGaussianBlur in="displaced" stdDeviation="4" result="finalBlur"/>' +
+        '<feComposite in="finalBlur" in2="finalBlur" operator="over"/></filter></defs></svg>';
       document.body.appendChild(holder);
       document.documentElement.classList.add('lg-refract');
     });
