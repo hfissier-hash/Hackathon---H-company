@@ -76,6 +76,9 @@ def do_replace(row):
 
 
 def do_understand(row):
+    if row["payload"].get("images"):  # photos d'inspiration : modèle de vision
+        patch(row["id"], {"status": "done", "result": pipeline.inspiration(row["payload"]["images"]), "payload": {"images": len(row["payload"]["images"])}})
+        return "done", None
     crit = pipeline.criteria(row["payload"])
     patch(row["id"], {"status": "done", "result": {"understood": crit["understood"], "llm": crit.get("llm", False)}})
     return "done", None

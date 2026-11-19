@@ -41,8 +41,12 @@ déployée sur Vercel (dossier racine `web`, variables `SUPABASE_URL` et `SUPABA
 - « Remplacer » avec ses mots (« en velours vert ») : catalogue d'abord, sinon un agent cherche sur ikea.com.
 - Écran « Agents » : lancements, taux de réussite, durée médiane, cas d'échec (table `agent_runs`).
 
-Pas encore branché : vue Plan, photos d'inspiration et critères de l'écran Envies, coussins, modèles 3D au-delà des 9 générés
-(les autres produits sont dessinés en formes simples par Blender).
+**Photos d'inspiration** : sur l'écran Envies, un modèle de vision (`google/gemma-4-31B-it`, Hugging Face Inference Providers) lit jusqu'à
+3 photos ; les couleurs et styles détectés guident le choix des produits et du mur d'accent.
+
+**Modèles 3D** : TRELLIS génère à la demande les meubles sans modèle (3 par salon) ; sinon Blender dessine une forme simple.
+
+Pas encore branché : vue Plan, critères de l'écran Envies (seconde main, animaux…), coussins.
 
 ## La solution
 
