@@ -27,3 +27,6 @@ worker/out/
 
 # Modèles 3D officiels téléchargés depuis le Storage
 worker/models_cache/
+
+# Lien local avec le projet Vercel
+.vercel

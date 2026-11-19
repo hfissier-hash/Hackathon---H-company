@@ -16,10 +16,13 @@ et le canapé finit par ne pas rentrer.
 **https://nester-mu.vercel.app** (projet Vercel « nester », dossier `web`).
 
 Seule l'interface est sur Vercel. Les demandes sont traitées par le worker, qui doit tourner sur une machine équipée de Blender
-(`python3 worker/worker.py`) : s'il est arrêté, les demandes restent en attente. Pour redéployer après une modification :
+(`python3 worker/worker.py`) : s'il est arrêté, les demandes restent en attente.
+
+Le projet Vercel est relié à ce dépôt, avec `web` comme dossier racine : **chaque fusion dans `main` redéploie l'application**.
+Pour déployer à la main depuis la racine du dépôt :
 
 ```bash
-npx vercel deploy --prod --cwd web
+npx vercel deploy --prod
 ```
 
 Variables du projet Vercel : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secrète) et, au besoin, `NESTER_MAX_PER_HOUR`.

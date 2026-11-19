@@ -1,0 +1,3 @@
+# Déploiement manuel : seul le dossier web part sur Vercel (le reste contient Blender et des modèles 3D).
+/*
+!/web
