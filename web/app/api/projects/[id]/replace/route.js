@@ -9,18 +9,20 @@ export const maxDuration = 300;
 
 export async function POST(request, { params }) {
   const { id } = await params;
-  let category, wish = '';
+  let category, wish = '', product_id = null;
   try {
     const body = await request.json();
     category = body.category;
     wish = String(body.wish || '').slice(0, 80);
+    // un produit précis, choisi parmi les idées de l'onglet Déco
+    if (body.product_id !== undefined && /^\d{1,9}$/.test(String(body.product_id))) product_id = Number(body.product_id);
   } catch (e) { category = null; }
   if (!UUID.test(id) || !CATEGORIES.includes(category)) return json({ error: 'demande invalide' }, 400);
   try {
     const project = await getProject(id);
     if (!project || project.status !== 'done' || !canSee(project, await currentUser())) return json({ error: 'projet inconnu ou pas encore prêt' }, 404);
     if (await overQuota('replace', 60)) return json({ error: 'Trop de demandes en ce moment. Réessaie dans quelques minutes.' }, 429);
-    const rows = await db('requests', { method: 'POST', body: { kind: 'replace', parent_id: id, payload: { category, wish } }, prefer: 'return=representation' });
+    const rows = await db('requests', { method: 'POST', body: { kind: 'replace', parent_id: id, payload: product_id === null ? { category, wish } : { category, product_id } }, prefer: 'return=representation' });
     const done = await waitFor(rows[0].id, wish ? 280 : 45); // un agent en direct peut prendre plusieurs minutes
     if (!done) return json({ error: 'Le worker ne répond pas.' }, 504);
     if (done.status === 'failed') return json({ error: done.error || 'Remplacement impossible.' }, 409);

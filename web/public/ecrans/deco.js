@@ -85,7 +85,27 @@
           name.textContent = p.name.split(',')[0];
           meta.textContent = p.category === 'peinture' ? Nestr.retailer(p) + (p.color ? ' · ' + p.color.replace('_', ' ') : '') : Nestr.dims(p);
           price.className = 'data idee-prix'; price.textContent = Nestr.euro(p.price_eur);
-          a.append(img, tag, name, meta, price);
+          // « Mettre dans le salon » : ce produit remplace celui de sa catégorie, si le budget le permet.
+          var put = document.createElement('button');
+          put.type = 'button'; put.className = 'idee-mettre'; put.textContent = 'Mettre dans le salon';
+          put.addEventListener('click', function (ev) {
+            ev.preventDefault(); ev.stopPropagation();
+            if (put.disabled) return;
+            put.disabled = true; put.textContent = 'Installation…';
+            fetch('/api/projects/' + job.id + '/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                           body: JSON.stringify({ category: p.category, product_id: p.id }) })
+              .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
+              .then(function () {
+                put.classList.add('fait'); put.textContent = '✓ Dans ton salon';
+                // Un meuble se voit en 3D ; la déco et la peinture se voient ici, en haut de la page.
+                setTimeout(function () { if (group[0] === 'Idées de meubles') location.href = 'rendu-3d.html'; else location.reload(); }, 900);
+              })
+              .catch(function (e) {
+                put.textContent = /budget/.test(e.message || '') ? 'Dépasse le budget' : /pas de produit/.test(e.message || '') ? 'Pas dans ce salon' : 'Impossible';
+                setTimeout(function () { put.disabled = false; put.textContent = 'Mettre dans le salon'; }, 2600);
+              });
+          });
+          a.append(img, tag, name, meta, price, put);
           rail.appendChild(a);
         });
         c.append(head, rail);

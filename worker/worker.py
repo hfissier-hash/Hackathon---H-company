@@ -70,7 +70,7 @@ def do_replace(row):
     with lock_of(parent[0]["id"]):
         parent = pipeline.admin(f"requests?id=eq.{row['parent_id']}&select=id,payload,result,status")
         job = dict(parent[0]["result"], id=parent[0]["id"], request=parent[0]["payload"])
-        pipeline.replace(job, str(row["payload"].get("category")), str(row["payload"].get("wish") or ""))
+        pipeline.replace(job, str(row["payload"].get("category")), str(row["payload"].get("wish") or ""), row["payload"].get("product_id"))
         patch(parent[0]["id"], {"result": result_of(job)})
     patch(row["id"], {"status": "done"})
     return "done", None

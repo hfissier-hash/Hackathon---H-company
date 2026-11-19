@@ -31,6 +31,9 @@ body > div:first-of-type > div:first-child > * { flex-shrink: 0; }
 .idee b { margin: 8px 4px 0; font-size: 13px; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; }
 .idee small { margin: 3px 4px 0; font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .idee-prix { margin: 6px 4px 0; font-size: 14px; color: var(--ink); }
+.idee-mettre { margin: 8px 0 0; height: 30px; border: 0; border-radius: 15px; background: var(--pine); color: var(--surface); font: 600 11.5px var(--body); cursor: pointer; white-space: nowrap; }
+.idee-mettre[disabled] { opacity: 0.75; cursor: default; }
+.idee-mettre.fait { background: var(--sun) !important; color: var(--pine-deep) !important; opacity: 1; }
 @keyframes idee { from { opacity: 0; transform: translateX(18px); } }
 </style>
 </head>

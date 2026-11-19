@@ -584,9 +584,10 @@ def wish_criteria(wish):
         return [], words
 
 
-def replace(job, category, wish=""):
+def replace(job, category, wish="", product_id=None):
     """Remplace le produit d'une catégorie. Sans envie : le suivant de la recherche qui tient dans le budget.
-    Avec une envie (« plutôt en velours vert ») : le catalogue d'abord, sinon un agent H va le chercher sur le site."""
+    Avec une envie (« plutôt en velours vert ») : le catalogue d'abord, sinon un agent H va le chercher sur le site.
+    Avec un produit précis (une idée choisie sur l'onglet Déco) : ce produit, s'il tient dans le budget."""
     current = next((p for p in job["products"] if p["category"] == category), None)
     if not current:
         raise ValueError("Ce projet n'a pas de produit dans cette catégorie.")
@@ -600,6 +601,31 @@ def replace(job, category, wish=""):
         job["products"][slot] = dict(nxt)
         finalize(job)
         return job["total_eur"] <= budget  # peinture et cadres : le total dépend de la quantité
+
+    if product_id is not None:
+        nxt = next((o for o in options if str(o["id"]) == str(int(product_id))), None)
+        if not nxt and category == "peinture":
+            # Les idées de peinture viennent du catalogue entier (couleurs de la palette), pas seulement de la recherche.
+            row = supabase(f"catalog_products?select={COLUMNS}&id=eq.{int(product_id)}&category=eq.peinture")
+            nxt = dict(row[0], category=category) if row else None
+        if not nxt:
+            raise ValueError("Ce produit n'est pas proposé pour ce salon.")
+        if nxt["id"] == current["id"]:
+            return current
+        before = (job["criteria"].get("accent_color"), job.get("palette"))
+        if category == "peinture" and nxt.get("color_family") in HEX:
+            # Une autre teinte : le mur d'accent et la palette suivent le pot choisi.
+            job["criteria"]["accent_color"] = nxt["color_family"]
+            job["palette"] = [{"name": LABELS[c], "hex": HEX[c], "accent": c == nxt["color_family"]}
+                              for c in dict.fromkeys(["blanc", nxt["color_family"]] + job["criteria"]["colors"])][:5]
+        if try_with(nxt):
+            if all(str(o["id"]) != str(nxt["id"]) for o in options):
+                options.insert(0, nxt)
+            return job["products"][slot]
+        job["criteria"]["accent_color"], job["palette"] = before
+        job["products"][slot] = current
+        finalize(job)
+        raise ValueError("Ce produit ferait dépasser ton budget.")
 
     import agent
     wish = agent.clean_wish(wish)
