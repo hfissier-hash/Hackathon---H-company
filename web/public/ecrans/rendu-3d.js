@@ -117,6 +117,7 @@ if (job && job.status === 'done') {
                                                                       body: JSON.stringify({ category: selected.category, wish: asked }) });
       const next = await r.json();
       if (!r.ok) throw new Error(next.error);
+      version = next.version;
       await load(next);
       select(next.products.find((p) => p.category === selected.category));
       wish.value = '';
@@ -128,6 +129,34 @@ if (job && job.status === 'done') {
     clearTimeout(slow);
     replaceBtn.disabled = false;
   });
+
+  // Après la livraison, le worker génère les modèles 3D manquants et les agents vérifient les prix :
+  // l'écran suit l'avancement et recharge le salon quand une nouvelle version arrive.
+  let version = job.version;
+  const note = document.createElement('p');
+  note.setAttribute('role', 'status');
+  note.style.cssText = 'position:absolute;left:12px;top:12px;margin:0;padding:6px 12px;border-radius:999px;background:#111111;color:#FFFFFF;font-size:12px;font-weight:600;display:none';
+  view.appendChild(note);
+  const until = Date.now() + 6 * 60 * 1000;
+  async function watch() {
+    const j = await Nestr.project();
+    if (j && j.status === 'done') {
+      const m = (j.steps || {}).models, v = (j.steps || {}).verify;
+      note.style.display = m && m.status === 'running' ? 'block' : 'none';
+      if (m) note.textContent = 'Modèles 3D : ' + m.detail.split(' générés')[0].replace(' modèle(s) 3D sur ', ' / ');
+      if (j.version !== version && !replaceBtn.disabled) {
+        version = j.version;
+        await load(j);
+        select(j.products.find((p) => p.url === selected.url) || j.products[0]);
+      } else if (v && v.status !== 'running' && !selected.live) {
+        const fresh = j.products.find((p) => p.url === selected.url);
+        if (fresh && fresh.live) select(fresh); // le prix vient d'être vérifié par un agent
+      }
+      if (m && m.status !== 'running') return;
+    }
+    if (Date.now() < until) setTimeout(watch, 4000);
+  }
+  setTimeout(watch, 4000);
 
   const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
   let down = null;

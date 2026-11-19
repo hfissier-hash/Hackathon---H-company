@@ -259,7 +259,7 @@ def dims_m(p):
     return (d["width_cm"] / 100, d["depth_cm"] / 100, d["height_cm"] / 100), guessed, []
 
 
-def import_model(path, footprint, center, name, back=-1):
+def import_model(path, footprint, center, name, back=-1, plain_mat=None):
     """Importe un .glb produit, le tourne pour que sa longueur suive l'axe y
     (canapé contre le mur ouest), puis le met exactement aux dimensions réelles."""
     import mathutils
@@ -281,6 +281,16 @@ def import_model(path, footprint, center, name, back=-1):
         bpy.ops.object.join()
     obj = bpy.context.view_layer.objects.active
     obj.name = name
+    # Modèle très détaillé (Hunyuan3D : plus de 300 000 faces) : on l'allège pour un fichier rapide à charger.
+    if len(obj.data.polygons) > 60000:
+        mod = obj.modifiers.new("Allege", "DECIMATE")
+        mod.ratio = 60000 / len(obj.data.polygons)
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Modèle sans texture (forme seule) : on lui donne la couleur du produit.
+    textured = any(m and m.use_nodes and any(n.type == "TEX_IMAGE" for n in m.node_tree.nodes) for m in obj.data.materials)
+    if not textured and plain_mat is not None:
+        obj.data.materials.clear()
+        obj.data.materials.append(plain_mat)
     # TRELLIS exporte ses matériaux en « métal » : un tissu ressort alors noir dans le navigateur.
     for m in obj.data.materials:
         bsdf = m.node_tree.nodes.get("Principled BSDF") if m and m.use_nodes else None
@@ -381,7 +391,7 @@ def build_products(products, W, L, H, room):
             else:  # en face du canapé, côté porte, tourné de trois quarts vers lui
                 center, back, angle = (min(W - d / 2 - 0.55, table_x + table_d / 2 + 0.75 + d / 2), max(w / 2 + 0.45, L * 0.22)), 1, -90
             if p.get("model_glb"):
-                obj, scale, fixes = import_model(p["model_glb"], (d, w, h), (center[0], center[1], h / 2), name, back=back)
+                obj, scale, fixes = import_model(p["model_glb"], (d, w, h), (center[0], center[1], h / 2), name, back=back, plain_mat=mat)
                 deformation = round(max(scale) / min(scale) - 1, 2)
                 entry["model"] = {"file": p["model_glb"], "scale_xyz": scale, "deformation": deformation, **fixes}
                 if deformation > MAX_DEFORMATION:

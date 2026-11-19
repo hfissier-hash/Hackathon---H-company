@@ -400,9 +400,50 @@ def replace(job, category, wish=""):
     raise ValueError("Aucun autre produit ne tient dans le budget.")
 
 
+MODEL_CATEGORIES = ("canape", "fauteuil", "table_basse", "meuble_tv", "etagere", "luminaire")
+VENV_PYTHON = os.path.join(ROOT, "prototypes/.venv/bin/python")
+GEN3D = os.path.join(ROOT, "prototypes/models3d/gen3d.py")
+
+
+def models_on_demand(job_id, lock, limit=3):
+    """Après la livraison : génère avec TRELLIS le modèle 3D des meubles qui n'en ont pas (les plus chers d'abord),
+    puis reconstruit le salon. À l'écran, la forme simple devient le vrai meuble."""
+    row = admin(f"requests?id=eq.{job_id}&select=steps,result")[0]
+    targets = sorted((p for p in row["result"]["products"] if p["category"] in MODEL_CATEGORIES and not has_model(p["id"])
+                      and str(p.get("image_url", "")).startswith("https://www.ikea.com/")),
+                     key=lambda p: (MODEL_CATEGORIES.index(p["category"]), -p["price_eur"]))[:limit]
+    if not targets:
+        return
+    done, built, t0 = 0, 0, time.time()
+
+    def publish(status):
+        nonlocal built
+        with lock:
+            row = admin(f"requests?id=eq.{job_id}&select=id,payload,steps,result")[0]
+            job = dict(row["result"], id=row["id"], request=row["payload"])
+            if done > built:
+                finalize(job)  # salon reconstruit avec le nouveau modèle
+                built = done
+            steps = dict(row["steps"], models={"status": status, "seconds": round(time.time() - t0, 1),
+                                               "detail": f"{done} modèle(s) 3D sur {len(targets)} générés par TRELLIS"})
+            admin(f"requests?id=eq.{job_id}", {"steps": steps, "result": {k: job[k] for k in RESULT if k in job}}, method="PATCH")
+
+    publish("running")
+    for p in targets:
+        r = subprocess.run([VENV_PYTHON, GEN3D, str(int(p["id"])), p["image_url"]], capture_output=True, text=True, timeout=240)
+        if r.returncode == 0 and has_model(p["id"]):
+            done += 1
+            publish("running")
+        elif "quota" in (r.stderr + r.stdout).lower() or "runs limit" in (r.stderr + r.stdout).lower():
+            break  # quota GPU épuisé : inutile d'insister
+    publish("done" if done else "failed")
+
+
 def verify(job_id):
     """Après la livraison du salon : des agents H rouvrent les fiches et confirment prix et disponibilité.
     Les cinq produits IKEA les plus chers sont vérifiés en parallèle ; le résultat s'ajoute au projet."""
+    if os.environ.get("NESTER_VERIFY", "1") == "0":
+        return
     from concurrent.futures import ThreadPoolExecutor
     import agent
     row = admin(f"requests?id=eq.{job_id}&select=steps,result")[0]
