@@ -275,29 +275,25 @@ def rank(category, crit, room, share_eur, extra=None, keep=None, must=None, any_
     return inside + outside
 
 
-def window_of(room):
-    """Fenêtre du mur nord : même calcul que la scène envoyée à Blender."""
-    x0 = max(40, room["width_cm"] / 2 - 60)
-    return x0, x0 + 120
-
-
 def constraints(room):
-    """Ce qui rentre dans la pièce, par catégorie : limites de recherche, filtres de hauteur, place disponible."""
-    W, L, H = room["width_cm"], room["length_cm"], room["height_cm"]
-    win_x0, win_x1 = window_of(room)
-    limits = {"canape": {"p_max_width_cm": L - 60, "p_max_depth_cm": min(110, W * 0.4)},
+    """Ce qui rentre dans la pièce, par catégorie : limites de recherche, filtres de hauteur, place disponible.
+    Les largeurs viennent du plan de la pièce (worker/layout.py) : mur du canapé, porte, fenêtres."""
+    import layout
+    plan = layout.plan(room)
+    H, mx = room["height_cm"], plan["max"]
+    limits = {"canape": {"p_max_width_cm": mx["canape_width"], "p_max_depth_cm": mx["canape_depth"]},
               "fauteuil": {"p_max_width_cm": 100, "p_max_depth_cm": 100},
               "table_basse": {"p_max_width_cm": 130, "p_max_depth_cm": 80},
-              "meuble_tv": {"p_max_width_cm": min(200, L - 80), "p_max_depth_cm": 50},
-              "etagere": {"p_max_width_cm": W - win_x1 - 30, "p_max_depth_cm": 45},
-              "tapis": {"p_max_width_cm": min(200, W - 150), "p_max_depth_cm": L - 60},
+              "meuble_tv": {"p_max_width_cm": mx["tv_width"], "p_max_depth_cm": 50},
+              "etagere": {"p_max_width_cm": mx["shelf_width"], "p_max_depth_cm": 45},
+              "tapis": {"p_max_width_cm": mx["rug_short"], "p_max_depth_cm": mx["rug_long"]},
               "luminaire": {}, "suspension": {"p_max_width_cm": 60},
-              "miroir": {"p_max_width_cm": win_x0 - 75}, "cadre": {"p_max_width_cm": 100}, "plante": {}, "rideau": {}}
+              "miroir": {"p_max_width_cm": 90}, "cadre": {"p_max_width_cm": 100}, "plante": {}, "rideau": {}}
     # Ce qui doit tenir en hauteur, et les catégories qui demandent de la place.
     must = {"etagere": lambda r: r["height_cm"] <= H - 10, "meuble_tv": lambda r: r["height_cm"] <= 80,
             "miroir": lambda r: (r["height_cm"] or 0) <= H - 30, "cadre": lambda r: (r["height_cm"] or 0) <= 110,
             "plante": lambda r: 40 <= r["height_cm"] <= H - 40, "rideau": lambda r: r["height_cm"] >= 200}
-    room_for = {"fauteuil": W * L >= 120000, "meuble_tv": W >= 340, "etagere": W - win_x1 - 30 >= 40, "miroir": win_x0 - 75 >= 30}
+    room_for = dict(plan["room_for"], rideau=bool(plan["windows"]))
     return limits, must, room_for
 
 
@@ -348,35 +344,48 @@ def select(req, crit, job, notify=lambda: None):
 
 
 def paint_plan(p, room):
-    """Nombre de pots pour le mur d'accent (mur ouest, derrière le canapé), 2 couches, sur le rendement de la fiche."""
+    """Nombre de pots pour le mur d'accent (derrière le canapé), 2 couches, sur le rendement de la fiche."""
+    import layout
     row = supabase(f"catalog_products?select=volume_l,coverage_m2_per_l_min,color&id=eq.{int(p['id'])}")[0]
-    area = round(room["length_cm"] / 100 * room["height_cm"] / 100, 1)
+    wall_cm = layout.wall_length(room, layout.plan(room)["sofa_wall"])
+    area = round(wall_cm / 100 * room["height_cm"] / 100, 1)
     litres = round(area * 2 / float(row["coverage_m2_per_l_min"]), 1)
     pots = max(1, math.ceil(litres / float(row["volume_l"])))
     return {"area_m2": area, "litres": litres, "pots": pots, "volume_l": float(row["volume_l"]), "color": row["color"],
-            "wall_cm": [room["length_cm"], room["height_cm"]]}
+            "wall_cm": [wall_cm, room["height_cm"]]}
 
 
 # ------------------------------------------------------------------ 3. salon 3D
 
 def build_scene(req, crit, products, out_dir, photo=None):
     """Écrit la scène et lance Blender. Avec `photo`, Blender rend aussi une vue photoréaliste du salon."""
+    import layout
     room = req["room"]
+    furniture = [p for p in products if p["category"] != "peinture"]
+    places, plan = layout.place(room, furniture)
+    sofa = next((p for p in furniture if p["category"] == "canape"), None)
     scene = {"room": {"width_cm": room["width_cm"], "length_cm": room["length_cm"], "height_cm": room["height_cm"],
                       "wall_color_hex": "#F2F0EA", "floor_color_hex": "#C9A77A",
-                      "door": {"wall": "south", "offset_cm": 30, "width_cm": room["door_cm"], "height_cm": 204},
-                      "window": {"wall": "north", "offset_cm": max(40, room["width_cm"] / 2 - 60), "width_cm": 120,
-                                 "height_cm": 125, "sill_cm": 90}},
+                      "door": dict(plan["door"], height_cm=204),
+                      "windows": [dict(w, height_cm=125, sill_cm=90) for w in plan["windows"]],
+                      "sofa_wall": plan["sofa_wall"],
+                      "sofa_t_cm": places.get(sofa["id"], {}).get("t") if sofa else None},
              "products": []}
+    if scene["room"]["sofa_t_cm"] is None:
+        del scene["room"]["sofa_t_cm"]
     ids = ",".join(str(int(p["id"])) for p in products)
     extra = {r["id"]: r for r in supabase(f"catalog_products?select=id,shape,diameter_cm&id=in.({ids})")}
     for p in products:
         if p["category"] == "peinture":
-            scene["room"]["accent_wall"] = {"wall": "west", "color_hex": HEX.get(crit["accent_color"], "#6F8F72")}
+            scene["room"]["accent_wall"] = {"wall": plan["sofa_wall"], "color_hex": HEX.get(crit["accent_color"], "#6F8F72")}
+            continue
+        place = {"windows": True} if p["category"] == "rideau" else places.get(p["id"])
+        p["placed"] = bool(place)
+        if not place:  # aucune place libre (porte, fenêtres, autres meubles) : le produit reste dans la liste, pas dans le salon
             continue
         item = {"category": p["category"], "name": p["name"], "url": p["url"], "price_eur": p["price_eur"],
                 "width_cm": p["width_cm"], "depth_cm": p["depth_cm"], "height_cm": p["height_cm"],
-                "shape": extra.get(p["id"], {}).get("shape", "rectangle"), "count": p.get("count", 1),
+                "shape": extra.get(p["id"], {}).get("shape", "rectangle"), "count": p.get("count", 1), "place": place,
                 "color_hex": HEX["vert"] if p["category"] == "plante" else HEX.get(p.get("color_family"), "#888888")}
         if p["category"] in ("luminaire", "plante", "miroir", "suspension") and extra.get(p["id"], {}).get("diameter_cm"):
             item["diameter_cm"] = extra[p["id"]]["diameter_cm"]

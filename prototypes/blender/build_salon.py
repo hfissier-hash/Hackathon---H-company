@@ -218,12 +218,11 @@ def build_room(room):
         objs[accent["wall"]].data.materials[0] = material("Mur_accent", accent["color_hex"])
 
     # Ouvertures (porte, fenêtre) : on creuse le mur avec un booléen.
-    for kind in ("door", "window"):
-        op = room.get(kind)
-        if not op:
-            continue
-        w, h = op["width_cm"] / 100, op["height_cm"] / 100
-        z0 = op.get("sill_cm", 0) / 100
+    openings = [("door", room["door"])] if room.get("door") else []
+    openings += [("window", w) for w in (room.get("windows") if room.get("windows") is not None else [room.get("window")]) if w]
+    for n_op, (kind, op) in enumerate(openings):
+        w, h = op["width_cm"] / 100, op.get("height_cm", 204 if kind == "door" else 125) / 100
+        z0 = op.get("sill_cm", 0 if kind == "door" else 90) / 100
         off = op["offset_cm"] / 100
         wall = op["wall"]
         if wall in ("south", "north"):
@@ -232,8 +231,8 @@ def build_room(room):
         else:
             x = -t / 2 if wall == "west" else W + t / 2
             center, size = (x, off + w / 2, z0 + h / 2), (t * 3, w, h)
-        cutter = box(f"Trou_{kind}", size, center, wall_mat)
-        mod = objs[wall].modifiers.new(f"Ouverture_{kind}", "BOOLEAN")
+        cutter = box(f"Trou_{kind}_{n_op}", size, center, wall_mat)
+        mod = objs[wall].modifiers.new(f"Ouverture_{kind}_{n_op}", "BOOLEAN")
         mod.operation, mod.object = "DIFFERENCE", cutter
         bpy.context.view_layer.objects.active = objs[wall]
         bpy.ops.object.modifier_apply(modifier=mod.name)
@@ -357,6 +356,118 @@ def import_model(path, footprint, center, name, back=-1, plain_mat=None):
 
 DEFAULT_HEX = {"plante": "#5E7F5A"}
 WALL_PIECES = ("miroir", "cadre")
+WALL_ANGLE = {"north": 0, "west": 90, "south": 180, "east": -90}  # dos du meuble contre ce mur
+
+
+def wall_point(W, L, wall, t, inset):
+    """Point à `inset` m du mur, à la position `t` (m) le long du mur."""
+    return {"south": (t, inset), "north": (t, L - inset), "west": (inset, t), "east": (W - inset, t)}[wall]
+
+
+def spot(place, W, L, depth):
+    """Centre et angle d'un produit à partir de la place calculée par le worker (worker/layout.py)."""
+    if "wall" in place:
+        return wall_point(W, L, place["wall"], place["t"] / 100, depth / 2 + 0.02), WALL_ANGLE[place["wall"]]
+    return (place["x"] / 100, place["y"] / 100), place.get("angle", 0)
+
+
+def shift_x(obj, dx):
+    import mathutils
+    obj.data.transform(mathutils.Matrix.Translation((dx, 0, 0)))
+
+
+def put(p, i, W, L, H, room, ctx):
+    """Dessine un produit à la place donnée par le worker. Les formes et les modèles officiels sont construits
+    à l'origine (largeur sur x, dos vers +y), puis tournés et posés ; rien n'est étiré."""
+    cat, name, place = p["category"], f"P{i}_{p['category']}", p["place"]
+    entry = {"name": p["name"], "category": cat}
+    cm = lambda key, default=None: p[key] / 100 if p.get(key) else default
+    mat = material(f"Mat_{i}", p.get("color_hex") or DEFAULT_HEX.get(cat, "#888888"))
+    wood = ctx["wood"]
+    w = cm("width_cm") or cm("diameter_cm", 0.5)
+    d = cm("depth_cm") or cm("diameter_cm") or (0.03 if cat in WALL_PIECES else 0.35)
+    h = cm("height_cm") or (0.01 if cat == "tapis" else 0.5)
+    count = int(p.get("count") or 1)
+    obj = None
+    if p.get("model_kind") == "official" and cat != "rideau":
+        obj, (rw, rd, rh), entry["model"] = import_official(p["model_glb"], cat, name, (w, d, h))
+        w, d, h = rw, rd, rh
+    elif p.get("model_glb") and cat in ("canape", "fauteuil"):
+        # Modèle généré depuis la photo : importé dos vers -x, puis tourné vers son orientation finale.
+        center, angle = spot(place, W, L, d)
+        obj, scale, fixes = import_model(p["model_glb"], (d, w, h), (center[0], center[1], h / 2), name, back=-1, plain_mat=mat)
+        deformation = round(max(scale) / min(scale) - 1, 2)
+        entry["model"] = {"file": p["model_glb"], "scale_xyz": scale, "deformation": deformation, **fixes}
+        if deformation > MAX_DEFORMATION:
+            bpy.data.objects.remove(obj, do_unlink=True)
+            entry["model"]["rejected"] = True
+            obj = None
+        else:
+            spin(obj, center, angle - 90)
+            return obj, entry
+    if obj is None:  # forme simple
+        if cat in ("canape", "fauteuil"):
+            obj = seat_shape(name, w, d, h, mat, wood)
+        elif cat == "table_basse":
+            obj = table_shape(name, w, d, h, mat, wood, p.get("shape") == "rond")
+        elif cat == "tapis":
+            w, d = min(w, d), max(w, d)
+            obj = join([box(name, (w, d, h), (0, 0, h / 2), mat)], name)
+        elif cat == "meuble_tv":
+            obj = cabinet_shape(name, w, d, h, mat, wood)
+        elif cat == "etagere":
+            obj = shelf_shape(name, w, d, h, mat)
+        elif cat == "luminaire":
+            obj = floor_lamp(name, w / 2, h, (0, 0, 0), mat)
+        elif cat == "suspension":
+            obj = pendant_shape(name, w / 2, H, mat, wood)
+        elif cat == "plante":
+            obj = plant_shape(name, cm("height_cm", 0.9), cm("diameter_cm", 0.24) / 2, material(f"Pot_{i}", "#D8D2C4"), mat)
+        elif cat == "miroir":
+            mirror = material(f"Miroir_{i}", "#DCE3E6", roughness=0.04)
+            mirror.node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = 1.0
+            obj = wall_piece(name, w, h, h / 2, mirror, round_shape=p.get("shape") == "rond")
+            d = 0.03
+        elif cat == "cadre":
+            obj = wall_piece(name, w, h, h / 2, mat, p.get("image_file"))
+            d = 0.03
+        elif cat == "rideau":  # un jeu de pans à chaque fenêtre
+            sets = []
+            for k, win in enumerate(ctx["windows"]):
+                ww = win["width_cm"] / 100
+                top = min(H - 0.08, (win.get("sill_cm", 90) + win.get("height_cm", 125)) / 100 + 0.18)
+                _, panels = curtains_shape(f"{name}_{k}", -ww / 2, ww / 2, top, mat)
+                one = join(panels, f"{name}_{k}")
+                settle(one, wall_point(W, L, win["wall"], (win["offset_cm"] + win["width_cm"] / 2) / 100, 0.05), WALL_ANGLE[win["wall"]])
+                sets.append(one)
+            if not sets:
+                return None, dict(entry, status="ignoré", missing=["fenêtre"])
+            return join(sets, name), entry
+        else:
+            obj = join([box(name, (w, d, h), (0, 0, h / 2), mat)], name)
+    # Hauteur d'accroche, exemplaires côte à côte, puis mise en place.
+    if cat == "suspension" and p.get("model_kind") == "official":
+        lift(obj, max(H - h, 1.75))
+    if cat in WALL_PIECES:
+        base = ctx["sofa_h"] + 0.28 if place.get("above_sofa") else 1.45 - h / 2
+        lift(obj, min(max(0.06, base), H - h - 0.08))
+        if count > 1:
+            pieces = [obj]
+            for k in range(1, count):
+                twin = obj.copy()
+                twin.data = obj.data.copy()
+                bpy.context.collection.objects.link(twin)
+                pieces.append(twin)
+            for k, piece in enumerate(pieces):
+                shift_x(piece, (k - (count - 1) / 2) * (w + 0.12))
+            obj = join(pieces, name)
+    center, angle = spot(place, W, L, d)
+    settle(obj, center, angle)
+    if place.get("wall"):
+        obj["nester_wall"] = place["wall"]
+    return obj, entry
+
+
 
 
 def import_official(path, category, name, fiche):
@@ -481,7 +592,17 @@ def build_products(products, W, L, H, room):
     table_d = dim("table_basse", "depth_cm", 0.60)
     table_x = sofa_d + 0.02 + 0.40 + table_d / 2
     wood = material("Bois_pieds", "#3B2F28")
+    ctx = {"wood": wood, "sofa_h": sofa_h, "windows": room.get("windows") or ([room["window"]] if room.get("window") else [])}
     for i, p in enumerate(products):
+        if p.get("place"):  # place calculée par le worker selon la porte et les fenêtres
+            obj, entry = put(p, i, W, L, H, room, ctx)
+            if obj is not None:
+                obj["nester_name"] = p["name"]
+                obj["nester_url"] = p.get("url") or ""
+                obj["nester_price_eur"] = p.get("price_eur") or 0
+                entry.setdefault("status", "approximatif" if entry.get("model", {}).get("rejected") else "ok")
+            report.append(entry)
+            continue
         cat, name = p["category"], f"P{i}_{p['category']}"
         entry = {"name": p["name"], "category": cat}
         size, guessed, missing = dims_m(p)
@@ -649,7 +770,7 @@ def render_photo(path, W, L, H, room, samples=64):
     white = material("Plafond", "#F6F5F1", roughness=0.9)
     box("Plafond", (W + 0.2, L + 0.2, 0.05), (W / 2, L / 2, H + 0.025), white)
     for nm, size, center in (("west", (0.012, L, 0.08), (0.006, L / 2, 0.04)), ("north", (W, 0.012, 0.08), (W / 2, L - 0.006, 0.04)),
-                             ("south", (W, 0.012, 0.08), (W / 2, 0.006, 0.04))):
+                             ("south", (W, 0.012, 0.08), (W / 2, 0.006, 0.04)), ("east", (0.012, L, 0.08), (W - 0.006, L / 2, 0.04))):
         box("Plinthe_" + nm, size, center, white)
 
     # Lumière du jour : ciel clair uniforme (pas d'horizon visible par la fenêtre), soleil par la fenêtre, appoint au plafond.
@@ -661,38 +782,48 @@ def render_photo(path, W, L, H, room, samples=64):
     # La porte : un battant blanc ferme l'ouverture (sinon on voit le vide derrière le mur).
     door = room.get("door")
     if door:
-        dw, dh, off = door["width_cm"] / 100, door["height_cm"] / 100, door["offset_cm"] / 100
-        if door["wall"] == "south":
-            box("Porte", (dw, 0.04, dh), (off + dw / 2, -0.03, dh / 2), white)
-        elif door["wall"] == "north":
-            box("Porte", (dw, 0.04, dh), (off + dw / 2, L + 0.03, dh / 2), white)
-    win = room.get("window") or {}
-    wx = (win.get("offset_cm", W * 50 - 60) + win.get("width_cm", 120) / 2) / 100
-    wz = (win.get("sill_cm", 90) + win.get("height_cm", 125) / 2) / 100
-    bpy.ops.object.light_add(type="SUN", location=(wx, L + 2, wz + 2))
+        dw, dh, off = door["width_cm"] / 100, door.get("height_cm", 204) / 100, door["offset_cm"] / 100
+        cx, cy = wall_point(W, L, door["wall"], off + dw / 2, -0.03)
+        size = (dw, 0.04, dh) if door["wall"] in ("south", "north") else (0.04, dw, dh)
+        box("Porte", size, (cx, cy, dh / 2), white)
+    windows = room.get("windows") or ([room["window"]] if room.get("window") else [])
+    # Chaque fenêtre éclaire la pièce ; le soleil entre par la première.
+    for k, win in enumerate(windows):
+        ww, wh = win["width_cm"] / 100, win.get("height_cm", 125) / 100
+        wz = win.get("sill_cm", 90) / 100 + wh / 2
+        px, py = wall_point(W, L, win["wall"], (win["offset_cm"] + win["width_cm"] / 2) / 100, -0.25)
+        facing = {"north": (90, 0, 0), "south": (-90, 0, 0), "west": (0, 90, 0), "east": (0, -90, 0)}[win["wall"]]
+        bpy.ops.object.light_add(type="AREA", location=(px, py, wz), rotation=tuple(math.radians(a) for a in facing))
+        portal = bpy.context.active_object
+        portal.data.shape, portal.data.size, portal.data.size_y = "RECTANGLE", ww, wh
+        portal.data.energy, portal.data.color = 260 / max(1, len(windows)), (1.0, 0.97, 0.92)
+    bpy.ops.object.light_add(type="SUN", location=(W / 2, L / 2, H + 2))
     sun = bpy.context.active_object
     sun.data.energy, sun.data.angle = 2.4, math.radians(4)
-    sun.rotation_euler = (math.radians(48), 0, math.radians(165))  # entre par la fenêtre, vers le sol devant le canapé
-    bpy.ops.object.light_add(type="AREA", location=(wx, L + 0.25, wz), rotation=(math.radians(90), 0, 0))
-    portal = bpy.context.active_object  # la fenêtre comme source de lumière douce
-    portal.data.shape, portal.data.size, portal.data.size_y = "RECTANGLE", win.get("width_cm", 120) / 100, win.get("height_cm", 125) / 100
-    portal.data.energy, portal.data.color = 260, (1.0, 0.97, 0.92)
+    sun.rotation_euler = (math.radians(48), 0, math.radians(165))
     bpy.ops.object.light_add(type="AREA", location=(W * 0.55, L * 0.45, H - 0.06))
     fill = bpy.context.active_object
     fill.data.size, fill.data.energy, fill.data.color = 1.6, 90, (1.0, 0.93, 0.84)
 
-    # Appareil : adossé au mur est, à hauteur d'yeux assis, grand angle.
-    bpy.ops.object.empty_add(location=(0.4, L * 0.52, 0.95))
+    # Appareil : adossé au mur d'en face du canapé, à hauteur d'yeux assis, grand angle.
+    sofa_wall = room.get("sofa_wall", "west")
+    behind = {"west": "east", "east": "west", "north": "south", "south": "north"}[sofa_wall]
+    run = W if sofa_wall in ("north", "south") else L
+    sofa_t = room.get("sofa_t_cm", run * 50) / 100
+    tx, ty = wall_point(W, L, sofa_wall, sofa_t + run * 0.02, 0.4)
+    px, py = wall_point(W, L, behind, min(max(sofa_t - run * 0.1, 0.6), run - 0.6), 0.12)
+    bpy.ops.object.empty_add(location=(tx, ty, 0.95))
     target = bpy.context.active_object
-    bpy.ops.object.camera_add(location=(W - 0.12, L * 0.40, 1.35))
+    bpy.ops.object.camera_add(location=(px, py, 1.35))
     cam = bpy.context.active_object
     track = cam.constraints.new("TRACK_TO")
     track.target, track.track_axis, track.up_axis = target, "TRACK_NEGATIVE_Z", "UP_Y"
     cam.data.lens, cam.data.clip_start = 17, 0.05
     sc.camera = cam
-    # Ce qui est entre l'appareil et la pièce (mur est, meuble TV adossé à ce mur) n'apparaît pas sur la photo.
+    # Ce qui est entre l'appareil et la pièce (ce mur, sa plinthe, ce qui y est adossé) n'apparaît pas sur la photo.
+    legacy = "sofa_wall" not in room  # anciennes scènes : le meuble TV est contre le mur est
     for o in bpy.data.objects:
-        if o.name == "Mur_east" or "_meuble_tv" in o.name:
+        if o.name in ("Mur_" + behind, "Plinthe_" + behind) or o.get("nester_wall") == behind or (legacy and "_meuble_tv" in o.name):
             o.hide_render = True
     bpy.ops.render.render(write_still=True)
 

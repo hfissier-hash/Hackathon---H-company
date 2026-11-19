@@ -66,7 +66,17 @@ if (job && job.status === 'done') {
     }
     link.href = p.url; link.target = '_blank'; link.rel = 'noopener';
   }
-  const meshes = [];
+  const meshes = [], walls = [];
+  // Vue « maison de poupée » : on masque les murs qui se trouvent entre la caméra et la pièce, quel que soit l'angle.
+  // Sens « vers l'extérieur » de chaque mur dans le repère three.js (le nord de la pièce est en -z).
+  const WALL_OUT = { Mur_south: [0, 1], Mur_north: [0, -1], Mur_west: [-1, 0], Mur_east: [1, 0] };
+  const roomCenter = new THREE.Vector3();
+  function hideFrontWalls() {
+    for (const wall of walls) {
+      const [nx, nz] = WALL_OUT[wall.name];
+      wall.visible = (camera.position.x - roomCenter.x) * nx + (camera.position.z - roomCenter.z) * nz < 0.4;
+    }
+  }
   let current = null, selected = job.products[0], firstLoad = true;
   function load(project) {
     for (const k of Object.keys(byUrl)) delete byUrl[k];
@@ -77,13 +87,15 @@ if (job && job.status === 'done') {
       current = gltf.scene;
       scene.add(current);
       meshes.length = 0;
+      walls.length = 0;
       current.traverse((o) => {
         if (!o.isMesh) return;
-        if (o.name === 'Mur_south' || o.name === 'Mur_east') o.visible = false; // murs côté caméra
+        if (WALL_OUT[o.name]) walls.push(o); // masqués ou non selon la position de la caméra
         // Un modèle à plusieurs matières arrive en groupe : l'adresse du produit est alors sur le parent.
         const url = o.userData.nester_url || (o.parent && o.parent.userData.nester_url);
         if (url && byUrl[url]) { o.userData.nester_url = url; meshes.push(o); }
       });
+      new THREE.Box3().setFromObject(current).getCenter(roomCenter);
       if (firstLoad) {
         const box = new THREE.Box3().setFromObject(current), c = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
@@ -224,5 +236,5 @@ if (job && job.status === 'done') {
   const [turn, full] = buttons.querySelectorAll('button');
   turn.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; turn.setAttribute('aria-pressed', controls.autoRotate); });
   full.addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : view.requestFullscreen(); });
-  renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+  renderer.setAnimationLoop(() => { controls.update(); hideFrontWalls(); renderer.render(scene, camera); });
 }

@@ -31,34 +31,15 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
   <h2 style="margin: 24px 0 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Tes pièces</h2>
   <p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-muted)">Les dimensions, et la porte la plus étroite.</p>
 
-  <div style="display: flex; gap: 8px; margin-top: 20px">
-    <button type="button" aria-pressed="true" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: var(--pine); color: var(--surface); font: 600 14px var(--body)">Salon</button>
-    <button type="button" aria-pressed="false" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: var(--birch); color: var(--ink); font: 500 14px var(--body)">Chambre</button>
-    <button type="button" aria-label="Ajouter une pièce" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: var(--birch); color: var(--ink); display: flex; align-items: center; justify-content: center">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
+  <div style="margin-top: 16px; padding: 12px 14px 10px; border-radius: var(--radius-card); background: var(--birch)">
+    <svg id="plan" width="100%" viewBox="0 0 320 214" fill="none" role="img" aria-label="Plan du salon" style="display: block; touch-action: none; cursor: pointer"></svg>
   </div>
 
-  <div style="margin-top: 16px; padding: 20px 20px 16px; border-radius: var(--radius-card); background: var(--birch)">
-    <svg width="302" height="259" viewBox="0 0 320 274" fill="none" role="img" aria-label="Plan du salon : 4,20 m sur 3,60 m, fenêtre de 1,20 m, porte de 83 cm">
-      <path d="M40 12 H292 M40 8 V16 M292 8 V16" stroke="var(--lingon)" stroke-width="1"/>
-      <rect x="140" y="4" width="52" height="16" fill="var(--birch)"/>
-      <text x="166" y="16" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="600" fill="var(--lingon)">4,20 m</text>
-      <path d="M16 30 V246 M12 30 H20 M12 246 H20" stroke="var(--lingon)" stroke-width="1"/>
-      <rect x="8" y="112" width="16" height="52" fill="var(--birch)"/>
-      <text x="16" y="142" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="600" fill="var(--lingon)" transform="rotate(-90 16 138)">3,60 m</text>
-      <rect x="40" y="30" width="252" height="216" fill="var(--surface)"/>
-      <path d="M40 30 H94 M166 30 H292 V246 H272 M222 246 H40 V30" stroke="var(--ink)" stroke-width="3" stroke-linecap="square"/>
-      <path d="M94 30 H166" stroke="var(--line)" stroke-width="3"/>
-      <path d="M222 246 A50 50 0 0 1 272 196 M272 246 V196" stroke="var(--ink-muted)" stroke-width="1"/>
-      <rect x="222" y="254" width="50" height="18" rx="9" fill="var(--lingon)"/>
-      <text x="247" y="267" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="600" fill="var(--surface)">83 cm</text>
-      <text x="166" y="136" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="16" font-weight="600" fill="var(--ink)">Salon</text>
-      <text x="166" y="156" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="var(--ink-muted)">15,1 m²</text>
-    </svg>
-  </div>
+  <div id="pieces-outils" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px"></div>
+  <div id="pieces-reglages" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; min-height: 36px"></div>
+  <p style="margin: 6px 0 0; font-size: 12px; color: var(--ink-muted)">Touche un mur du plan pour y placer l'élément choisi.</p>
 
-  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; row-gap: 18px; margin-top: 24px">
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; row-gap: 12px; margin-top: 14px">
     <div style="display: flex; flex-direction: column; gap: 4px">
       <label for="f-long" style="font-size: 13px; color: var(--ink-muted)">Longueur</label>
       <div style="display: flex; align-items: baseline; gap: 6px; padding: 4px 0 8px; border-bottom: 1.5px solid var(--ink-muted)">
@@ -95,16 +76,26 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 
 <script src="nestr.js"></script>
 <script>
-// Les dimensions sont vérifiées ici, avant de continuer, pour ne pas échouer plus loin dans la recherche.
+// Écran « Tes pièces » : plan à l'échelle redessiné à chaque saisie, porte et fenêtres placées sur les murs.
+// Repère : x d'ouest en est (longueur), y du sud au nord (largeur). Une position le long d'un mur se mesure
+// depuis l'ouest pour les murs nord et sud, depuis le sud pour les murs est et ouest (même repère que le worker).
 (function () {
   var FIELDS = [ // id, clé envoyée, unité affichée, minimum, maximum, nom
     ['f-long', 'width_cm', 'm', 2, 10, 'La longueur'], ['f-larg', 'length_cm', 'm', 2, 10, 'La largeur'],
     ['f-haut', 'height_cm', 'm', 2, 4, 'La hauteur'], ['f-porte', 'door_cm', 'cm', 60, 200, 'La porte']];
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('plan'), tools = document.getElementById('pieces-outils'), settings = document.getElementById('pieces-reglages');
   var next = document.querySelector('a[href="style.html"]');
   var message = document.createElement('p');
   message.setAttribute('role', 'alert');
-  message.style.cssText = 'margin:0 0 10px;min-height:18px;font-size:13px;font-weight:500;color:var(--lingon);text-align:center';
+  message.style.cssText = 'margin:0 0 8px;min-height:18px;font-size:13px;font-weight:500;color:var(--warn);text-align:center';
   next.parentNode.insertBefore(message, next);
+
+  var saved = Nestr.get().room || {};
+  var room = { width_cm: 420, length_cm: 360, height_cm: 250, door_cm: 83 };
+  var door = saved.door || { wall: 'south', offset_cm: 30, width_cm: 83, opens: 'in', hinge: 'start' };
+  var windows = saved.windows || [{ wall: 'north', offset_cm: 150, width_cm: 120 }];
+  var selected = 'door'; // 'door' ou l'indice d'une fenêtre
 
   // Tolère « 360 » saisi en centimètres dans un champ en mètres, et « 0,83 » en mètres pour la porte.
   function read(f) {
@@ -113,40 +104,212 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
     if (f[2] === 'cm' && n < 3) n = n * 100;
     return n;
   }
+  function run(wall) { return wall === 'north' || wall === 'south' ? room.width_cm : room.length_cm; }
+  function item(key) { return key === 'door' ? door : windows[key]; }
+  function others(key) {
+    var list = windows.map(function (w, i) { return i === key ? null : w; }).filter(Boolean);
+    if (key !== 'door') list.push(door);
+    return list;
+  }
+  // Garde une ouverture dans son mur, sans chevaucher les autres ; renvoie false si elle ne tient nulle part.
+  function fit(key, wall, center) {
+    var it = item(key), len = run(wall), w = Math.min(it.width_cm, len - 20);
+    var off = Math.min(Math.max(center - w / 2, 5), len - w - 5);
+    var same = others(key).filter(function (o) { return o.wall === wall; });
+    for (var pass = 0; pass < 3; pass++) {
+      for (var i = 0; i < same.length; i++) {
+        var o = same[i];
+        if (off < o.offset_cm + o.width_cm + 10 && o.offset_cm < off + w + 10) {
+          off = center < o.offset_cm + o.width_cm / 2 ? o.offset_cm - w - 10 : o.offset_cm + o.width_cm + 10;
+        }
+      }
+    }
+    if (off < 5 || off + w > len - 5) return false;
+    if (same.some(function (o) { return off < o.offset_cm + o.width_cm + 9 && o.offset_cm < off + w + 9; })) return false;
+    it.wall = wall; it.offset_cm = Math.round(off); it.width_cm = Math.round(w);
+    return true;
+  }
+  function tidy() { // après un changement de dimensions : tout reste dans les murs
+    door.width_cm = room.door_cm;
+    ['door'].concat(windows.map(function (_, i) { return i; })).forEach(function (key) {
+      var it = item(key);
+      if (!fit(key, it.wall, it.offset_cm + it.width_cm / 2)) {
+        it.width_cm = Math.min(it.width_cm, run(it.wall) - 20);
+        it.offset_cm = Math.max(5, Math.min(it.offset_cm, run(it.wall) - it.width_cm - 5));
+      }
+    });
+  }
+
+  // ---------- dessin
+  var frame = { x: 0, y: 0, k: 1 };
+  function el(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text !== undefined) n.textContent = text;
+    svg.appendChild(n);
+    return n;
+  }
+  // Point du plan (pixels) pour une position le long d'un mur, à `inset` cm vers l'intérieur.
+  function at(wall, t, inset) {
+    var W = room.width_cm, L = room.length_cm, x, y;
+    if (wall === 'south') { x = t; y = inset; } else if (wall === 'north') { x = t; y = L - inset; }
+    else if (wall === 'west') { x = inset; y = t; } else { x = W - inset; y = t; }
+    return [frame.x + x * frame.k, frame.y + (L - y) * frame.k];
+  }
+  function fr(cm) { return (cm / 100).toFixed(2).replace('.', ','); }
+  function draw() {
+    var W = room.width_cm, L = room.length_cm;
+    frame.k = Math.min(232 / W, 150 / L);
+    frame.x = 48 + (232 - W * frame.k) / 2 + 12;
+    frame.y = 28 + (150 - L * frame.k) / 2;
+    var x0 = frame.x, y0 = frame.y, x1 = x0 + W * frame.k, y1 = y0 + L * frame.k;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute('aria-label', 'Plan du salon : ' + fr(W) + ' m sur ' + fr(L) + ' m, porte de ' + door.width_cm + ' cm, ' + windows.length + ' fenêtre(s)');
+    var mono = { 'font-family': 'JetBrains Mono, Consolas, monospace', 'font-size': 11, 'font-weight': 500, 'text-anchor': 'middle' };
+    // la cote : trait, taquets, mesure au centre
+    el('path', { d: 'M' + x0 + ' ' + (y0 - 14) + 'H' + x1 + 'M' + x0 + ' ' + (y0 - 18) + 'v8M' + x1 + ' ' + (y0 - 18) + 'v8', stroke: 'var(--lingon)', 'stroke-width': 1 });
+    el('rect', { x: (x0 + x1) / 2 - 26, y: y0 - 22, width: 52, height: 16, fill: 'var(--birch)' });
+    el('text', Object.assign({ x: (x0 + x1) / 2, y: y0 - 10, fill: 'var(--lingon)' }, mono), fr(W) + ' m');
+    el('path', { d: 'M' + (x0 - 14) + ' ' + y0 + 'V' + y1 + 'M' + (x0 - 18) + ' ' + y0 + 'h8M' + (x0 - 18) + ' ' + y1 + 'h8', stroke: 'var(--lingon)', 'stroke-width': 1 });
+    el('rect', { x: x0 - 22, y: (y0 + y1) / 2 - 26, width: 16, height: 52, fill: 'var(--birch)' });
+    el('text', Object.assign({ x: x0 - 10, y: (y0 + y1) / 2 + 4, fill: 'var(--lingon)', transform: 'rotate(-90 ' + (x0 - 10) + ' ' + (y0 + y1) / 2 + ')' }, mono), fr(L) + ' m');
+    // la pièce et ses murs
+    el('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: 'var(--surface)' });
+    el('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, stroke: 'var(--ink)', 'stroke-width': 3 });
+    el('text', { x: (x0 + x1) / 2, y: (y0 + y1) / 2 - 2, 'text-anchor': 'middle', 'font-family': 'Figtree, Arial, sans-serif', 'font-size': 13, 'font-weight': 600, fill: 'var(--ink)' }, 'Salon');
+    el('text', Object.assign({ x: (x0 + x1) / 2, y: (y0 + y1) / 2 + 14, fill: 'var(--ink-muted)' }, mono), (W * L / 10000).toFixed(1).replace('.', ',') + ' m²');
+    // fenêtres : le mur s'ouvre, un trait fin marque le vitrage
+    windows.forEach(function (w, i) {
+      var a = at(w.wall, w.offset_cm, 0), b = at(w.wall, w.offset_cm + w.width_cm, 0), on = selected === i;
+      el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: 'var(--surface)', 'stroke-width': 5 });
+      el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: on ? 'var(--lingon)' : 'var(--ink-muted)', 'stroke-width': on ? 2.5 : 1.5 });
+    });
+    // porte : ouverture dans le mur, battant et arc du débattement, vers l'intérieur ou l'extérieur
+    var da = at(door.wall, door.offset_cm, 0), db = at(door.wall, door.offset_cm + door.width_cm, 0), don = selected === 'door';
+    el('line', { x1: da[0], y1: da[1], x2: db[0], y2: db[1], stroke: 'var(--surface)', 'stroke-width': 5 });
+    var hingeT = door.hinge === 'end' ? door.offset_cm + door.width_cm : door.offset_cm;
+    var freeT = door.hinge === 'end' ? door.offset_cm : door.offset_cm + door.width_cm;
+    var depth = door.opens === 'out' ? -door.width_cm : door.width_cm;
+    var h = at(door.wall, hingeT, 0), tip = at(door.wall, hingeT, depth), end = at(door.wall, freeT, 0), r = door.width_cm * frame.k;
+    var cross = (tip[0] - h[0]) * (end[1] - h[1]) - (tip[1] - h[1]) * (end[0] - h[0]);
+    el('path', { d: 'M' + h[0] + ' ' + h[1] + 'L' + tip[0] + ' ' + tip[1] + 'A' + r + ' ' + r + ' 0 0 ' + (cross > 0 ? 1 : 0) + ' ' + end[0] + ' ' + end[1],
+                 stroke: don ? 'var(--lingon)' : 'var(--ink-muted)', 'stroke-width': don ? 1.8 : 1.2, fill: don ? 'var(--lingon)' : 'none', 'fill-opacity': 0.08 });
+    // largeur de la porte, à l'extérieur du mur
+    var lab = at(door.wall, door.offset_cm + door.width_cm / 2, -13 / frame.k);
+    el('rect', { x: lab[0] - 22, y: lab[1] - 8, width: 44, height: 16, rx: 8, fill: 'var(--lingon)' });
+    el('text', Object.assign({ x: lab[0], y: lab[1] + 4, fill: 'var(--on-lingon)' }, mono, { 'font-size': 10 }), door.width_cm + ' cm');
+  }
+
+  // ---------- outils : choisir l'élément à placer, régler la porte ou la fenêtre
+  function chip(label, on, action, aria) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    if (aria) b.setAttribute('aria-label', aria);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.style.cssText = 'height:36px;padding:0 14px;border-radius:18px;border:1px solid ' + (on ? 'var(--pine)' : 'var(--line)') + ';background:' + (on ? 'var(--pine)' : 'var(--surface)') + ';color:' + (on ? 'var(--surface)' : 'var(--ink)') + ';font:600 13px var(--body);cursor:pointer';
+    b.addEventListener('click', action);
+    return b;
+  }
+  function text(t) {
+    var p = document.createElement('span');
+    p.textContent = t;
+    p.style.cssText = 'font-size:13px;color:var(--ink-muted);margin-right:2px';
+    return p;
+  }
+  function refresh() {
+    tools.textContent = ''; settings.textContent = '';
+    tools.appendChild(chip('Porte', selected === 'door', function () { selected = 'door'; refresh(); }));
+    windows.forEach(function (w, i) {
+      tools.appendChild(chip('Fenêtre ' + (i + 1), selected === i, function () { selected = i; refresh(); }));
+    });
+    if (windows.length < 4) tools.appendChild(chip('+ Fenêtre', false, function () {
+      windows.push({ wall: 'north', offset_cm: 0, width_cm: 120 });
+      var i = windows.length - 1, placed = ['north', 'east', 'west', 'south'].some(function (wall) { return fit(i, wall, run(wall) / 2) || fit(i, wall, run(wall) * 0.25) || fit(i, wall, run(wall) * 0.75); });
+      if (placed) selected = i; else { windows.pop(); message.textContent = 'Plus de place sur les murs pour une fenêtre de 120 cm.'; }
+      refresh();
+    }, 'Ajouter une fenêtre'));
+    if (selected === 'door') {
+      settings.appendChild(text('Elle ouvre'));
+      settings.appendChild(chip('vers l’intérieur', door.opens !== 'out', function () { door.opens = 'in'; refresh(); }));
+      settings.appendChild(chip('vers l’extérieur', door.opens === 'out', function () { door.opens = 'out'; refresh(); }));
+      settings.appendChild(chip('⇄ Côté des gonds', false, function () { door.hinge = door.hinge === 'end' ? 'start' : 'end'; refresh(); }, 'Changer le côté des gonds'));
+    } else {
+      var w = windows[selected];
+      settings.appendChild(text('Largeur'));
+      settings.appendChild(chip('−', false, function () { resize(-10); }, 'Réduire la fenêtre de 10 cm'));
+      var v = text(w.width_cm + ' cm'); v.className = 'data'; v.style.color = 'var(--ink)'; v.style.minWidth = '56px'; v.style.textAlign = 'center';
+      settings.appendChild(v);
+      settings.appendChild(chip('+', false, function () { resize(10); }, 'Agrandir la fenêtre de 10 cm'));
+      settings.appendChild(chip('Supprimer', false, function () { windows.splice(selected, 1); selected = 'door'; refresh(); }));
+    }
+    draw();
+    save();
+  }
+  function resize(step) {
+    var w = windows[selected], before = w.width_cm, center = w.offset_cm + w.width_cm / 2;
+    w.width_cm = Math.min(300, Math.max(40, before + step));
+    if (!fit(selected, w.wall, center)) w.width_cm = before;
+    refresh();
+  }
+
+  // ---------- toucher un mur : y placer l'élément choisi ; toucher un élément : le choisir et le faire glisser
+  function nearest(ev) {
+    var box = svg.getBoundingClientRect(), px = (ev.clientX - box.left) * 320 / box.width, py = (ev.clientY - box.top) * 214 / box.height;
+    var x = (px - frame.x) / frame.k, y = room.length_cm - (py - frame.y) / frame.k, W = room.width_cm, L = room.length_cm;
+    var list = [['south', x, Math.abs(y)], ['north', x, Math.abs(y - L)], ['west', y, Math.abs(x)], ['east', y, Math.abs(x - W)]];
+    list.sort(function (a, b) { return a[2] - b[2]; });
+    return { wall: list[0][0], t: list[0][1], far: list[0][2] * frame.k };
+  }
+  var dragging = false;
+  function move(ev) {
+    var hit = nearest(ev);
+    if (hit.far > 34) return;
+    if (fit(selected, hit.wall, hit.t)) { message.textContent = ''; draw(); }
+  }
+  svg.addEventListener('pointerdown', function (ev) {
+    var hit = nearest(ev);
+    if (hit.far > 34) return;
+    var keys = ['door'].concat(windows.map(function (_, i) { return i; }));
+    var grabbed = keys.filter(function (key) { var it = item(key); return it.wall === hit.wall && hit.t >= it.offset_cm - 12 && hit.t <= it.offset_cm + it.width_cm + 12; })[0];
+    if (grabbed !== undefined && grabbed !== selected) { selected = grabbed; refresh(); }
+    dragging = true;
+    svg.setPointerCapture(ev.pointerId);
+    move(ev);
+  });
+  svg.addEventListener('pointermove', function (ev) { if (dragging) move(ev); });
+  ['pointerup', 'pointercancel'].forEach(function (name) {
+    svg.addEventListener(name, function () { if (dragging) { dragging = false; refresh(); } });
+  });
+
+  // ---------- dimensions saisies
   function check() {
-    var room = {}, error = '';
+    var error = '';
     FIELDS.forEach(function (f) {
       var n = read(f), input = document.getElementById(f[0]), bad = !(n >= f[3] && n <= f[4]);
       input.setAttribute('aria-invalid', bad ? 'true' : 'false');
-      input.style.color = bad ? 'var(--lingon)' : 'var(--ink)';
+      input.style.color = bad ? 'var(--warn)' : 'var(--ink)';
       if (bad && !error) error = f[5] + ' doit être comprise entre ' + f[3] + ' et ' + f[4] + ' ' + f[2] + '.';
-      room[f[1]] = Math.round(f[2] === 'm' ? n * 100 : n);
+      if (!bad) room[f[1]] = Math.round(f[2] === 'm' ? n * 100 : n);
     });
     message.textContent = error;
     next.style.opacity = error ? '0.35' : '1';
     next.setAttribute('aria-disabled', error ? 'true' : 'false');
-    if (!error) { // le plan suit la saisie
-      var texts = document.querySelectorAll('svg[role="img"] text'), fr = function (cm) { return (cm / 100).toFixed(2).replace('.', ','); };
-      if (texts.length >= 5) {
-        texts[0].textContent = fr(room.width_cm) + ' m';
-        texts[1].textContent = fr(room.length_cm) + ' m';
-        texts[2].textContent = room.door_cm + ' cm';
-        texts[4].textContent = (room.width_cm * room.length_cm / 10000).toFixed(1).replace('.', ',') + ' m²';
-      }
-    }
-    return error ? null : room;
+    tidy();
+    return !error;
   }
-  FIELDS.forEach(function (f) { document.getElementById(f[0]).addEventListener('input', check); });
-  // Reprend la dernière saisie si on revient sur cet écran.
-  var saved = Nestr.get().room;
-  if (saved) FIELDS.forEach(function (f) {
+  function save() {
+    Nestr.set({ room: Object.assign({}, room, { door: Object.assign({}, door), windows: windows.map(function (w) { return Object.assign({}, w); }) }), projectId: null });
+  }
+  FIELDS.forEach(function (f) {
     if (saved[f[1]]) document.getElementById(f[0]).value = f[2] === 'm' ? (saved[f[1]] / 100).toFixed(2).replace('.', ',') : saved[f[1]];
+    document.getElementById(f[0]).addEventListener('input', function () { check(); refresh(); });
   });
   check();
+  refresh();
   next.addEventListener('click', function (ev) {
-    var room = check();
-    if (!room) return ev.preventDefault();
-    Nestr.set({ room: room, projectId: null });
+    if (!check()) return ev.preventDefault();
+    save();
   });
 })();
 </script>
