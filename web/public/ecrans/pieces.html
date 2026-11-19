@@ -92,12 +92,60 @@ a{color:#111111}a:hover{color:#444444}
 
 <script src="nestr.js"></script>
 <script>
-// Enregistre les dimensions pour la recherche (longueur = côté de 4,20 m sur le plan).
-document.querySelector('a[href="style.html"]').addEventListener('click', function () {
-  var v = function (id, d) { return Nestr.num(document.getElementById(id).value, d); };
-  Nestr.set({ room: { width_cm: Math.round(v('f-long', 4.2) * 100), length_cm: Math.round(v('f-larg', 3.6) * 100),
-                      height_cm: Math.round(v('f-haut', 2.5) * 100), door_cm: Math.round(v('f-porte', 83)) }, projectId: null });
-});
+// Les dimensions sont vérifiées ici, avant de continuer, pour ne pas échouer plus loin dans la recherche.
+(function () {
+  var FIELDS = [ // id, clé envoyée, unité affichée, minimum, maximum, nom
+    ['f-long', 'width_cm', 'm', 2, 10, 'La longueur'], ['f-larg', 'length_cm', 'm', 2, 10, 'La largeur'],
+    ['f-haut', 'height_cm', 'm', 2, 4, 'La hauteur'], ['f-porte', 'door_cm', 'cm', 60, 200, 'La porte']];
+  var next = document.querySelector('a[href="style.html"]');
+  var message = document.createElement('p');
+  message.setAttribute('role', 'alert');
+  message.style.cssText = 'margin:0 0 10px;min-height:18px;font-size:13px;font-weight:500;color:#B84F2C;text-align:center';
+  next.parentNode.insertBefore(message, next);
+
+  // Tolère « 360 » saisi en centimètres dans un champ en mètres, et « 0,83 » en mètres pour la porte.
+  function read(f) {
+    var n = Nestr.num(document.getElementById(f[0]).value, NaN);
+    if (f[2] === 'm' && n > 20) n = n / 100;
+    if (f[2] === 'cm' && n < 3) n = n * 100;
+    return n;
+  }
+  function check() {
+    var room = {}, error = '';
+    FIELDS.forEach(function (f) {
+      var n = read(f), input = document.getElementById(f[0]), bad = !(n >= f[3] && n <= f[4]);
+      input.setAttribute('aria-invalid', bad ? 'true' : 'false');
+      input.style.color = bad ? '#B84F2C' : '#111111';
+      if (bad && !error) error = f[5] + ' doit être comprise entre ' + f[3] + ' et ' + f[4] + ' ' + f[2] + '.';
+      room[f[1]] = Math.round(f[2] === 'm' ? n * 100 : n);
+    });
+    message.textContent = error;
+    next.style.opacity = error ? '0.35' : '1';
+    next.setAttribute('aria-disabled', error ? 'true' : 'false');
+    if (!error) { // le plan suit la saisie
+      var texts = document.querySelectorAll('svg[role="img"] text'), fr = function (cm) { return (cm / 100).toFixed(2).replace('.', ','); };
+      if (texts.length >= 5) {
+        texts[0].textContent = fr(room.width_cm) + ' m';
+        texts[1].textContent = fr(room.length_cm) + ' m';
+        texts[2].textContent = room.door_cm + ' cm';
+        texts[4].textContent = (room.width_cm * room.length_cm / 10000).toFixed(1).replace('.', ',') + ' m²';
+      }
+    }
+    return error ? null : room;
+  }
+  FIELDS.forEach(function (f) { document.getElementById(f[0]).addEventListener('input', check); });
+  // Reprend la dernière saisie si on revient sur cet écran.
+  var saved = Nestr.get().room;
+  if (saved) FIELDS.forEach(function (f) {
+    if (saved[f[1]]) document.getElementById(f[0]).value = f[2] === 'm' ? (saved[f[1]] / 100).toFixed(2).replace('.', ',') : saved[f[1]];
+  });
+  check();
+  next.addEventListener('click', function (ev) {
+    var room = check();
+    if (!room) return ev.preventDefault();
+    Nestr.set({ room: room, projectId: null });
+  });
+})();
 </script>
 </body>
 </html>

@@ -11,18 +11,38 @@ Hackathon *Build The Future* 2026 (Eugenia × H Company × Hugging Face × Verce
 Meubler un logement prend des heures : chaque enseigne a son format, il faut noter les cotes à la main,
 et le canapé finit par ne pas rentrer.
 
-## Lancer l'application (parcours complet)
+## Lancer l'application (V1)
+
+Deux programmes, dans deux terminaux :
 
 ```bash
-python3 prototypes/server/app.py
+npm --prefix web install && npm --prefix web run dev     # l'application, sur http://localhost:3000
 ```
 
-Puis ouvrir http://127.0.0.1:8770/ : la maquette (`maquette/`) est branchée sur le parcours réel.
-Dimensions, style, budget et envies → critères (gpt-oss-120b) → catalogue Supabase « Nestr. » → salon construit par Blender →
-rendu 3D et liste d'achat. Il faut un fichier `.env` (voir `.env.example`), Blender dans `prototypes/tools/` et un jeton Hugging Face.
-Ouverte en simple fichier, la maquette garde son contenu d'exemple.
+```bash
+python3 worker/worker.py                                  # le worker qui traite les demandes
+```
 
-Pas encore branché : appel d'un agent H en direct quand le catalogue ne suffit pas, vue Plan, photos d'inspiration et critères de l'écran Envies.
+- **`web/`** : application Next.js. Les écrans sont dans `web/public/ecrans/` ; les routes `web/app/api/` déposent les demandes
+  dans la table Supabase `requests` et lisent l'avancement. La clé secrète Supabase reste côté serveur.
+- **`worker/`** : surveille `requests` et enchaîne gpt-oss-120b → `search_catalog` → agent H si le catalogue ne suffit pas
+  (`holo run`, fiche ajoutée au catalogue, mesure dans `agent_runs`) → Blender → fichier `.glb` dans Supabase Storage.
+- Un projet se retrouve par son lien : `/ecrans/rendu-3d.html?p=<identifiant>`.
+
+Il faut : le fichier `.env` (voir `.env.example`), Blender dans `prototypes/tools/`, un jeton Hugging Face (`hf auth login`)
+et la commande `holo` connectée (`holo login`). Le worker tourne sur une machine qui a Blender ; l'application peut être
+déployée sur Vercel (dossier racine `web`, variables `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY`).
+
+**Les agents H Company dans l'application**
+
+- Collecte du catalogue (633 fiches, en amont).
+- Recherche en direct quand rien ne rentre dans la pièce pour une catégorie.
+- Vérification du prix et de la disponibilité des 5 produits IKEA les plus chers après chaque salon (désactivable : `NESTER_VERIFY=0`).
+- « Remplacer » avec ses mots (« en velours vert ») : catalogue d'abord, sinon un agent cherche sur ikea.com.
+- Écran « Agents » : lancements, taux de réussite, durée médiane, cas d'échec (table `agent_runs`).
+
+Pas encore branché : vue Plan, photos d'inspiration et critères de l'écran Envies, coussins, modèles 3D au-delà des 9 générés
+(les autres produits sont dessinés en formes simples par Blender).
 
 ## La solution
 

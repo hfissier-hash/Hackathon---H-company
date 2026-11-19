@@ -7,6 +7,7 @@
   var title = ring.querySelector('h2'), subtitle = ring.querySelectorAll('p')[2];
   var STEPS = [['criteria', 'IA', 'Vos envies', 'Lecture de votre demande'],
                ['catalog', 'I', 'IKEA', 'Recherche dans le catalogue'],
+               ['agent', 'H', 'Agent H Company', 'Recherche en direct sur ikea.com'],
                ['paint', 'C', 'Castorama', 'Recherche de la peinture'],
                ['build', '3D', 'Salon en 3D', 'Construction aux vraies dimensions']];
 
@@ -20,20 +21,27 @@
     var dot = document.createElement('span');
     dot.style.cssText = 'width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#FFFFFF;background:#E7E5E0';
     row.replaceChild(dot, row.children[2]);
+    row.style.padding = '8px 0'; // cinq étapes possibles : lignes plus serrées pour garder le bouton entier
     rows.appendChild(row);
-    return { key: s[0], wait: s[3], detail: row.children[1].children[1], dot: dot };
+    return { key: s[0], wait: s[3], detail: row.children[1].children[1], dot: dot, row: row };
   });
+  ring.style.marginTop = '8px';
+  rows.style.marginTop = '14px';
   card.style.visibility = 'hidden';
   cta.style.opacity = '0.35';
   cta.style.pointerEvents = 'none';
-  subtitle.textContent = 'Votre demande est comparée au catalogue relevé par les agents H Company.';
+  subtitle.textContent = 'Votre demande est comparée au catalogue relevé par les agents H Company. S’il manque un produit, un agent part le chercher.';
 
   var started = Date.now();
   function show(job) {
-    var done = 0;
+    var done = 0, shown = 0;
     lines.forEach(function (l) {
       var s = (job.steps || {})[l.key] || { status: 'pending' };
       var st = s.status;
+      // L'agent n'apparaît que s'il est lancé (catalogue insuffisant).
+      l.row.style.display = l.key === 'agent' && !(job.steps || {}).agent ? 'none' : 'flex';
+      if (l.row.style.display === 'none') return;
+      shown++;
       if (st === 'done' || st === 'skipped') done++;
       l.dot.style.background = st === 'done' ? '#1F7A4A' : st === 'failed' ? '#B84F2C' : st === 'running' ? '#111111' : '#E7E5E0';
       l.dot.textContent = st === 'done' ? '✓' : st === 'failed' ? '!' : st === 'running' ? '…' : '';
@@ -41,7 +49,7 @@
       l.dot.setAttribute('aria-label', { done: 'Terminé', failed: 'Échec', running: 'En cours', skipped: 'Ignoré', pending: 'En attente' }[st]);
       l.detail.textContent = s.detail ? s.detail + (s.seconds ? ' · ' + String(s.seconds).replace('.', ',') + ' s' : '') : l.wait;
     });
-    var ratio = job.status === 'done' ? 1 : done / lines.length;
+    var ratio = job.status === 'done' ? 1 : done / shown;
     arc.setAttribute('stroke-dasharray', Math.round(327 * ratio) + ' 327');
     pct.textContent = Math.round(ratio * 100) + ' %';
     var secs = job.seconds ? Math.round(job.seconds) : Math.round((Date.now() - started) / 1000);
@@ -72,20 +80,27 @@
     } else if (job.status === 'failed') {
       title.textContent = 'La recherche a échoué';
       subtitle.textContent = job.error || 'Erreur inconnue.';
-      cta.textContent = 'Modifier ma demande';
+      rows.style.display = 'none'; // rien n'a tourné : on laisse la place au message et au bouton
+      card.style.display = 'none';
+      cta.textContent = 'Corriger ma demande';
       cta.href = 'pieces.html';
       cta.style.opacity = '1';
       cta.style.pointerEvents = 'auto';
     }
   }
 
+  var misses = 0;
   function poll(id) {
-    fetch('/api/projects/' + id).then(function (r) { return r.json(); }).then(function (job) {
-      show(job);
-      if (job.status === 'running') setTimeout(function () { poll(id); }, 400);
-    }).catch(function () {
-      show({ status: 'failed', error: 'Le serveur Nester ne répond plus.', steps: {} });
-    });
+    fetch('/api/projects/' + id).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
+      .then(function (job) {
+        misses = 0;
+        show(job);
+        if (job.status === 'running' || job.status === 'queued') setTimeout(function () { poll(id); }, 600);
+      }).catch(function () {
+        // Une coupure passagère ne doit pas faire échouer l'écran : on réessaie quelques fois.
+        if (++misses < 6) return setTimeout(function () { poll(id); }, 1000);
+        show({ status: 'failed', error: 'Le serveur Nester ne répond plus.', steps: {} });
+      });
   }
 
   show({ status: 'running', steps: {} });

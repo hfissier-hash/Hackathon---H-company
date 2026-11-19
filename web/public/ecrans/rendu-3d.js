@@ -44,7 +44,8 @@ if (job && job.status === 'done') {
   // Fiche produit.
   const byUrl = {};
   const img = card.querySelector('img'), texts = card.children[0].children[1].children;
-  const price = card.children[0].children[2], chips = card.children[1], link = card.children[2].querySelector('a');
+  const price = card.children[0].children[2], chips = card.children[1], link = card.querySelector('a');
+  chips.style.flexWrap = 'wrap';
   const chipTpl = chips.children[0].cloneNode(true);
   function select(p) {
     selected = p;
@@ -93,24 +94,38 @@ if (job && job.status === 'done') {
   load(job);
   select(job.products[0]);
 
-  // « Remplacer » : produit suivant de la recherche, le serveur reconstruit le salon.
-  const replaceBtn = card.children[2].querySelector('button');
+  // « Remplacer » : produit suivant de la recherche, ou produit décrit avec ses mots.
+  // Avec une envie, le worker cherche dans le catalogue puis envoie un agent H sur le site de l'enseigne.
+  const wish = document.createElement('input');
+  wish.type = 'text';
+  wish.maxLength = 80;
+  wish.placeholder = 'Une envie ? ex. en velours vert';
+  wish.setAttribute('aria-label', 'Décrire le produit souhaité');
+  wish.style.cssText = "width:100%;box-sizing:border-box;height:44px;margin-top:12px;padding:0 16px;border-radius:999px;border:1px solid #D8D4CC;background:#FFFFFF;color:#111111;font:400 14px 'Inter',Arial,sans-serif;outline-offset:2px";
+  card.insertBefore(wish, card.children[2]);
+  card.children[3].style.marginTop = '8px';
+  const replaceBtn = card.children[3].querySelector('button');
+  wish.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') replaceBtn.click(); });
   replaceBtn.addEventListener('click', async () => {
-    const label = replaceBtn.textContent;
+    const label = 'Remplacer', asked = wish.value.trim();
     replaceBtn.disabled = true;
     replaceBtn.textContent = 'Recherche…';
+    // Au-delà de quelques secondes, c'est qu'un agent H est parti chercher sur le site.
+    const slow = asked ? setTimeout(() => { replaceBtn.textContent = 'Agent H en route…'; }, 6000) : null;
     try {
       const r = await fetch('/api/projects/' + job.id + '/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                                                      body: JSON.stringify({ category: selected.category }) });
+                                                                      body: JSON.stringify({ category: selected.category, wish: asked }) });
       const next = await r.json();
       if (!r.ok) throw new Error(next.error);
       await load(next);
       select(next.products.find((p) => p.category === selected.category));
+      wish.value = '';
       replaceBtn.textContent = label;
     } catch (e) {
-      replaceBtn.textContent = 'Pas d\'autre choix';
-      setTimeout(() => { replaceBtn.textContent = label; }, 2500);
+      replaceBtn.textContent = asked ? 'Rien trouvé' : 'Pas d\'autre choix';
+      setTimeout(() => { replaceBtn.textContent = label; }, 3000);
     }
+    clearTimeout(slow);
     replaceBtn.disabled = false;
   });
 

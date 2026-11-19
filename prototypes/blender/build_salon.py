@@ -61,22 +61,139 @@ def cylinder(name, radius_m, height_m, center_m, mat):
     return obj
 
 
+def join(parts, name):
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in parts:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = parts[0]
+    if len(parts) > 1:
+        bpy.ops.object.join()
+    obj = bpy.context.view_layer.objects.active
+    obj.name = name
+    # Position et rotation passent dans les sommets : l'objet reste à l'origine, sans pivot surprise.
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    return obj
+
+
+def settle(obj, center_xy, angle_deg=0.0):
+    """Les formes sont dessinées à l'origine, dos vers +y ; on les tourne puis on les pose à leur place."""
+    import mathutils
+    import math
+    obj.data.transform(mathutils.Matrix.Rotation(math.radians(angle_deg), 4, "Z"))
+    obj.data.transform(mathutils.Matrix.Translation((center_xy[0], center_xy[1], 0)))
+    return obj
+
+
+def spin(obj, center_xy, angle_deg):
+    """Tourne un objet déjà posé autour de son propre centre."""
+    import mathutils
+    import math
+    cx, cy = center_xy
+    obj.data.transform(mathutils.Matrix.Translation((-cx, -cy, 0)))
+    obj.data.transform(mathutils.Matrix.Rotation(math.radians(angle_deg), 4, "Z"))
+    obj.data.transform(mathutils.Matrix.Translation((cx, cy, 0)))
+
+
+# Formes simples pour les produits sans modèle 3D : largeur sur x, profondeur sur y, dos vers +y, posées au sol.
+
+def seat_shape(name, w, d, h, mat, legs_mat):
+    """Canapé ou fauteuil : assise, dossier, accoudoirs, pieds."""
+    seat_h, t, arm = min(0.44, h * 0.55), min(0.22, d * 0.26), min(0.16, w * 0.13)
+    parts = [box(name, (w, d, seat_h - 0.08), (0, 0, 0.08 + (seat_h - 0.08) / 2), mat),
+             box(name + "_dossier", (w, t, h - 0.08), (0, d / 2 - t / 2, 0.08 + (h - 0.08) / 2), mat),
+             box(name + "_coussin", (w - 2 * arm - 0.04, d - t - 0.06, 0.10), (0, -t / 2, seat_h + 0.04), mat)]
+    for sx in (-1, 1):
+        parts.append(box(name + "_accoudoir", (arm, d - t, seat_h + 0.16 - 0.08), (sx * (w / 2 - arm / 2), -t / 2, 0.08 + (seat_h + 0.08) / 2), mat))
+        for sy in (-1, 1):
+            parts.append(box(name + "_pied", (0.05, 0.05, 0.08), (sx * (w / 2 - 0.07), sy * (d / 2 - 0.07), 0.04), legs_mat))
+    return join(parts, name)
+
+
+def table_shape(name, w, d, h, mat, legs_mat, round_top=False):
+    if round_top:
+        return join([cylinder(name, w / 2, 0.04, (0, 0, h - 0.02), mat), cylinder(name + "_pied", 0.04, h - 0.06, (0, 0, (h - 0.06) / 2 + 0.02), legs_mat),
+                     cylinder(name + "_socle", w * 0.28, 0.02, (0, 0, 0.01), legs_mat)], name)
+    parts = [box(name, (w, d, 0.04), (0, 0, h - 0.02), mat)]
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            parts.append(box(name + "_pied", (0.04, 0.04, h - 0.04), (sx * (w / 2 - 0.05), sy * (d / 2 - 0.05), (h - 0.04) / 2), legs_mat))
+    return join(parts, name)
+
+
+def cabinet_shape(name, w, d, h, mat, legs_mat):
+    """Meuble TV : caisson sur socle, plateau débordant."""
+    return join([box(name, (w, d, h - 0.08), (0, 0, 0.06 + (h - 0.08) / 2), mat), box(name + "_socle", (w - 0.10, d - 0.08, 0.06), (0, 0, 0.03), legs_mat),
+                 box(name + "_plateau", (w + 0.02, d + 0.02, 0.02), (0, -0.005, h - 0.01), mat)], name)
+
+
+def shelf_shape(name, w, d, h, mat):
+    """Étagère ou bibliothèque : montants, fond et tablettes tous les 35 cm environ."""
+    t = 0.02
+    parts = [box(name, (t, d, h), (-w / 2 + t / 2, 0, h / 2), mat), box(name + "_montant", (t, d, h), (w / 2 - t / 2, 0, h / 2), mat),
+             box(name + "_fond", (w, 0.008, h), (0, d / 2 - 0.004, h / 2), mat)]
+    levels = max(2, round(h / 0.35) + 1)
+    for i in range(levels):
+        parts.append(box(name + "_tablette", (w - 2 * t, d, t), (0, 0, t / 2 + i * (h - t) / (levels - 1)), mat))
+    return join(parts, name)
+
+
+def plant_shape(name, h, radius, pot_mat, leaf_mat):
+    pot_h, r = min(0.30, h * 0.28), min(max(radius, 0.08), 0.20)
+    parts = [cylinder(name, r, pot_h, (0, 0, pot_h / 2), pot_mat)]
+    leaf = max(0.10, min(0.32, (h - pot_h) * 0.38))
+    for dx, dy, dz, k in ((0, 0, 0.72, 1.0), (0.09, 0.04, 0.45, 0.8), (-0.08, 0.06, 0.55, 0.75), (0.02, -0.09, 0.33, 0.7)):
+        bpy.ops.mesh.primitive_ico_sphere_add(radius=leaf * k, subdivisions=2, location=(dx, dy, pot_h + (h - pot_h) * dz))
+        o = bpy.context.active_object
+        o.data.materials.append(leaf_mat)
+        parts.append(o)
+    return join(parts, name)
+
+
+def wall_piece(name, w, h, z_center, mat, image_path=None, round_shape=False):
+    """Miroir ou cadre : plaque fine dos vers +y. Avec une image, la photo du produit est posée sur la face avant."""
+    if round_shape:
+        bpy.ops.mesh.primitive_cylinder_add(radius=w / 2, depth=0.03, vertices=48, location=(0, 0, z_center), rotation=(1.5707963, 0, 0))
+        obj = bpy.context.active_object
+        obj.data.materials.append(mat)
+        return join([obj], name)
+    frame = box(name, (w, 0.03, h), (0, 0, z_center), mat)
+    if not image_path:
+        return join([frame], name)
+    bpy.ops.mesh.primitive_plane_add(size=1, location=(0, -0.017, z_center), rotation=(1.5707963, 0, 0))
+    face = bpy.context.active_object
+    face.scale = (w * 0.94, h * 0.94, 1)
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    pic = bpy.data.materials.new(name + "_image")
+    pic.use_nodes = True
+    tex = pic.node_tree.nodes.new("ShaderNodeTexImage")
+    tex.image = bpy.data.images.load(image_path)
+    bsdf = pic.node_tree.nodes.get("Principled BSDF")
+    pic.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = 0.9
+    face.data.materials.append(pic)
+    return join([frame, face], name)
+
+
+def curtains_shape(name, x0, x1, top, mat):
+    """Deux pans de rideau ouverts de part et d'autre de la fenêtre (dessinés directement à leur place)."""
+    return [(x0 - 0.20, top), (x1 + 0.20, top)], [box(name + ("" if i == 0 else "_2"), (0.36, 0.07, top - 0.04), (x, 0, 0.04 + (top - 0.04) / 2), mat)
+                                                 for i, x in enumerate((x0 - 0.20, x1 + 0.20))]
+
+
+def pendant_shape(name, radius, ceiling, mat, cord_mat):
+    drop, shade_h = 0.45, 0.22
+    return join([cylinder(name, min(radius, 0.28), shade_h, (0, 0, ceiling - drop - shade_h / 2), mat),
+                 cylinder(name + "_fil", 0.004, drop, (0, 0, ceiling - drop / 2), cord_mat)], name)
+
+
 def floor_lamp(name, radius_m, height_m, center_m, mat):
     """Lampadaire sans modèle 3D : socle, tige fine et abat-jour (au lieu d'un cylindre plein)."""
     x, y = center_m[0], center_m[1]
     radius_m = min(radius_m, 0.22)  # lampes à arc : la largeur de la fiche inclut le bras
     shade_h = min(0.28, height_m * 0.2)
-    parts = [cylinder(name + "_socle", radius_m * 0.8, 0.03, (x, y, 0.015), mat),
-             cylinder(name + "_tige", 0.012, height_m - shade_h, (x, y, (height_m - shade_h) / 2), mat),
-             cylinder(name, radius_m, shade_h, (x, y, height_m - shade_h / 2), mat)]
-    bpy.ops.object.select_all(action="DESELECT")
-    for o in parts:
-        o.select_set(True)
-    bpy.context.view_layer.objects.active = parts[-1]
-    bpy.ops.object.join()
-    obj = bpy.context.view_layer.objects.active
-    obj.name = name
-    return obj
+    return join([cylinder(name, radius_m, shade_h, (x, y, height_m - shade_h / 2), mat),
+                 cylinder(name + "_tige", 0.012, height_m - shade_h, (x, y, (height_m - shade_h) / 2), mat),
+                 cylinder(name + "_socle", radius_m * 0.8, 0.03, (x, y, 0.015), mat)], name)
 
 
 # ---------------------------------------------------------------- pièce
@@ -140,25 +257,6 @@ def dims_m(p):
     if missing:
         return None, guessed, missing
     return (d["width_cm"] / 100, d["depth_cm"] / 100, d["height_cm"] / 100), guessed, []
-
-
-def place(p, size, W, L, sofa_depth=0.90, table_depth=0.60):
-    """Règles de placement pour un salon. Renvoie (centre, rotation) ; 90 = dos au mur ouest, 270 = dos à l'est.
-    Le canapé est contre le mur ouest ; table et tapis se placent par rapport à sa profondeur réelle."""
-    w, dpt, h = size
-    cat = p["category"]
-    if cat == "canape":  # contre le mur ouest, face à l'est
-        return (dpt / 2 + 0.02, L / 2, h / 2), 90
-    if cat == "tapis":  # glissé de 30 cm sous l'avant du canapé, grand côté parallèle au canapé
-        return (max(sofa_depth - 0.30, 0.20) + w / 2, L / 2, h / 2), 0
-    if cat == "table_basse":  # 40 cm devant le canapé
-        return (sofa_depth + 0.02 + 0.40 + dpt / 2, L / 2, h / 2), 90
-    if cat == "fauteuil":  # en face du canapé, décalé vers la fenêtre, tourné vers le canapé
-        x = min(W - dpt / 2 - 0.35, sofa_depth + 0.42 + table_depth + 0.70 + dpt / 2)
-        return (x, min(L - w / 2 - 0.40, L / 2 + 0.85), h / 2), 270
-    if cat == "luminaire":  # coin nord-ouest
-        return (0.30, L - 0.30, h / 2), 0
-    return (W / 2, L / 2, h / 2), 0
 
 
 def import_model(path, footprint, center, name, back=-1):
@@ -247,37 +345,89 @@ def import_model(path, footprint, center, name, back=-1):
     return obj, (round(sx, 3), round(sy, 3), round(sz, 3)), {"straighten_deg": int(straighten), "plate_removed": plate_removed}
 
 
-def build_products(products, W, L):
+DEFAULT_HEX = {"plante": "#5E7F5A"}
+
+
+def build_products(products, W, L, H, room):
+    """Place chaque produit dans le salon. Le canapé est contre le mur ouest (x = 0) ; les murs sud et est
+    sont ceux que la caméra masque, donc la déco murale va sur les murs ouest et nord."""
     report = []
-    depth_of = lambda cat, default: next((dims_m(q)[0][1] for q in products if q["category"] == cat and dims_m(q)[0]), default)
-    sofa_depth, table_depth = depth_of("canape", 0.90), depth_of("table_basse", 0.60)
+    win = room.get("window") or {}
+    win_x0 = win.get("offset_cm", W * 50 - 60) / 100
+    win_x1 = win_x0 + win.get("width_cm", 120) / 100
+    win_top = (win.get("sill_cm", 90) + win.get("height_cm", 125)) / 100
+    dim = lambda cat, key, default: next((q[key] / 100 for q in products if q["category"] == cat and q.get(key)), default)
+    sofa_d, sofa_h, sofa_w = dim("canape", "depth_cm", 0.90), dim("canape", "height_cm", 0.85), dim("canape", "width_cm", 1.80)
+    table_d = dim("table_basse", "depth_cm", 0.60)
+    table_x = sofa_d + 0.02 + 0.40 + table_d / 2
+    wood = material("Bois_pieds", "#3B2F28")
     for i, p in enumerate(products):
+        cat, name = p["category"], f"P{i}_{p['category']}"
+        entry = {"name": p["name"], "category": cat}
         size, guessed, missing = dims_m(p)
-        entry = {"name": p["name"], "category": p["category"]}
+        if cat in ("miroir", "cadre", "plante", "rideau", "suspension"):
+            size, missing = (0, 0, 0), []  # dimensions lues plus bas, selon la catégorie
         if size is None:
             entry.update(status="ignoré", missing=missing)
             report.append(entry)
             continue
-        center, rot = place(p, size, W, L, sofa_depth, table_depth)
-        mat = material(f"Mat_{i}", p.get("color_hex", "#888888"))
-        footprint = (size[1], size[0], size[2]) if rot in (90, 270) else size
-        if p.get("model_glb"):
-            obj, scale, fixes = import_model(p["model_glb"], footprint, center, f"P{i}_{p['category']}", back=1 if rot == 270 else -1)
-            deformation = round(max(scale) / min(scale) - 1, 2)
-            entry["model"] = {"file": p["model_glb"], "scale_xyz": scale, "deformation": deformation, **fixes}
-            if deformation > MAX_DEFORMATION:
-                bpy.data.objects.remove(obj, do_unlink=True)
-                obj = box(f"P{i}_{p['category']}", footprint, center, mat)
-                entry["model"]["rejected"] = True
-        elif p["category"] == "table_basse" and p.get("shape") == "rond":
-            obj = cylinder(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
-        elif p["category"] == "luminaire":
-            obj = floor_lamp(f"P{i}_{p['category']}", size[0] / 2, size[2], center, mat)
+        w, d, h = size
+        mat = material(f"Mat_{i}", p.get("color_hex") or DEFAULT_HEX.get(cat, "#888888"))
+        cm = lambda key, default=None: p[key] / 100 if p.get(key) else default
+
+        if cat in ("canape", "fauteuil"):
+            if cat == "canape":
+                center, back, angle = (d / 2 + 0.02, L / 2), -1, 90
+            else:  # en face du canapé, côté porte, tourné de trois quarts vers lui
+                center, back, angle = (min(W - d / 2 - 0.55, table_x + table_d / 2 + 0.75 + d / 2), max(w / 2 + 0.45, L * 0.22)), 1, -90
+            if p.get("model_glb"):
+                obj, scale, fixes = import_model(p["model_glb"], (d, w, h), (center[0], center[1], h / 2), name, back=back)
+                deformation = round(max(scale) / min(scale) - 1, 2)
+                entry["model"] = {"file": p["model_glb"], "scale_xyz": scale, "deformation": deformation, **fixes}
+                if deformation > MAX_DEFORMATION:
+                    bpy.data.objects.remove(obj, do_unlink=True)
+                    entry["model"]["rejected"] = True
+                    obj = settle(seat_shape(name, w, d, h, mat, wood), center, angle)
+            else:
+                obj = settle(seat_shape(name, w, d, h, mat, wood), center, angle)
+            if cat == "fauteuil":
+                spin(obj, center, -35)
+        elif cat == "table_basse":
+            obj = settle(table_shape(name, w, d, h, mat, wood, p.get("shape") == "rond"), (table_x, L / 2), 90)
+        elif cat == "tapis":  # glissé de 30 cm sous l'avant du canapé, grand côté parallèle au canapé
+            obj = box(name, (w, d, h), (max(sofa_d - 0.30, 0.20) + w / 2, L / 2, h / 2), mat)
+        elif cat == "meuble_tv":  # contre le mur est, face au canapé
+            obj = settle(cabinet_shape(name, w, d, h, mat, wood), (W - d / 2 - 0.02, L / 2), -90)
+        elif cat == "etagere":  # contre le mur nord, à droite de la fenêtre
+            obj = settle(shelf_shape(name, w, d, h, mat), (W - w / 2 - 0.08, L - d / 2 - 0.02), 0)
+        elif cat == "luminaire":  # à côté du canapé, côté fenêtre (le coin nord-ouest reste libre pour le miroir)
+            obj = floor_lamp(name, w / 2, h, (0.35, min(L - 0.35, L / 2 + sofa_w / 2 + 0.35), h / 2), mat)
+        elif cat == "suspension":  # au-dessus de la table basse
+            obj = settle(pendant_shape(name, cm("width_cm", 0.35) / 2, H, mat, wood), (table_x, L / 2))
+        elif cat == "plante":  # coin sud-est
+            obj = settle(plant_shape(name, cm("height_cm", 0.9), cm("diameter_cm", 0.24) / 2, material(f"Pot_{i}", "#D8D2C4"), mat), (W - 0.30, 0.32))
+        elif cat == "rideau":
+            _, panels = curtains_shape(name, win_x0, win_x1, min(H - 0.08, win_top + 0.18), mat)
+            obj = settle(join(panels, name), (0, L - 0.05))
+        elif cat in ("miroir", "cadre"):
+            pw = cm("width_cm") or cm("diameter_cm", 0.5)
+            ph = cm("height_cm") or pw
+            round_shape = p.get("shape") == "rond"
+            if cat == "miroir":  # mur nord, entre l'angle et la fenêtre
+                mirror = material(f"Miroir_{i}", "#DCE3E6", roughness=0.04)
+                mirror.node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = 1.0
+                z = min(max(ph / 2 + 0.06, 1.45), H - ph / 2 - 0.08)
+                obj = settle(wall_piece(name, pw, ph, z, mirror, round_shape=round_shape), (max(pw / 2 + 0.20, (0.20 + win_x0 - 0.45) / 2), L - 0.02), 0)
+            else:  # mur ouest, centré au-dessus du canapé ; deux cadres côte à côte si la fiche le prévoit
+                z = min(max(sofa_h + 0.28 + ph / 2, 1.45), H - ph / 2 - 0.08)
+                count = int(p.get("count") or 1)
+                pieces = []
+                for k in range(count):
+                    off = (k - (count - 1) / 2) * (pw + 0.12)
+                    pieces.append(settle(wall_piece(f"{name}_{k}", pw, ph, z, mat, p.get("image_file")), (0.02, L / 2 + off), 90))
+                obj = join(pieces, name)
         else:
-            # Quart de tour = on échange largeur et profondeur (pas de rotation
-            # d'objet : sous Blender 5.3 elle pivotait autour du coin de la pièce).
-            footprint = (size[1], size[0], size[2]) if rot in (90, 270) else size
-            obj = box(f"P{i}_{p['category']}", footprint, center, mat)
+            obj = box(name, (w, d, h), (W / 2, L / 2, h / 2), mat)
         obj["nester_name"] = p["name"]
         obj["nester_url"] = p.get("url") or ""
         obj["nester_price_eur"] = p.get("price_eur") or 0
@@ -297,7 +447,7 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = json.load(open(scene_path, encoding="utf-8"))
     W, L, H = build_room(scene["room"])
-    report = build_products(scene["products"], W, L)
+    report = build_products(scene["products"], W, L, H, scene["room"])
 
     bpy.ops.export_scene.gltf(filepath=glb_path, export_format="GLB", export_extras=True, export_apply=True)
     t_glb = time.time() - t0
