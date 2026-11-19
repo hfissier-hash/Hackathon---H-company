@@ -76,6 +76,20 @@ def admin(path, body=None, method=None, prefer=None, api="/rest/v1/"):
     return curl_json(env("SUPABASE_URL") + api + path, headers, body, method=method)
 
 
+def prune(job):
+    """Ménage du Storage : pour un projet, on ne garde que le salon courant, le précédent (un écran peut encore
+    être en train de le charger) et la photo de la version courante. Sans cela, le stockage gratuit se remplit vite."""
+    try:
+        v, pv = int(job.get("version") or 1), (job.get("photo") or {}).get("version")
+        keep = {f"salon-v{v}.glb", f"salon-v{v - 1}.glb"} | ({f"photo-v{pv}.jpg"} if pv else set())
+        files = admin("object/list/salons", {"prefix": job["id"], "limit": 200, "offset": 0}, api="/storage/v1/")
+        old = [f"{job['id']}/{f['name']}" for f in files if f.get("id") and f["name"] not in keep]
+        if old:
+            admin("object/salons", {"prefixes": old}, method="DELETE", api="/storage/v1/")
+    except Exception:
+        pass  # le ménage ne doit jamais faire échouer une demande
+
+
 def upload(bucket_path, file_path, content_type):
     """Dépose un fichier dans Supabase Storage et renvoie son adresse publique."""
     url = env("SUPABASE_URL") + "/storage/v1/object/" + bucket_path
@@ -407,6 +421,7 @@ def finalize(job):
     job["version"] = job.get("version", 0) + 1
     glb = upload(f"salons/{job['id']}/salon-v{job['version']}.glb", os.path.join(out_dir, "salon.glb"), "model/gltf-binary")
     job.update(report=report, total_eur=round(sum(p["price_eur"] for p in products), 2), glb=glb)
+    prune(job)
     return report
 
 
@@ -512,6 +527,7 @@ def photo(job):
     url = upload(f"salons/{job['id']}/photo-v{job['version']}.jpg", path, "image/jpeg")
     job["photo"] = {"url": url, "version": job["version"], "seconds": round(time.time() - t, 1),
                     "render_seconds": report.get("photo_seconds")}
+    prune(job)
     return job["photo"]
 
 

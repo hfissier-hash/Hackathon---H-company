@@ -421,8 +421,8 @@ def lift(obj, dz):
     obj.data.transform(mathutils.Matrix.Translation((0, 0, dz)))
 
 
-def shrink_textures(limit=1024):
-    """Les textures du fabricant sont parfois très grandes : on les ramène à 1024 px pour un salon rapide à charger."""
+def shrink_textures(limit=768):
+    """Les textures du fabricant sont parfois très grandes : on les ramène à 768 px pour un salon léger."""
     for img in bpy.data.images:
         if img.size[0] > limit or img.size[1] > limit:
             k = limit / max(img.size)
@@ -677,7 +677,10 @@ def main():
     report = build_products(scene["products"], W, L, H, scene["room"])
 
     shrink_textures()
-    bpy.ops.export_scene.gltf(filepath=glb_path, export_format="GLB", export_extras=True, export_apply=True)
+    # Fichier compact : géométrie compressée (Draco). Les textures gardent leur format d'origine :
+    # le WebP, plus léger, n'est pas lu par tous les navigateurs avec three.js (essai du 19.11).
+    bpy.ops.export_scene.gltf(filepath=glb_path, export_format="GLB", export_extras=True, export_apply=True,
+                              export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6)
     t_glb = time.time() - t0
 
     t_png = None

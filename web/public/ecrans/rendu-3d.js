@@ -3,6 +3,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+// Les salons sont compressés (Draco) : le décodeur vient du même paquet three.js.
+const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/');
 
 const job = Nestr.live ? await Nestr.project() : null;
 if (job && job.status === 'done') {
@@ -68,7 +72,7 @@ if (job && job.status === 'done') {
     for (const k of Object.keys(byUrl)) delete byUrl[k];
     for (const p of project.products) byUrl[p.url] = p;
     header.querySelector('p').textContent = project.request.style + ' · ' + project.products.length + ' produits';
-    return new Promise((resolve, reject) => new GLTFLoader().load(project.glb, (gltf) => {
+    return new Promise((resolve, reject) => new GLTFLoader().setDRACOLoader(draco).load(project.glb, (gltf) => {
       if (current) scene.remove(current);
       current = gltf.scene;
       scene.add(current);
