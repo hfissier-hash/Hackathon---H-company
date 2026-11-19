@@ -557,10 +557,116 @@ def build_products(products, W, L, H, room):
     return report
 
 
+# ---------------------------------------------------------------- photo
+
+def render_photo(path, W, L, H, room, samples=64):
+    """Rendu photoréaliste du salon (moteur Cycles) : vue d'intérieur depuis le mur est, face au canapé.
+    Les meubles sont ceux du salon 3D, à leurs vraies dimensions : rien n'est inventé par une IA d'image."""
+    import math
+    sc = bpy.context.scene
+    sc.render.engine = "CYCLES"
+    try:  # carte graphique du Mac (Metal) si elle est disponible, sinon processeur
+        prefs = bpy.context.preferences.addons["cycles"].preferences
+        prefs.compute_device_type = "METAL"
+        prefs.get_devices()
+        for dev in prefs.devices:
+            dev.use = True
+        sc.cycles.device = "GPU"
+    except Exception:
+        sc.cycles.device = "CPU"
+    sc.cycles.samples = samples
+    sc.cycles.use_denoising = True
+    sc.cycles.use_adaptive_sampling = True
+    sc.cycles.adaptive_threshold = 0.03
+    sc.cycles.max_bounces = 5
+    sc.render.resolution_x, sc.render.resolution_y = 1320, 880
+    sc.render.filepath = path
+    if path.lower().endswith((".jpg", ".jpeg")):
+        sc.render.image_settings.file_format = "JPEG"
+        sc.render.image_settings.quality = 88
+    sc.view_settings.view_transform = "AgX" if "AgX" in [v.identifier for v in type(sc.view_settings).bl_rna.properties["view_transform"].enum_items] else "Filmic"
+    sc.view_settings.exposure = 0.1
+
+    # Parquet : le sol reçoit un veinage et un léger brillant.
+    floor = bpy.data.objects.get("Sol")
+    if floor and floor.data.materials:
+        m = floor.data.materials[0]
+        nt, bsdf = m.node_tree, m.node_tree.nodes["Principled BSDF"]
+        base = tuple(bsdf.inputs["Base Color"].default_value)
+        coord, mapping = nt.nodes.new("ShaderNodeTexCoord"), nt.nodes.new("ShaderNodeMapping")
+        wave, ramp = nt.nodes.new("ShaderNodeTexWave"), nt.nodes.new("ShaderNodeValToRGB")
+        mapping.inputs["Scale"].default_value = (0.35, 7.0, 1.0)  # lames dans le sens de la longueur
+        wave.inputs["Scale"].default_value, wave.inputs["Distortion"].default_value = 1.0, 1.2
+        wave.inputs["Detail"].default_value = 1.0
+        ramp.color_ramp.elements[0].color = tuple(c * 0.84 for c in base[:3]) + (1,)
+        ramp.color_ramp.elements[1].color = base
+        nt.links.new(coord.outputs["Object"], mapping.inputs["Vector"])
+        nt.links.new(mapping.outputs["Vector"], wave.inputs["Vector"])
+        nt.links.new(wave.outputs["Fac"], ramp.inputs["Fac"])
+        nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+        bsdf.inputs["Roughness"].default_value = 0.42
+
+    # Plafond et plinthes : la pièce est fermée, la lumière rebondit comme dans une vraie pièce.
+    white = material("Plafond", "#F6F5F1", roughness=0.9)
+    box("Plafond", (W + 0.2, L + 0.2, 0.05), (W / 2, L / 2, H + 0.025), white)
+    for nm, size, center in (("west", (0.012, L, 0.08), (0.006, L / 2, 0.04)), ("north", (W, 0.012, 0.08), (W / 2, L - 0.006, 0.04)),
+                             ("south", (W, 0.012, 0.08), (W / 2, 0.006, 0.04))):
+        box("Plinthe_" + nm, size, center, white)
+
+    # Lumière du jour : ciel clair uniforme (pas d'horizon visible par la fenêtre), soleil par la fenêtre, appoint au plafond.
+    world = bpy.data.worlds.new("Ciel")
+    world.use_nodes = True
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.78, 0.88, 1.0, 1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 1.1
+    sc.world = world
+    # La porte : un battant blanc ferme l'ouverture (sinon on voit le vide derrière le mur).
+    door = room.get("door")
+    if door:
+        dw, dh, off = door["width_cm"] / 100, door["height_cm"] / 100, door["offset_cm"] / 100
+        if door["wall"] == "south":
+            box("Porte", (dw, 0.04, dh), (off + dw / 2, -0.03, dh / 2), white)
+        elif door["wall"] == "north":
+            box("Porte", (dw, 0.04, dh), (off + dw / 2, L + 0.03, dh / 2), white)
+    win = room.get("window") or {}
+    wx = (win.get("offset_cm", W * 50 - 60) + win.get("width_cm", 120) / 2) / 100
+    wz = (win.get("sill_cm", 90) + win.get("height_cm", 125) / 2) / 100
+    bpy.ops.object.light_add(type="SUN", location=(wx, L + 2, wz + 2))
+    sun = bpy.context.active_object
+    sun.data.energy, sun.data.angle = 2.4, math.radians(4)
+    sun.rotation_euler = (math.radians(48), 0, math.radians(165))  # entre par la fenêtre, vers le sol devant le canapé
+    bpy.ops.object.light_add(type="AREA", location=(wx, L + 0.25, wz), rotation=(math.radians(90), 0, 0))
+    portal = bpy.context.active_object  # la fenêtre comme source de lumière douce
+    portal.data.shape, portal.data.size, portal.data.size_y = "RECTANGLE", win.get("width_cm", 120) / 100, win.get("height_cm", 125) / 100
+    portal.data.energy, portal.data.color = 260, (1.0, 0.97, 0.92)
+    bpy.ops.object.light_add(type="AREA", location=(W * 0.55, L * 0.45, H - 0.06))
+    fill = bpy.context.active_object
+    fill.data.size, fill.data.energy, fill.data.color = 1.6, 90, (1.0, 0.93, 0.84)
+
+    # Appareil : adossé au mur est, à hauteur d'yeux assis, grand angle.
+    bpy.ops.object.empty_add(location=(0.4, L * 0.52, 0.95))
+    target = bpy.context.active_object
+    bpy.ops.object.camera_add(location=(W - 0.12, L * 0.40, 1.35))
+    cam = bpy.context.active_object
+    track = cam.constraints.new("TRACK_TO")
+    track.target, track.track_axis, track.up_axis = target, "TRACK_NEGATIVE_Z", "UP_Y"
+    cam.data.lens, cam.data.clip_start = 17, 0.05
+    sc.camera = cam
+    # Ce qui est entre l'appareil et la pièce (mur est, meuble TV adossé à ce mur) n'apparaît pas sur la photo.
+    for o in bpy.data.objects:
+        if o.name == "Mur_east" or "_meuble_tv" in o.name:
+            o.hide_render = True
+    bpy.ops.render.render(write_still=True)
+
+
 # ---------------------------------------------------------------- main
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:]
+    photo_path = None
+    if "--photo" in argv:  # ... -- scene.json sortie.glb [rendu.png] --photo photo.png
+        i = argv.index("--photo")
+        photo_path = argv[i + 1]
+        argv = argv[:i] + argv[i + 2:]
     scene_path, glb_path = argv[0], argv[1]
     png_path = argv[2] if len(argv) > 2 else None
     t0 = time.time()
@@ -605,7 +711,14 @@ def main():
         bpy.ops.render.render(write_still=True)
         t_png = time.time() - t1
 
+    t_photo = None
+    if photo_path:
+        t2 = time.time()
+        render_photo(photo_path, W, L, H, scene["room"])
+        t_photo = round(time.time() - t2, 1)
+
     print("NESTER_REPORT " + json.dumps({
+        "photo": photo_path, "photo_seconds": t_photo,
         "glb": glb_path, "glb_seconds": round(t_glb, 2),
         "png": png_path, "png_seconds": round(t_png, 2) if t_png else None,
         "products": report,

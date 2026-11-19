@@ -345,7 +345,8 @@ def paint_plan(p, room):
 
 # ------------------------------------------------------------------ 3. salon 3D
 
-def build_scene(req, crit, products, out_dir):
+def build_scene(req, crit, products, out_dir, photo=None):
+    """Écrit la scène et lance Blender. Avec `photo`, Blender rend aussi une vue photoréaliste du salon."""
     room = req["room"]
     scene = {"room": {"width_cm": room["width_cm"], "length_cm": room["length_cm"], "height_cm": room["height_cm"],
                       "wall_color_hex": "#F2F0EA", "floor_color_hex": "#C9A77A",
@@ -378,8 +379,8 @@ def build_scene(req, crit, products, out_dir):
         scene["products"].append(item)
     scene_path, glb = os.path.join(out_dir, "scene.json"), os.path.join(out_dir, "salon.glb")
     json.dump(scene, open(scene_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    r = subprocess.run([BLENDER, "--background", "--factory-startup", "--python", BUILD, "--", scene_path, glb],
-                       capture_output=True, text=True, timeout=180)
+    r = subprocess.run([BLENDER, "--background", "--factory-startup", "--python", BUILD, "--", scene_path, glb]
+                       + (["--photo", photo] if photo else []), capture_output=True, text=True, timeout=420)
     rep = [l for l in r.stdout.splitlines() if l.startswith("NESTER_REPORT ")]
     if not rep or not os.path.exists(glb):
         raise RuntimeError("Blender n'a pas produit le salon : " + (r.stderr or r.stdout)[-300:])
@@ -388,7 +389,7 @@ def build_scene(req, crit, products, out_dir):
 
 # ------------------------------------------------------------------ orchestration
 
-RESULT = ("criteria", "palette", "products", "candidates", "total_eur", "glb", "version", "seconds", "last")
+RESULT = ("criteria", "palette", "products", "candidates", "total_eur", "glb", "version", "seconds", "last", "photo")
 
 
 def finalize(job):
@@ -494,6 +495,24 @@ def replace(job, category, wish=""):
 MODEL_CATEGORIES = ("canape", "fauteuil", "table_basse", "meuble_tv", "etagere", "luminaire")
 VENV_PYTHON = os.path.join(ROOT, "prototypes/.venv/bin/python")
 GEN3D = os.path.join(ROOT, "prototypes/models3d/gen3d.py")
+
+
+def photo(job):
+    """Photo du salon (rendu Cycles de Blender) pour la version courante du projet, déposée dans le Storage.
+    Les meubles sont ceux du salon 3D : rien n'est inventé par une IA d'image."""
+    if (job.get("photo") or {}).get("version") == job.get("version"):
+        return job["photo"]  # déjà faite pour cette version
+    out_dir = os.path.join(OUT, job["id"])
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "photo.jpg")
+    t = time.time()
+    report = build_scene(job["request"], job["criteria"], job["products"], out_dir, photo=path)
+    if not os.path.exists(path):
+        raise RuntimeError("Blender n'a pas rendu la photo.")
+    url = upload(f"salons/{job['id']}/photo-v{job['version']}.jpg", path, "image/jpeg")
+    job["photo"] = {"url": url, "version": job["version"], "seconds": round(time.time() - t, 1),
+                    "render_seconds": report.get("photo_seconds")}
+    return job["photo"]
 
 
 def models_on_demand(job_id, lock, limit=3):
