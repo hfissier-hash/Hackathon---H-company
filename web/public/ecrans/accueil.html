@@ -72,12 +72,23 @@ a.suite + a.suite { animation-delay: 1.3s !important; }
   </h1>
   <p class="suite" style="margin: 20px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-muted)">Tes dimensions, ton style. On trouve ce qui rentre et on te le montre en 3D.</p>
 
-  <a id="go" class="suite" href="pieces.html" style="margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 10px; height: 58px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 17px; font-weight: 600">Commencer
+  <a id="go" class="suite" href="compte.html" style="margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 10px; height: 58px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 17px; font-weight: 600">Commencer
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
   </a>
-  <a class="suite" href="pieces.html" style="margin-top: 6px; display: flex; align-items: center; justify-content: center; height: 40px; color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500">J'ai déjà un plan</a>
+  <a id="deja" class="suite" href="compte.html#connexion" style="margin-top: 6px; display: flex; align-items: center; justify-content: center; height: 40px; color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500">J'ai déjà un compte</a>
 </div>
 
+<script>
+// Déjà connecté : l'accueil mène droit aux salons enregistrés.
+fetch('/api/me').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+  if (!j || !j.user) return;
+  var go = document.getElementById('go'), other = document.getElementById('deja');
+  go.href = 'salons.html';
+  go.firstChild.textContent = 'Mes salons ';
+  other.textContent = j.user.first_name ? 'Connecté : ' + j.user.first_name : 'Connecté';
+  other.href = 'salons.html';
+}).catch(function () {});
+</script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module" src="accueil.js"></script>
 </body>

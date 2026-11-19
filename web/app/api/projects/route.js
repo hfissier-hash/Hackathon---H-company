@@ -1,36 +1,13 @@
-// POST /api/projects : dépose une demande de salon dans la file d'attente.
+// POST /api/projects : dépose une demande de salon dans la file d'attente, rattachée au compte connecté.
+// GET /api/projects : les salons enregistrés de la personne connectée, du plus récent au plus ancien.
 import { db, json, overQuota } from '@/lib/db';
-
-function number(v, lo, hi, name) {
-  const n = Number(v);
-  if (!Number.isFinite(n) || n < lo || n > hi) throw new Error(`${name} : valeur attendue entre ${lo} et ${hi}`);
-  return n;
-}
+import { currentUser } from '@/lib/auth';
+import { number, validRoom } from '@/lib/room';
 
 const words = (list) => (Array.isArray(list) ? list : []).filter((w) => typeof w === 'string' && /^[a-z_]{2,20}$/.test(w)).slice(0, 4);
 
-const WALLS = ['north', 'south', 'east', 'west'];
-
-// Une ouverture (porte ou fenêtre) : un mur, une position le long du mur, une largeur, ramenées dans le mur.
-function opening(o, room, minWidth, maxWidth, name) {
-  if (!o || !WALLS.includes(o.wall)) throw new Error(`${name} : mur inconnu`);
-  const run = o.wall === 'north' || o.wall === 'south' ? room.width_cm : room.length_cm;
-  const width = Math.min(number(o.width_cm, minWidth, maxWidth, name), run - 20);
-  const offset = Math.min(Math.max(Number(o.offset_cm) || 0, 5), run - width - 5);
-  return { wall: o.wall, offset_cm: Math.round(offset), width_cm: Math.round(width) };
-}
-
 function validate(body) {
-  const room = body.room || {}, wants = body.wants || {};
-  const size = { width_cm: number(room.width_cm, 200, 1000, 'largeur'), length_cm: number(room.length_cm, 200, 1000, 'longueur'),
-                 height_cm: number(room.height_cm, 200, 400, 'hauteur'), door_cm: number(room.door_cm, 60, 200, 'porte') };
-  // Porte et fenêtres placées sur le plan ; absentes, le worker prend une disposition par défaut.
-  if (room.door) {
-    size.door = { ...opening({ ...room.door, width_cm: room.door.width_cm || size.door_cm }, size, 60, 200, 'porte'),
-                  opens: room.door.opens === 'out' ? 'out' : 'in', hinge: room.door.hinge === 'end' ? 'end' : 'start' };
-    size.door_cm = size.door.width_cm;
-  }
-  if (Array.isArray(room.windows)) size.windows = room.windows.slice(0, 4).map((w) => opening(w, size, 40, 300, 'fenêtre'));
+  const wants = body.wants || {}, size = validRoom(body.room);
   return {
     room: size,
     style: String(body.style || 'Scandinave').slice(0, 30),
@@ -55,10 +32,29 @@ export async function POST(request) {
     return json({ error: e.message || 'demande illisible' }, 400);
   }
   try {
+    const user = await currentUser();
+    if (!user) return json({ error: 'Connecte-toi pour créer un salon.' }, 401);
     if (await overQuota('project', 40)) return json({ error: 'Trop de demandes en ce moment. Réessaie dans quelques minutes.' }, 429);
-    const rows = await db('requests', { method: 'POST', body: { kind: 'project', payload }, prefer: 'return=representation' });
+    const rows = await db('requests', { method: 'POST', body: { kind: 'project', payload, user_id: user.id }, prefer: 'return=representation' });
     return json({ id: rows[0].id }, 202);
   } catch (e) {
     return json({ error: 'La demande n’a pas pu être enregistrée.' }, 502);
+  }
+}
+
+export async function GET() {
+  try {
+    const user = await currentUser();
+    if (!user) return json({ error: 'non connecté' }, 401);
+    const rows = await db(`requests?user_id=eq.${user.id}&kind=eq.project&status=eq.done&select=id,created_at,payload,result&order=created_at.desc&limit=30`);
+    return json({ projects: rows.map((r) => {
+      const res = r.result || {}, products = res.products || [];
+      return { id: r.id, created_at: r.created_at, style: r.payload?.style, budget_eur: r.payload?.budget_eur, text: String(r.payload?.text || '').slice(0, 120),
+               room: { width_cm: r.payload?.room?.width_cm, length_cm: r.payload?.room?.length_cm },
+               total_eur: res.total_eur, count: products.length, palette: (res.palette || []).map((c) => c.hex).slice(0, 5),
+               photo: res.photo?.url || null, images: products.slice(0, 4).map((p) => p.image_url).filter(Boolean) };
+    }) });
+  } catch (e) {
+    return json({ error: 'Les salons n’ont pas pu être lus.' }, 502);
   }
 }

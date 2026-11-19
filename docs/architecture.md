@@ -49,3 +49,15 @@ flowchart TD
 | `prototypes/models3d/` | Génération 3D par lot et à la demande |
 
 Mesures des agents, coûts et risques : voir le document complet.
+
+## Comptes utilisateurs
+
+Chaque personne crée un compte (prénom, adresse mail, mot de passe), puis renseigne son logement ; ses salons sont enregistrés et se retrouvent sur l'écran « Mes salons ».
+
+- **Identité** : Supabase Auth (`auth.users`). Le mot de passe n'est jamais stocké dans une table de Nestr.
+- **Profil** : table `profiles` (prénom, logement en JSON), une ligne par compte.
+- **Salons** : colonne `requests.user_id`. Un salon rattaché à un compte n'est lisible que par son auteur ; les salons créés avant les comptes restent ouverts par leur lien.
+- **Session** : deux cookies `httpOnly` posés par le serveur (`nestr_at`, `nestr_rt`). Le navigateur ne reçoit ni clé ni jeton lisible ; toutes les routes passent par `web/lib/auth.js`.
+- **Routes** : `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET` et `PATCH /api/me`, `GET /api/projects` (mes salons).
+- **Vérification de l'adresse mail** : réglage `NESTER_VERIFY_EMAIL=1`. Activé, le compte doit être confirmé par le lien reçu par mail avant la première connexion. Désactivé (réglage de la démonstration), le compte est utilisable tout de suite, car Supabase limite l'envoi de mails à quelques-uns par heure.
+- **Écrans** : `compte.html` (création ou connexion), `pieces.html` (logement, enregistré dans le profil), `salons.html` (salons enregistrés). Tous les écrans sauf l'accueil et « Ton compte » renvoient vers la connexion si la session manque.

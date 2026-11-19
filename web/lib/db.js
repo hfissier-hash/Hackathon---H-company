@@ -42,7 +42,7 @@ export function toProject(row) {
 }
 
 export async function getProject(id) {
-  const rows = await db(`requests?id=eq.${id}&kind=eq.project&select=id,status,payload,steps,result,error`);
+  const rows = await db(`requests?id=eq.${id}&kind=eq.project&select=id,status,payload,steps,result,error,user_id`);
   return rows[0] || null;
 }
 

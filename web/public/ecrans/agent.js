@@ -100,7 +100,7 @@
       rows.style.display = 'none'; // rien n'a tourné : on laisse la place au message et au bouton
       card.style.display = 'none';
       cta.textContent = 'Corriger ma demande';
-      cta.href = 'pieces.html';
+      cta.href = 'style.html';
       cta.style.opacity = '1';
       cta.style.pointerEvents = 'auto';
     }
@@ -127,7 +127,7 @@
                style: s.style || 'Scandinave', budget_eur: s.budget_eur || 1200, text: s.text || '', wants: s.wants,
                inspiration: s.inspiration };
   fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
+    .then(function (r) { if (r.status === 401) location.replace('compte.html#connexion'); return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
     .then(function (j) { Nestr.set({ projectId: j.id }); poll(j.id); })
     .catch(function (e) { show({ status: 'failed', error: e.message || 'Le serveur Nester ne répond pas.', steps: {} }); });
 })();

@@ -48,6 +48,19 @@ window.Nestr = (function () {
     if (p.live.changed) return ['Prix du jour : ' + euro(p.live.price_eur), false];
     return ['✓ Prix vérifié à ' + at, true];
   }
+  // Compte : tous les écrans sauf l'accueil et « Ton compte » demandent d'être connecté.
+  // Nestr.me donne la personne connectée ({ email, first_name, room }) ou null ; le logement du profil sert de pièce par défaut.
+  var open = /\/(accueil|compte)\.html$/.test(location.pathname), online = /^https?:$/.test(location.protocol);
+  var me = !online ? Promise.resolve(null) : fetch('/api/me').then(function (r) {
+    if (r.status === 401) { if (!open) location.replace('compte.html#connexion'); return null; }
+    return r.ok ? r.json().then(function (j) { return j.user; }) : null;
+  }).then(function (user) {
+    if (!user) return null;
+    var s = get();
+    if (s.owner !== user.email) { try { localStorage.removeItem(KEY); } catch (e) {} s = {}; } // un autre compte sur cet appareil : on repart de zéro
+    if (!s.owner || (!s.room && user.room)) set({ owner: user.email, room: s.room || user.room || undefined });
+    return user;
+  }).catch(function () { return null; });
   // Onglet « Agents » ajouté à la barre de navigation des écrans du projet.
   document.addEventListener('DOMContentLoaded', function () {
     var nav = document.querySelector('nav[aria-label="Navigation principale"]');
@@ -56,8 +69,8 @@ window.Nestr = (function () {
     var title = document.querySelector('h2');
     if (title) {
       var back = document.createElement('a');
-      back.href = 'pieces.html';
-      back.textContent = '← Nouveau salon';
+      back.href = 'salons.html';
+      back.textContent = '← Mes salons';
       back.style.cssText = 'display:inline-block;margin:0 0 8px;padding:6px 12px;border-radius:999px;background:var(--birch);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none';
       title.parentNode.insertBefore(back, title);
     }
@@ -79,5 +92,5 @@ window.Nestr = (function () {
   // Prix et mesures : police de données de la charte.
   function data(el) { if (el) el.classList.add('data'); return el; }
   return { data: data, live: /^https?:$/.test(location.protocol), get: get, set: set, num: num, euro: euro, dims: dims,
-           retailer: retailer, checks: checks, live: live, project: project };
+           retailer: retailer, checks: checks, live: live, project: project, me: me };
 })();

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nestr — Ton compte</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&amp;family=Figtree:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+h1, h2, h3 { font-family: var(--display); }
+.data { font-family: var(--data); font-weight: 500; letter-spacing: -0.02em; font-size: 0.92em; }
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--birch)}
+a{color:var(--ink)}a:hover{color:var(--ink-muted)}
+input[type=range]{accent-color:var(--ink)}
+</style>
+<link rel="stylesheet" href="../glass.css">
+<script src="../glass.js" defer></script>
+<style>
+.champ { display: flex; flex-direction: column; gap: 5px; }
+.champ label { font-size: 13px; font-weight: 600; color: var(--ink-muted); }
+.champ input { height: 50px; padding: 0 16px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,0.55); color: var(--ink); font: 500 16px var(--body); box-shadow: var(--glass-rim); }
+.champ small { font-size: 12px; color: var(--ink-muted); }
+#onglets { display: flex; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.12); box-shadow: var(--glass-rim), var(--glass-drop); }
+#onglets button { flex: 1; height: 40px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-muted); font: 600 14px var(--body); cursor: pointer; }
+#onglets button[aria-selected="true"] { background: rgba(255,255,255,0.75); color: var(--pine); box-shadow: var(--glass-rim); }
+#etat { min-height: 20px; margin: 0; font-size: 13px; font-weight: 500; text-align: center; color: var(--warn); }
+#etat.ok { color: var(--pine); }
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; padding: 16px 24px 34px; overflow: hidden">
+  <div style="display: flex; align-items: center; height: 44px">
+    <a href="accueil.html" aria-label="Retour" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: var(--ink)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <p class="nestr-logo" aria-label="Nestr" style="margin: 0 0 0 4px; font-size: 26px"><span class="nestr-accent">n</span>estr<span class="nestr-accent">.</span></p>
+  </div>
+
+  <h2 id="titre" style="margin: 22px 0 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Crée ton compte</h2>
+  <p id="sous-titre" style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-muted)">Tes salons sont enregistrés : tu peux en faire plusieurs et y revenir.</p>
+
+  <div id="onglets" role="tablist" aria-label="Compte" style="margin-top: 20px">
+    <button type="button" role="tab" id="t-creer" aria-selected="true">Créer un compte</button>
+    <button type="button" role="tab" id="t-connexion" aria-selected="false">Se connecter</button>
+  </div>
+
+  <form id="formulaire" novalidate style="display: flex; flex-direction: column; gap: 14px; margin-top: 20px">
+    <div class="champ" id="c-prenom">
+      <label for="f-prenom">Prénom</label>
+      <input id="f-prenom" name="given-name" type="text" autocomplete="given-name" maxlength="40">
+    </div>
+    <div class="champ">
+      <label for="f-mail">Adresse mail</label>
+      <input id="f-mail" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="champ">
+      <label for="f-passe">Mot de passe</label>
+      <input id="f-passe" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72">
+      <small id="aide-passe">8 caractères au moins.</small>
+    </div>
+    <p id="etat" role="alert"></p>
+    <button id="envoyer" type="submit" style="display: flex; align-items: center; justify-content: center; height: 56px; border: 0; border-radius: 999px; background: var(--pine); color: var(--surface); font: 600 16px var(--body); cursor: pointer">Créer mon compte</button>
+  </form>
+
+  <div style="flex: 1"></div>
+  <p style="margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink-muted); text-align: center">Ton adresse sert uniquement à retrouver tes salons. Ton mot de passe n'est jamais lisible par Nestr.</p>
+</div>
+<script>
+// Écran « Ton compte » : création d'un compte ou connexion. Les dimensions du logement se saisissent juste après.
+(function () {
+  var form = document.getElementById('formulaire'), state = document.getElementById('etat'), send = document.getElementById('envoyer');
+  var tabs = { creer: document.getElementById('t-creer'), connexion: document.getElementById('t-connexion') };
+  var mode = location.hash === '#connexion' ? 'connexion' : 'creer';
+  function show(next) {
+    mode = next;
+    var create = mode === 'creer';
+    tabs.creer.setAttribute('aria-selected', create ? 'true' : 'false');
+    tabs.connexion.setAttribute('aria-selected', create ? 'false' : 'true');
+    document.getElementById('titre').textContent = create ? 'Crée ton compte' : 'Content de te revoir';
+    document.getElementById('sous-titre').textContent = create ? 'Tes salons sont enregistrés : tu peux en faire plusieurs et y revenir.' : 'Connecte-toi pour retrouver tes salons.';
+    document.getElementById('c-prenom').style.display = create ? 'flex' : 'none';
+    document.getElementById('aide-passe').style.display = create ? 'block' : 'none';
+    document.getElementById('f-passe').autocomplete = create ? 'new-password' : 'current-password';
+    send.textContent = create ? 'Créer mon compte' : 'Me connecter';
+    state.textContent = ''; state.className = '';
+  }
+  tabs.creer.addEventListener('click', function () { show('creer'); });
+  tabs.connexion.addEventListener('click', function () { show('connexion'); });
+  show(mode);
+
+  // Après la connexion : sans logement enregistré, on commence par les dimensions ; sinon, les salons.
+  function enter() {
+    fetch('/api/me').then(function (r) { return r.json(); }).then(function (j) {
+      try { localStorage.removeItem('nestr-projet'); } catch (e) {}
+      location.href = j.user && j.user.room ? 'salons.html' : 'pieces.html?compte=1';
+    }).catch(function () { location.href = 'salons.html'; });
+  }
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var create = mode === 'creer';
+    var body = { email: document.getElementById('f-mail').value.trim(), password: document.getElementById('f-passe').value };
+    if (create) body.first_name = document.getElementById('f-prenom').value.trim();
+    if (create && !body.first_name) { state.textContent = 'Indique ton prénom.'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { state.textContent = 'Cette adresse mail ne semble pas valide.'; return; }
+    if (body.password.length < 8) { state.textContent = create ? 'Le mot de passe doit faire au moins 8 caractères.' : 'Adresse mail ou mot de passe incorrect.'; return; }
+    state.className = ''; state.textContent = '';
+    send.disabled = true; send.style.opacity = '0.6';
+    send.textContent = create ? 'Création…' : 'Connexion…';
+    fetch(create ? '/api/auth/signup' : '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.data.error || 'Une erreur est survenue.');
+        if (res.data.confirm) { // vérification de l'adresse activée : il faut cliquer sur le lien reçu
+          show('connexion');
+          state.className = 'ok';
+          state.textContent = 'Compte créé. Clique sur le lien reçu par mail, puis connecte-toi.';
+          return;
+        }
+        if (res.data.login) { show('connexion'); state.className = 'ok'; state.textContent = 'Compte créé. Connecte-toi.'; return; }
+        enter();
+      })
+      .catch(function (e) { state.className = ''; state.textContent = e.message; })
+      .then(function () { send.disabled = false; send.style.opacity = '1'; if (send.textContent.indexOf('…') > 0) send.textContent = mode === 'creer' ? 'Créer mon compte' : 'Me connecter'; });
+  });
+  // Déjà connecté : inutile de repasser par ici.
+  fetch('/api/me').then(function (r) { if (r.ok) enter(); }).catch(function () {});
+})();
+</script>
+</body>
+</html>

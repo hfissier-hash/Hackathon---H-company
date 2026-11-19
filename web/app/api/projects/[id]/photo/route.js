@@ -1,5 +1,6 @@
 // POST /api/projects/<id>/photo : rendu photoréaliste du salon (Blender, moteur Cycles) fait par le worker.
 import { UUID, db, getProject, json, overQuota, toProject, waitFor } from '@/lib/db';
+import { canSee, currentUser } from '@/lib/auth';
 
 export const maxDuration = 300;
 
@@ -8,7 +9,7 @@ export async function POST(_request, { params }) {
   if (!UUID.test(id)) return json({ error: 'demande invalide' }, 400);
   try {
     const project = await getProject(id);
-    if (!project || project.status !== 'done') return json({ error: 'projet inconnu ou pas encore prêt' }, 404);
+    if (!project || project.status !== 'done' || !canSee(project, await currentUser())) return json({ error: 'projet inconnu ou pas encore prêt' }, 404);
     const current = project.result || {};
     if (current.photo && current.photo.version === current.version) return json(toProject(project)); // déjà à jour
     if (await overQuota('photo', 60)) return json({ error: 'Trop de demandes en ce moment. Réessaie dans quelques minutes.' }, 429);
