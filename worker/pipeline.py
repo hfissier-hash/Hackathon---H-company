@@ -171,8 +171,58 @@ def _criteria(req):
 
 # ------------------------------------------------------------------ 2. catalogue
 
+OFFICIAL_CACHE = os.path.join(ROOT, "worker/models_cache/ikea")
+_OFFICIAL = {"refs": set(), "by_id": {}, "at": 0.0}
+
+
+def _load_official():
+    """Modèles 3D officiels déposés dans Supabase Storage (models/ikea/<numéro d'article>.glb) et fiches correspondantes."""
+    refs, offset = set(), 0
+    while True:
+        page = admin("object/list/models", {"prefix": "ikea", "limit": 1000, "offset": offset}, api="/storage/v1/")
+        refs.update(e["name"][:-4] for e in page if e["name"].endswith(".glb"))
+        if len(page) < 1000:
+            break
+        offset += 1000
+    by_id = {}
+    for p in supabase("products?select=id,reference,source_url&source_site=eq.ikea.com&limit=5000"):
+        ref = re.sub(r"\D", "", p.get("reference") or "")
+        if not ref:
+            m = re.search(r"-s?(\d{8})/?$", p["source_url"])
+            ref = m.group(1) if m else ""
+        by_id[p["id"]] = ref
+    _OFFICIAL.update(refs=refs, by_id=by_id, at=time.time())
+
+
+def official_ref(pid):
+    """Numéro d'article du produit s'il a un modèle 3D officiel, sinon None. Liste rafraîchie toutes les 10 minutes."""
+    try:
+        if time.time() - _OFFICIAL["at"] > 600 or pid not in _OFFICIAL["by_id"]:
+            _load_official()
+    except Exception:
+        _OFFICIAL["at"] = time.time()  # Storage injoignable : on continue avec ce qu'on a
+    ref = _OFFICIAL["by_id"].get(pid)
+    return ref if ref and ref in _OFFICIAL["refs"] else None
+
+
+def official_model(pid):
+    """Chemin local du modèle officiel, téléchargé une fois depuis le Storage."""
+    ref = official_ref(pid)
+    if not ref:
+        return None
+    path = os.path.join(OFFICIAL_CACHE, ref + ".glb")
+    if not os.path.exists(path):
+        os.makedirs(OFFICIAL_CACHE, exist_ok=True)
+        url = env("SUPABASE_URL") + f"/storage/v1/object/public/models/ikea/{ref}.glb"
+        if subprocess.run(["curl", "-sSfL", "--max-time", "60", "-o", path + ".part", url]).returncode:
+            return None
+        os.replace(path + ".part", path)
+    return path
+
+
 def has_model(pid):
-    return os.path.exists(os.path.join(MODELS, f"{pid}.glb"))
+    """Vrai si le produit a un modèle 3D : officiel (Storage) ou généré par TRELLIS (local)."""
+    return bool(official_ref(pid)) or os.path.exists(os.path.join(MODELS, f"{pid}.glb"))
 
 
 def score(r, crit, category):
@@ -320,8 +370,11 @@ def build_scene(req, crit, products, out_dir):
             image_file = os.path.join(out_dir, f"cadre-{int(p['id'])}.jpg")
             if subprocess.run(["curl", "-sSfL", "--max-time", "20", "-o", image_file, p["image_url"]]).returncode == 0:
                 item["image_file"] = image_file
-        if has_model(p["id"]):
-            item["model_glb"] = os.path.join(MODELS, f"{p['id']}.glb")
+        official = official_model(p["id"]) if p["category"] != "rideau" else None
+        if official:  # modèle du fabricant, déjà aux vraies dimensions
+            item.update(model_glb=official, model_kind="official")
+        elif os.path.exists(os.path.join(MODELS, f"{p['id']}.glb")):  # modèle généré depuis la photo
+            item.update(model_glb=os.path.join(MODELS, f"{p['id']}.glb"), model_kind="generated")
         scene["products"].append(item)
     scene_path, glb = os.path.join(out_dir, "scene.json"), os.path.join(out_dir, "salon.glb")
     json.dump(scene, open(scene_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
@@ -542,7 +595,7 @@ def run(job, notify=lambda: None):
         report = finalize(job)
         with_model = sum(1 for e in report["products"] if e.get("model") and not e["model"].get("rejected"))
         step("build", status="done", seconds=round(time.time() - t, 1),
-             detail=f"Blender · {with_model} modèle(s) 3D sur {len(report['products'])} meubles")
+             detail=f"Blender · {with_model} modèles 3D sur {len(report['products'])} objets")
         job.update(status="done", seconds=round(time.time() - t0, 1))
     except Exception as e:
         for s in steps.values():

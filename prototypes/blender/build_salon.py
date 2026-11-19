@@ -356,6 +356,77 @@ def import_model(path, footprint, center, name, back=-1, plain_mat=None):
 
 
 DEFAULT_HEX = {"plante": "#5E7F5A"}
+WALL_PIECES = ("miroir", "cadre")
+
+
+def import_official(path, category, name, fiche):
+    """Importe le modèle 3D du fabricant. Il est déjà aux vraies dimensions : on ne l'étire pas, on le met seulement
+    dans le repère des formes (largeur sur x, dos vers +y, posé au sol, centré) et on l'allège si besoin."""
+    import math
+    import mathutils
+    import numpy as np
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=path)
+    new = set(bpy.data.objects) - before
+    meshes = [o for o in new if o.type == "MESH"]
+    for o in meshes:
+        o.data.transform(o.matrix_world)
+        o.matrix_world = mathutils.Matrix.Identity(4)
+    for o in new:
+        if o.type != "MESH":
+            bpy.data.objects.remove(o, do_unlink=True)
+    obj = join(meshes, name)
+    faces = len(obj.data.polygons)
+    if faces > 40000:  # certains modèles dépassent 100 000 faces
+        mod = obj.modifiers.new("Allege", "DECIMATE")
+        mod.ratio = 40000 / faces
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    def coords():
+        a = np.empty(len(obj.data.vertices) * 3)
+        obj.data.vertices.foreach_get("co", a)
+        return a.reshape(-1, 3)
+
+    def turn(axis, deg):
+        obj.data.transform(mathutils.Matrix.Rotation(math.radians(deg), 4, axis))
+
+    ext = np.ptp(coords(), axis=0)
+    turned = []
+    if category in WALL_PIECES:
+        if ext[2] < ext[1]:  # miroir ou cadre livré couché à plat : on le redresse, face vers -y
+            turn("X", 90)
+            turned.append("redressé")
+    else:
+        w, d = fiche[0], fiche[1]
+        if category == "tapis":
+            w, d = min(w, d), max(w, d)
+        if w and d and abs(ext[0] - d) + abs(ext[1] - w) < abs(ext[0] - w) + abs(ext[1] - d) - 0.05:
+            turn("Z", 90)  # modèle tourné d'un quart de tour par rapport à la fiche
+            turned.append("quart de tour")
+        if category in ("canape", "fauteuil"):
+            co = coords()
+            mid = (co[:, 1].min() + co[:, 1].max()) / 2
+            if co[co[:, 1] < mid][:, 2].mean() > co[co[:, 1] >= mid][:, 2].mean() + 0.02:
+                turn("Z", 180)  # le dossier (côté le plus haut) doit être vers +y
+                turned.append("demi-tour")
+    co = coords()
+    mn, mx = co.min(axis=0), co.max(axis=0)
+    obj.data.transform(mathutils.Matrix.Translation((-(mn[0] + mx[0]) / 2, -(mn[1] + mx[1]) / 2, -mn[2])))
+    size = [round(float(v), 3) for v in (mx - mn)]
+    return obj, size, {"file": path, "kind": "officiel", "faces": faces, "size_m": size, "turned": turned}
+
+
+def lift(obj, dz):
+    import mathutils
+    obj.data.transform(mathutils.Matrix.Translation((0, 0, dz)))
+
+
+def shrink_textures(limit=1024):
+    """Les textures du fabricant sont parfois très grandes : on les ramène à 1024 px pour un salon rapide à charger."""
+    for img in bpy.data.images:
+        if img.size[0] > limit or img.size[1] > limit:
+            k = limit / max(img.size)
+            img.scale(max(1, int(img.size[0] * k)), max(1, int(img.size[1] * k)))
 
 
 def build_products(products, W, L, H, room):
@@ -385,7 +456,47 @@ def build_products(products, W, L, H, room):
         mat = material(f"Mat_{i}", p.get("color_hex") or DEFAULT_HEX.get(cat, "#888888"))
         cm = lambda key, default=None: p[key] / 100 if p.get(key) else default
 
-        if cat in ("canape", "fauteuil"):
+        if p.get("model_kind") == "official":
+            # Modèle du fabricant : mêmes emplacements que les formes, sans étirement.
+            obj, real, entry["model"] = import_official(p["model_glb"], cat, name, (w, d, h))
+            rw, rd, rh = real
+            if cat == "canape":
+                settle(obj, (rd / 2 + 0.02, L / 2), 90)
+            elif cat == "fauteuil":
+                settle(obj, (min(W - rd / 2 - 0.55, table_x + table_d / 2 + 0.75 + rd / 2), max(rw / 2 + 0.45, L * 0.22)), -125)
+            elif cat == "table_basse":
+                settle(obj, (table_x, L / 2), 90)
+            elif cat == "tapis":
+                settle(obj, (max(sofa_d - 0.30, 0.20) + rw / 2, L / 2), 0)
+            elif cat == "meuble_tv":
+                settle(obj, (W - rd / 2 - 0.02, L / 2), -90)
+            elif cat == "etagere":
+                settle(obj, (W - rw / 2 - 0.08, L - rd / 2 - 0.02), 0)
+            elif cat == "luminaire":
+                settle(obj, (0.35, min(L - 0.35, L / 2 + sofa_w / 2 + 0.35)), 0)
+            elif cat == "suspension":  # le modèle inclut son câble : on l'accroche au plafond
+                lift(obj, max(H - rh, 1.75))
+                settle(obj, (table_x, L / 2), 0)
+            elif cat == "plante":
+                settle(obj, (W - 0.30 - rw / 4, 0.32 + rd / 4), 0)
+            elif cat == "miroir":
+                lift(obj, min(max(0.06, 1.45 - rh / 2), H - rh - 0.08))
+                settle(obj, (max(rw / 2 + 0.20, (0.20 + win_x0 - 0.45) / 2), L - 0.01 - rd / 2), 0)
+            elif cat == "cadre":
+                lift(obj, min(max(sofa_h + 0.28, 1.45 - rh / 2), H - rh - 0.08))
+                count = int(p.get("count") or 1)
+                pieces = [obj]
+                for k in range(1, count):
+                    twin = obj.copy()
+                    twin.data = obj.data.copy()
+                    bpy.context.collection.objects.link(twin)
+                    pieces.append(twin)
+                for k, piece in enumerate(pieces):
+                    settle(piece, (0.01 + rd / 2, L / 2 + (k - (count - 1) / 2) * (rw + 0.12)), 90)
+                obj = join(pieces, name) if count > 1 else obj
+            else:
+                settle(obj, (W / 2, L / 2), 0)
+        elif cat in ("canape", "fauteuil"):
             if cat == "canape":
                 center, back, angle = (d / 2 + 0.02, L / 2), -1, 90
             else:  # en face du canapé, côté porte, tourné de trois quarts vers lui
@@ -459,6 +570,7 @@ def main():
     W, L, H = build_room(scene["room"])
     report = build_products(scene["products"], W, L, H, scene["room"])
 
+    shrink_textures()
     bpy.ops.export_scene.gltf(filepath=glb_path, export_format="GLB", export_extras=True, export_apply=True)
     t_glb = time.time() - t0
 
