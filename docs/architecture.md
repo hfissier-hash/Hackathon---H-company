@@ -48,4 +48,4 @@ flowchart TD
 | `prototypes/supabase/migrations/` | Tables, vue du catalogue, recherche |
 | `prototypes/models3d/` | Génération 3D par lot et à la demande |
 
-Mesures des agents, coûts, risques et reste à faire : voir le document complet.
+Mesures des agents, coûts et risques : voir le document complet.
