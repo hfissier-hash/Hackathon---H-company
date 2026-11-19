@@ -1,6 +1,8 @@
-"""Génère les modèles 3D d'une sélection de produits avec TRELLIS (Space Hugging Face).
+"""Génère les modèles 3D d'une sélection de produits avec un Space Hugging Face.
 
-Usage : python batch_trellis.py demo_selection.json
+Usage : python batch_trellis.py demo_selection.json [trellis|hunyuan]
+  trellis (défaut) : forme + texture, mais demande 120 s de quota GPU par produit ;
+  hunyuan          : Hunyuan3D-2, forme seule (Blender applique la couleur du produit), passe avec un quota presque épuisé.
 Pour chaque produit {id, image_url} : télécharge la photo dans input/ (non versionné),
 écrit out/catalog/<id>.glb et une ligne de mesure dans out/catalog/report.jsonl.
 Reprise : un modèle déjà présent n'est pas régénéré.
@@ -15,8 +17,17 @@ tok = open(os.path.expanduser("~/.cache/huggingface/token")).read().strip()
 client = None
 
 
+ENGINE = sys.argv[2] if len(sys.argv) > 2 else "trellis"
+
+
 def generate(img):
     global client
+    if ENGINE == "hunyuan":
+        if client is None:
+            client = Client("tencent/Hunyuan3D-2", token=tok, verbose=False)
+        r = client.predict(None, handle_file(img), None, None, None, None, 30, 5.0, 1234, 256, True, 8000, False,
+                           api_name="/shape_generation")[0]
+        return r.get("value") or r.get("path") if isinstance(r, dict) else r
     if client is None:
         client = Client("trellis-community/TRELLIS", token=tok, verbose=False)
         try: client.predict(api_name="/start_session")
@@ -31,7 +42,7 @@ for p in json.load(open(sys.argv[1], encoding="utf-8")):
     if os.path.exists(dst):
         continue
     img = os.path.join(IN, f"{p['id']}.jpg")
-    t, row = time.time(), {"id": p["id"], "name": p["name"]}
+    t, row = time.time(), {"id": p["id"], "name": p["name"], "engine": ENGINE}
     try:
         if not os.path.exists(img):
             subprocess.run(["curl", "-sSfL", "--max-time", "60", "-o", img, p["image_url"]], check=True)
