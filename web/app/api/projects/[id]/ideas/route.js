@@ -1,6 +1,7 @@
 // GET /api/projects/<id>/ideas : d'autres produits du catalogue qui iraient dans ce salon, avec leur photo.
 // Meubles et déco : les produits que la recherche avait retenus sans les choisir (ils rentrent dans la pièce et le budget).
 // Peinture : les peintures du catalogue dans les couleurs de la palette du salon.
+// Seules les catégories déjà présentes dans le salon sont proposées, puisqu'une idée remplace un produit existant.
 import { UUID, db, json } from '@/lib/db';
 import { canSee, currentUser } from '@/lib/auth';
 
@@ -29,9 +30,12 @@ export async function GET(_request, { params }) {
     if (!row || row.status !== 'done' || !canSee(row, await currentUser())) return json({ error: 'projet inconnu' }, 404);
     const result = row.result || {}, candidates = result.candidates || {};
     const taken = new Set((result.products || []).map((p) => String(p.id)));
+    // Une idée remplace un produit du salon : on ne propose que les catégories qui y sont déjà (pas de meuble TV s'il n'y en a pas).
+    const present = new Set((result.products || []).map((p) => p.category));
+    const inRoom = (list) => list.filter((c) => present.has(c));
     const palette = [result.criteria?.accent_color, ...(result.criteria?.colors || [])].filter((c) => typeof c === 'string' && COLORS.test(c));
     let paints = [];
-    if (palette.length) {
+    if (palette.length && present.has('peinture')) {
       const found = await db(`catalog_products?category=eq.peinture&color_family=in.(${[...new Set(palette)].join(',')})`
         + '&select=id,name,retailer,price_eur,url,image_url,width_cm,depth_cm,height_cm,color_family&order=price_eur.asc&limit=24');
       // la couleur du mur d'accent d'abord, puis les autres teintes de la palette
@@ -39,7 +43,7 @@ export async function GET(_request, { params }) {
         .sort((a, b) => palette.indexOf(a.color_family) - palette.indexOf(b.color_family))
         .slice(0, 8).map((p) => card({ ...p, category: 'peinture' }));
     }
-    return json({ meubles: mix(candidates, MEUBLES, taken, 8), deco: mix(candidates, DECO, taken, 10), peinture: paints });
+    return json({ meubles: mix(candidates, inRoom(MEUBLES), taken, 8), deco: mix(candidates, inRoom(DECO), taken, 10), peinture: paints });
   } catch (e) {
     return json({ error: 'Les idées n’ont pas pu être lues.' }, 502);
   }
