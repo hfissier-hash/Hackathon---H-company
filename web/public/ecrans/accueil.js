@@ -58,7 +58,7 @@ try {
     el.className = 'etiquette';
     el.style.cssText = 'background: var(--surface)'; // pris en charge par la couche de verre
     const dot = document.createElement('i');
-    dot.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FAFAF6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+    dot.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#FAFAF6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
     const text = document.createElement('span'), extra = document.createElement('b');
     text.textContent = name;
     extra.textContent = kind === 'fit' ? 'ça rentre' : Math.round(d.nester_price_eur) + ' €';
@@ -74,9 +74,9 @@ try {
       v.copy(l.at).project(camera);
       const lw = l.el.offsetWidth, lh = l.el.offsetHeight;
       const x = Math.min(w - lw - 8, Math.max(8, (v.x + 1) / 2 * w - lw / 2));
-      let y = Math.max(70, (1 - v.y) / 2 * h - 16 - lh);
+      let y = Math.max(70, (1 - v.y) / 2 * h - 10 - lh);
       // deux étiquettes ne se recouvrent pas : la suivante monte d'un cran
-      for (const r of placed) if (x < r.x + r.w + 6 && r.x < x + lw + 6 && y < r.y + lh + 6 && r.y < y + lh + 6) y = r.y - lh - 8;
+      for (const r of placed) if (x < r.x + r.w + 6 && r.x < x + lw + 6 && y < r.y + lh + 6 && r.y < y + lh + 6) y = r.y - lh - 5;
       placed.push({ x, y, w: lw });
       l.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
     }

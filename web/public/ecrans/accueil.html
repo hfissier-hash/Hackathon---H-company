@@ -28,10 +28,10 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 @keyframes logo { from { opacity: 0; transform: translateY(-14px) scale(0.8); } }
 #badge { animation: logo 0.9s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
 /* étiquettes accrochées aux meubles */
-.etiquette { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 7px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--surface);
-  font-size: 12px; font-weight: 600; white-space: nowrap; opacity: 0; transition: opacity 0.35s ease; will-change: transform; }
+.etiquette { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 5px; padding: 3px 9px 3px 4px; border-radius: 999px; background: var(--surface);
+  font-size: 10.5px; font-weight: 600; white-space: nowrap; opacity: 0; transition: opacity 0.35s ease; will-change: transform; }
 .etiquette.vue { opacity: 1; }
-.etiquette i { width: 20px; height: 20px; border-radius: 50%; background: var(--ok); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.etiquette i { width: 14px; height: 14px; border-radius: 50%; background: var(--ok); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .etiquette b { font-family: var(--data); font-weight: 500; color: var(--ink-muted); }
 /* titre : pas de dégradé ici (il gêne l'animation mot à mot), encre pleine */
 #titre { background: none; -webkit-text-fill-color: currentColor; color: var(--ink); }

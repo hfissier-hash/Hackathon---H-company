@@ -25,14 +25,26 @@
     rows.appendChild(row);
     return { key: s[0], wait: s[3], detail: row.children[1].children[1], dot: dot, row: row };
   });
-  ring.style.marginTop = '8px';
+  ring.style.marginTop = '14px';
   rows.style.marginTop = '14px';
   card.style.visibility = 'hidden';
   cta.style.opacity = '0.35';
   cta.style.pointerEvents = 'none';
   subtitle.textContent = 'Ta demande est comparée au catalogue relevé par les agents H Company. S’il manque un produit, un agent part le chercher.';
 
-  var started = Date.now();
+  var started = Date.now(), seen = null, shownPct = 0, target = 0, counting = false;
+  // Le pourcentage défile jusqu'à sa valeur au lieu de sauter.
+  function count(to) {
+    target = to;
+    if (counting) return;
+    counting = true;
+    (function step() {
+      if (shownPct === target) { counting = false; return; }
+      shownPct += shownPct < target ? Math.max(1, Math.round((target - shownPct) / 6)) : -1;
+      pct.textContent = shownPct + ' %';
+      requestAnimationFrame(step);
+    })();
+  }
   function show(job) {
     var done = 0, shown = 0;
     lines.forEach(function (l) {
@@ -43,6 +55,7 @@
       if (l.row.style.display === 'none') return;
       shown++;
       if (st === 'done' || st === 'skipped') done++;
+      l.row.dataset.state = st === 'skipped' ? 'done' : st;
       l.dot.style.background = st === 'done' ? 'var(--ok)' : st === 'failed' ? 'var(--warn)' : st === 'running' ? 'var(--ink)' : 'var(--line)';
       l.dot.textContent = st === 'done' ? '✓' : st === 'failed' ? '!' : st === 'running' ? '…' : '';
       l.dot.setAttribute('role', 'img');
@@ -51,12 +64,14 @@
     });
     var ratio = job.status === 'done' ? 1 : done / shown;
     arc.setAttribute('stroke-dasharray', Math.round(327 * ratio) + ' 327');
-    pct.textContent = Math.round(ratio * 100) + ' %';
+    count(Math.round(ratio * 100));
+    root.dataset.status = job.status;
     var secs = job.seconds ? Math.round(job.seconds) : Math.round((Date.now() - started) / 1000);
     clock.textContent = Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
 
     var last = job.products ? job.products[0] : job.last;
     if (last) {
+      if (seen !== last.url) { seen = last.url; card.classList.remove('arrive'); void card.offsetWidth; card.classList.add('arrive'); } // chaque nouvelle trouvaille surgit
       card.style.visibility = 'visible';
       var img = card.querySelector('img'), txt = card.children[0].children[1].children, chips = card.children[1];
       img.removeAttribute('data-img'); img.src = last.image_url; img.alt = last.name;
