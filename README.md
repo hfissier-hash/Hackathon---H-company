@@ -11,7 +11,21 @@ Hackathon *Build The Future* 2026 (Eugenia × H Company × Hugging Face × Verce
 Meubler un logement prend des heures : chaque enseigne a son format, il faut noter les cotes à la main,
 et le canapé finit par ne pas rentrer.
 
-## Lancer l'application (V1)
+## Application en ligne
+
+**https://nester-mu.vercel.app** (projet Vercel « nester », dossier `web`).
+
+Seule l'interface est sur Vercel. Les demandes sont traitées par le worker, qui doit tourner sur une machine équipée de Blender
+(`python3 worker/worker.py`) : s'il est arrêté, les demandes restent en attente. Pour redéployer après une modification :
+
+```bash
+npx vercel deploy --prod --cwd web
+```
+
+Variables du projet Vercel : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secrète) et, au besoin, `NESTER_MAX_PER_HOUR`.
+Un plafond horaire de demandes protège les crédits (40 salons par heure par défaut).
+
+## Lancer l'application en local
 
 Deux programmes, dans deux terminaux :
 
