@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charte graphique Nestr</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Les couleurs et polices viennent de tokens.css (source unique). */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 56px 16px 96px; display: flex; flex-direction: column; gap: 72px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; }
+h1 { font-size: clamp(36px, 7vw, 64px); font-weight: 800; line-height: 1; }
+h2 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+h3 { font-size: 20px; font-weight: 700; }
+p { margin: 0; }
+.muted { color: var(--ink-muted); }
+.eyebrow { font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 14px; color: var(--pine); }
+code, .mono { font-family: var(--data); font-size: 14px; }
+section { display: flex; flex-direction: column; gap: 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: #fff; }
+.card .art { height: 168px; display: flex; align-items: center; justify-content: center; }
+.card .meta { padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); }
+.dark { background: var(--pine-deep); color: var(--surface); }
+.light { background: var(--surface); color: var(--ink); }
+/* Le logo est du texte : la même police partout, seules les couleurs changent. */
+.logo { font-family: var(--display); font-weight: 800; font-size: 80px; line-height: 1; letter-spacing: -.01em; }
+.mono-logo { font-family: var(--display); font-weight: 800; font-size: 72px; line-height: 1; }
+.mono-logo sup { font-size: .3em; vertical-align: top; position: relative; top: .15em; }
+.a-lingon { color: var(--lingon); } .a-pine { color: var(--pine); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.swatch { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: #fff; }
+.swatch .chip { height: 96px; }
+.swatch .meta { padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; }
+table { width: 100%; border-collapse: collapse; }
+td, th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
+th { font-size: 14px; color: var(--ink-muted); font-weight: 600; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.rule { border-radius: 16px; padding: 20px; background: var(--birch); display: flex; flex-direction: column; gap: 8px; }
+.rule.no { background: #fff; border: 1px solid var(--line); }
+.tag { font-family: var(--data); font-size: 13px; padding: 2px 10px; border-radius: 999px; align-self: flex-start; }
+.tag.ok { background: var(--pine); color: var(--surface); }
+.tag.no { background: var(--lingon); color: var(--on-lingon); }
+/* Motif signature : la cote d'architecte « 210 cm · ça rentre ». */
+.cote { display: flex; align-items: center; gap: 12px; max-width: 560px; }
+.cote .tick { width: 2px; height: 28px; background: currentColor; }
+.cote .bar { flex: 1; height: 2px; background: currentColor; }
+.cote .val { font-family: var(--data); font-size: 18px; white-space: nowrap; }
+.phone { width: 150px; height: 300px; border-radius: 28px; border: 2px solid var(--line); background: var(--birch); }
+.foot { color: var(--ink-muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 520px) { .logo { font-size: 60px; } .mono-logo { font-size: 56px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header style="display:flex; flex-direction:column; gap:16px;">
+    <p class="eyebrow">Charte graphique · v1 · 19.11.2026</p>
+    <h1><span class="a-lingon">n</span>estr<span class="a-lingon">.</span></h1>
+    <p class="muted" style="font-size:20px; max-width:640px;">Ton salon en 3D, avec de vrais produits qui rentrent. Cette page fixe le logo, les couleurs, la typographie et les motifs de Nestr, pour l’appli, les decks et les documents.</p>
+  </header>
+
+  <section>
+    <h2>1. Logo</h2>
+    <p class="muted">Deux formes. Le <b>logotype</b> « nestr. » est la forme principale. Le <b>monogramme</b> « (n.)™ » sert dans les petits formats : coin de page, icône d’appli, favicon. Dans les deux, le « n » et le point ont toujours la même couleur d’accent.</p>
+    <div class="grid">
+      <div class="card"><div class="art light"><span class="logo"><span class="a-lingon">n</span>estr<span class="a-lingon">.</span></span></div><div class="meta"><h3>Principal</h3><span class="mono muted">logos/logo-principal.svg</span></div></div>
+      <div class="card"><div class="art dark"><span class="logo"><span class="a-lingon">n</span>estr<span class="a-lingon">.</span></span></div><div class="meta"><h3>Principal, fond sombre</h3><span class="mono muted">logos/logo-principal-fond-sombre.svg · grands formats seulement</span></div></div>
+      <div class="card"><div class="art light"><span class="logo"><span class="a-pine">n</span>estr<span class="a-pine">.</span></span></div><div class="meta"><h3>Pin</h3><span class="mono muted">logos/logo-pin.svg · version sobre</span></div></div>
+      <div class="card"><div class="art light"><span class="logo">nestr.</span></div><div class="meta"><h3>Monochrome encre</h3><span class="mono muted">logos/logo-mono-encre.svg · impression noir et blanc</span></div></div>
+      <div class="card"><div class="art dark"><span class="logo">nestr.</span></div><div class="meta"><h3>Monochrome blanc</h3><span class="mono muted">logos/logo-mono-blanc.svg · petits formats sur fond sombre, sur photo</span></div></div>
+    </div>
+
+    <h3 style="margin-top:16px;">Monogramme « (n.)™ »</h3>
+    <div class="grid">
+      <div class="card"><div class="art light"><span class="mono-logo">(<span class="a-lingon">n.</span>)<sup>™</sup></span></div><div class="meta"><h3>Principal</h3><span class="mono muted">logos/monogramme-principal.svg</span></div></div>
+      <div class="card"><div class="art dark"><span class="mono-logo">(<span class="a-lingon">n.</span>)<sup>™</sup></span></div><div class="meta"><h3>Principal, fond sombre</h3><span class="mono muted">logos/monogramme-principal-fond-sombre.svg</span></div></div>
+      <div class="card"><div class="art light"><span class="mono-logo">(<span class="a-pine">n.</span>)<sup>™</sup></span></div><div class="meta"><h3>Pin</h3><span class="mono muted">logos/monogramme-pin.svg · + versions encre et blanc</span></div></div>
+    </div>
+
+    <div class="rules">
+      <div class="rule"><span class="tag ok">à faire</span><p><b>Zone de protection :</b> laisser autour du logo un vide égal à la hauteur du « n ».</p></div>
+      <div class="rule"><span class="tag ok">à faire</span><p><b>Taille minimale :</b> logotype 80 px (ou 20 mm) de large ; en dessous, utiliser le monogramme (min. 24 px).</p></div>
+      <div class="rule no"><span class="tag no">à éviter</span><p>Mettre le « n » et le point de deux couleurs différentes, déformer, ajouter une ombre ou un contour.</p></div>
+      <div class="rule no"><span class="tag no">à éviter</span><p>Lingon sur fond sombre en petit (contraste 2,8:1) : passer à la version blanche. Jamais de jaune dans le logo.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Couleurs</h2>
+    <p class="muted">Une palette de bois clair et de forêt nordique. Le pin porte la marque, le lingon (airelle) attire l’œil, le soleil sert d’accent sur fond sombre, jamais dans le logo. Contrastes calculés selon WCAG.</p>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#1F4D3F"></div><div class="meta"><h3>Pin</h3><span class="mono">#1F4D3F · --pine</span><span class="muted">Marque, titres, boutons. 9,2:1 sur surface.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#14332A"></div><div class="meta"><h3>Pin profond</h3><span class="mono">#14332A · --pine-deep</span><span class="muted">Fonds sombres, couvertures.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#C9432F"></div><div class="meta"><h3>Lingon</h3><span class="mono">#C9432F · --lingon</span><span class="muted">Accent du logo, appels à l’action. 4,6:1 sur surface.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#F2C14E"></div><div class="meta"><h3>Soleil</h3><span class="mono">#F2C14E · --sun</span><span class="muted">Accent sur fond sombre (8,1:1). Jamais en texte sur clair.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#FAFAF6"></div><div class="meta"><h3>Surface</h3><span class="mono">#FAFAF6 · --surface</span><span class="muted">Fond principal.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#EEE7D7"></div><div class="meta"><h3>Bouleau</h3><span class="mono">#EEE7D7 · --birch</span><span class="muted">Fonds de section, cartes.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#14231F"></div><div class="meta"><h3>Encre</h3><span class="mono">#14231F · --ink</span><span class="muted">Texte courant. 15,6:1.</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#4A5A55"></div><div class="meta"><h3>Encre douce</h3><span class="mono">#4A5A55 · --ink-muted</span><span class="muted">Texte secondaire. 7,0:1.</span></div></div>
+    </div>
+    <table>
+      <tr><th>Couleurs d’état</th><th>Code</th><th>Usage</th></tr>
+      <tr><td>Bleu « ça rentre »</td><td class="mono">#2F6FA3 · --ok</td><td>Validation, produit compatible avec la pièce.</td></tr>
+      <tr><td>Ambre</td><td class="mono">#A65A12 · --warn</td><td>Alerte : produit trop grand, passage serré.</td></tr>
+      <tr><td>Ligne</td><td class="mono">#D5D8CE · --line</td><td>Bordures et séparateurs.</td></tr>
+      <tr><td>Texte sur lingon</td><td class="mono">#FFF8F2 · --on-lingon</td><td>Texte des boutons lingon (4,6:1).</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. Typographie</h2>
+    <p class="muted">Trois polices gratuites (Google Fonts, licence OFL).</p>
+    <table>
+      <tr><th>Rôle</th><th>Police</th><th>Exemple</th></tr>
+      <tr><td>Titres, logo</td><td class="mono">Bricolage Grotesque 700–800</td><td style="font-family:var(--display); font-weight:800; font-size:28px;">Ça rentre.</td></tr>
+      <tr><td>Texte</td><td class="mono">Figtree 400–700</td><td>Le canapé fait 230 cm, ton mur 210.</td></tr>
+      <tr><td>Mesures, prix, données</td><td class="mono">JetBrains Mono 500</td><td class="mono" style="font-size:16px;">210 cm · 499 €</td></tr>
+    </table>
+    <p class="muted">Échelle des slides (1920 × 1080) : <span class="mono">120 / 72 / 44 / 32 / 24 px</span>. Appli et web : texte 16–17 px, interligne 1,5–1,6.</p>
+  </section>
+
+  <section>
+    <h2>4. Motifs</h2>
+    <div class="grid">
+      <div class="card"><div class="art dark" style="padding:24px;"><div class="cote" style="width:100%; color:var(--sun);"><div class="tick"></div><div class="bar"></div><p class="val">210 cm · ça rentre</p><div class="bar"></div><div class="tick"></div></div></div><div class="meta"><h3>La cote</h3><span class="muted">Ligne de cote d’architecte avec la mesure au centre. C’est la promesse de Nestr : on mesure avant d’acheter.</span></div></div>
+      <div class="card"><div class="art light" style="height:auto; padding:24px;"><div class="phone"></div></div><div class="meta"><h3>Cadre de téléphone</h3><span class="muted">Captures de l’appli dans un cadre arrondi (rayon 28 px, bordure ligne 2 px).</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Ton</h2>
+    <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px;">
+      <li>On tutoie. Phrases courtes, concrètes, avec des chiffres : « 230 cm », pas « un grand canapé ».</li>
+      <li>On rassure sans promettre : « ça rentre » se dit quand c’est mesuré.</li>
+      <li>Le nom s’écrit <b>Nestr</b> dans une phrase ; <b>nestr.</b> en minuscules avec le point, seulement comme logo.</li>
+    </ul>
+  </section>
+
+  <p class="foot">Fichiers : <code>docs/charte-graphique/</code>. Les SVG du dossier <code>logos/</code> sont générés par <code>gen-logos.py</code> ; ils chargent Bricolage Grotesque depuis Google Fonts (à installer sur l’ordinateur pour les ouvrir dans Figma ou Inkscape).</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+/* Nestr — tokens de la charte graphique (source unique pour l'appli, les decks et les pages).
+   Usage : <link rel="stylesheet" href="tokens.css"> puis var(--pine), var(--display)…
+   Polices : charger aussi Google Fonts (voir README.md, section « Polices »). */
+:root {
+  /* Marque */
+  --pine: #1F4D3F;        /* marque, titres, boutons */
+  --pine-deep: #14332A;   /* fonds sombres, couvertures */
+  --lingon: #C9432F;      /* accent du logo (n et point), appels à l'action */
+  --on-lingon: #FFF8F2;   /* texte sur fond lingon */
+  --sun: #F2C14E;         /* accent sur fond sombre uniquement */
+
+  /* Neutres */
+  --surface: #FAFAF6;     /* fond principal */
+  --birch: #EEE7D7;       /* fonds de section, cartes */
+  --line: #D5D8CE;        /* bordures, séparateurs */
+  --ink: #14231F;         /* texte courant */
+  --ink-muted: #4A5A55;   /* texte secondaire */
+  --ink-on-dark: #EEF1EC; /* texte sur pin profond */
+
+  /* États */
+  --ok: #2F6FA3;          /* « ça rentre » */
+  --warn: #A65A12;        /* trop grand, passage serré */
+
+  /* Typographie */
+  --display: 'Bricolage Grotesque', 'Arial Black', Arial, sans-serif; /* titres, logo : 700–800 */
+  --body: 'Figtree', Verdana, Arial, sans-serif;                       /* texte : 400–700 */
+  --data: 'JetBrains Mono', Consolas, 'Courier New', monospace;        /* mesures, prix : 500 */
+
+  /* Formes */
+  --radius-card: 16px;
+  --radius-phone: 28px;
+}
+
+/* Logo en texte : <span class="nestr-logo"><span class="nestr-accent">n</span>estr<span class="nestr-accent">.</span></span> */
+.nestr-logo { font-family: var(--display); font-weight: 800; letter-spacing: -0.01em; line-height: 1; }
+.nestr-accent { color: var(--lingon); }
+.nestr-on-dark .nestr-accent { color: var(--surface); } /* petits formats sur fond sombre : tout en blanc */

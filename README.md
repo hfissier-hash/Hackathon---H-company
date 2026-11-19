@@ -166,3 +166,8 @@ Prochaines étapes : interface Next.js, table `requests` et Storage dans Supabas
 
 Les photos et données produits appartiennent à leurs enseignes ; elles ne servent ici qu'au prototype de
 démonstration.
+
+## Charte graphique
+
+La charte de la marque Nestr est dans [docs/charte-graphique/](docs/charte-graphique/) (règles dans son `README.md`, valeurs dans `tokens.css` et `tokens.json`).
+L'application la charge depuis `web/public/tokens.css` : couleurs, polices et rayons des écrans passent par ces variables, sans couleur écrite en dur.

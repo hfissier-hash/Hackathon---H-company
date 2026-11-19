@@ -3,94 +3,97 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nestr — Vos envies</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<title>Nestr — Tes envies</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&amp;family=Figtree:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#E9E7E2}
-a{color:#111111}a:hover{color:#444444}
+h1, h2, h3 { font-family: var(--display); }
+.data { font-family: var(--data); font-weight: 500; letter-spacing: -0.02em; font-size: 0.92em; }
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--birch)}
+a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 </style>
 </head>
 <body>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #111111; font-family: 'Inter', Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; overflow: hidden">
   <div style="padding: 16px 24px 0; flex-shrink: 0">
     <div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
-      <a href="style.html" aria-label="Retour" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: #111111">
+      <a href="style.html" aria-label="Retour" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: var(--ink)">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       </a>
       <div role="img" aria-label="Étape 3 sur 4" style="display: flex; gap: 6px">
-        <span style="width: 20px; height: 4px; border-radius: 2px; background: #111111"></span>
-        <span style="width: 20px; height: 4px; border-radius: 2px; background: #111111"></span>
-        <span style="width: 20px; height: 4px; border-radius: 2px; background: #111111"></span>
-        <span style="width: 20px; height: 4px; border-radius: 2px; background: #E7E5E0"></span>
+        <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--pine)"></span>
+        <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--pine)"></span>
+        <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--pine)"></span>
+        <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--line)"></span>
       </div>
-      <a href="agent.html" style="min-width: 44px; height: 44px; padding: 0 4px; margin-right: -8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: #6B6B6B; text-decoration: none">Passer</a>
+      <a href="agent.html" style="min-width: 44px; height: 44px; padding: 0 4px; margin-right: -8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--ink-muted); text-decoration: none">Passer</a>
     </div>
   </div>
 
   <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 16px 24px 20px; display: flex; flex-direction: column">
-    <h2 style="margin: 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Vos envies</h2>
-    <p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: #6B6B6B">Dites-le avec vos mots, montrez-le en photos.</p>
+    <h2 style="margin: 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Tes envies</h2>
+    <p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-muted)">Dis-le avec tes mots, montre-le en photos.</p>
 
-    <div style="margin-top: 18px; padding: 16px; border-radius: 22px; background: #F4F3F0">
+    <div style="margin-top: 18px; padding: 16px; border-radius: 22px; background: var(--birch)">
       <div style="display: flex; align-items: center; gap: 8px">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B84F2C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lingon)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
         <label for="smart" style="font-size: 14px; font-weight: 600">Recherche intelligente</label>
       </div>
-      <textarea id="smart" rows="3" style="display: block; box-sizing: border-box; width: 100%; margin-top: 10px; padding: 12px 14px; border: 1.5px solid #8A8A85; border-radius: 14px; background: #FFFFFF; resize: none; outline: none; font: 400 15px/1.45 'Inter', Arial, sans-serif; color: #111111">Un salon lumineux pour recevoir 6 personnes, avec un coin lecture près de la fenêtre. J'ai un chat.</textarea>
-      <p style="margin: 12px 0 8px; font-size: 13px; color: #6B6B6B">Nestr a compris :</p>
+      <textarea id="smart" rows="3" style="display: block; box-sizing: border-box; width: 100%; margin-top: 10px; padding: 12px 14px; border: 1.5px solid var(--ink-muted); border-radius: 14px; background: var(--surface); resize: none; outline: none; font: 400 15px/1.45 var(--body); color: var(--ink)">Un salon lumineux pour recevoir 6 personnes, avec un coin lecture près de la fenêtre. J'ai un chat.</textarea>
+      <p style="margin: 12px 0 8px; font-size: 13px; color: var(--ink-muted)">Nestr a compris :</p>
       <div style="display: flex; flex-wrap: wrap; gap: 6px">
-        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 500">6 places assises</p>
-        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 500">Coin lecture</p>
-        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 500">Tons clairs</p>
-        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 500">Tissu anti-griffes</p>
+        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 500">6 places assises</p>
+        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 500">Coin lecture</p>
+        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 500">Tons clairs</p>
+        <p style="margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 500">Tissu anti-griffes</p>
       </div>
     </div>
 
     <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 24px">
-      <p style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px">Vos inspirations</p>
-      <p style="margin: 0; font-size: 13px; color: #6B6B6B">2 photos</p>
+      <p style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px">Tes inspirations</p>
+      <p style="margin: 0; font-size: 13px; color: var(--ink-muted)">2 photos</p>
     </div>
     <div style="display: flex; gap: 10px; margin-top: 12px">
-      <button type="button" aria-label="Ajouter des photos d'inspiration" style="width: 96px; height: 120px; flex-shrink: 0; border-radius: 18px; border: 1.5px dashed #8A8A85; background: #FFFFFF; color: #111111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 13px 'Inter', Arial, sans-serif">
+      <button type="button" aria-label="Ajouter des photos d'inspiration" style="width: 96px; height: 120px; flex-shrink: 0; border-radius: var(--radius-card); border: 1.5px dashed var(--ink-muted); background: var(--surface); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 13px var(--body)">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         Ajouter
       </button>
-      <div style="position: relative; width: 96px; height: 120px; flex-shrink: 0; border-radius: 18px; overflow: hidden; background: #F4F3F0">
+      <div style="position: relative; width: 96px; height: 120px; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--birch)">
         <img src="https://images.unsplash.com/photo-1618221381711-42ca8ab6e908?w=240&amp;h=300&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.47&amp;fp-y=0.5&amp;q=80&amp;auto=format" alt="Inspiration importée depuis Pinterest : canapé orange devant un mur vert couvert de cadres" style="display: block; width: 100%; height: 100%; object-fit: cover">
-        <p style="position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 8px; border-radius: 999px; background: #FFFFFF; font-size: 11px; font-weight: 500">Pinterest</p>
+        <p style="position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 8px; border-radius: 999px; background: var(--surface); font-size: 11px; font-weight: 500">Pinterest</p>
       </div>
-      <div style="position: relative; width: 96px; height: 120px; flex-shrink: 0; border-radius: 18px; overflow: hidden; background: #F4F3F0">
+      <div style="position: relative; width: 96px; height: 120px; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--birch)">
         <img src="https://images.unsplash.com/photo-1790343434182-872b9d1539c3?w=240&amp;h=300&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.567&amp;q=80&amp;auto=format" alt="Inspiration importée depuis la galerie : mur terracotta, fauteuils et table en bois massif, carrelage" style="display: block; width: 100%; height: 100%; object-fit: cover">
-        <p style="position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 8px; border-radius: 999px; background: #FFFFFF; font-size: 11px; font-weight: 500">Galerie</p>
+        <p style="position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 8px; border-radius: 999px; background: var(--surface); font-size: 11px; font-weight: 500">Galerie</p>
       </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: #FBF1EC">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B84F2C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/></svg>
-      <p style="margin: 0; font-size: 13px; line-height: 1.35; color: #111111">Détecté : terracotta, orange brûlé, bois massif, murs de cadres</p>
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--birch)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lingon)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/></svg>
+      <p style="margin: 0; font-size: 13px; line-height: 1.35; color: var(--ink)">Détecté : terracotta, orange brûlé, bois massif, murs de cadres</p>
     </div>
 
     <p style="margin: 24px 0 12px; font-size: 17px; font-weight: 700; letter-spacing: -0.3px">À chercher</p>
     <div style="display: flex; gap: 8px">
-      <button type="button" class="pill" data-label="Meubles" aria-pressed="true" style="flex: 1; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #111111; color: #FFFFFF; border: 1.5px solid #111111;">✓ Meubles</button>
-<button type="button" class="pill" data-label="Déco" aria-pressed="true" style="flex: 1; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #111111; color: #FFFFFF; border: 1.5px solid #111111;">✓ Déco</button>
-<button type="button" class="pill" data-label="Peinture" aria-pressed="true" style="flex: 1; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #111111; color: #FFFFFF; border: 1.5px solid #111111;">✓ Peinture</button>
+      <button type="button" class="pill" data-label="Meubles" aria-pressed="true" style="flex: 1; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--pine); color: var(--surface); border: 1.5px solid var(--pine);">✓ Meubles</button>
+<button type="button" class="pill" data-label="Déco" aria-pressed="true" style="flex: 1; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--pine); color: var(--surface); border: 1.5px solid var(--pine);">✓ Déco</button>
+<button type="button" class="pill" data-label="Peinture" aria-pressed="true" style="flex: 1; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--pine); color: var(--surface); border: 1.5px solid var(--pine);">✓ Peinture</button>
     </div>
 
     <p style="margin: 24px 0 12px; font-size: 17px; font-weight: 700; letter-spacing: -0.3px">Critères</p>
     <div style="display: flex; flex-wrap: wrap; gap: 8px">
-      <button type="button" class="pill crit" data-label="Seconde main" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #FFFFFF; color: #111111; border: 1.5px solid #D8D4CC;">Seconde main</button>
-<button type="button" class="pill crit" data-label="Éco-responsable" aria-pressed="true" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #111111; color: #FFFFFF; border: 1.5px solid #111111;">✓ Éco-responsable</button>
-<button type="button" class="pill crit" data-label="Livré en 1 semaine" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #FFFFFF; color: #111111; border: 1.5px solid #D8D4CC;">Livré en 1 semaine</button>
-<button type="button" class="pill crit" data-label="Facile à monter" aria-pressed="true" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #111111; color: #FFFFFF; border: 1.5px solid #111111;">✓ Facile à monter</button>
-<button type="button" class="pill crit" data-label="Animaux" aria-pressed="true" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #111111; color: #FFFFFF; border: 1.5px solid #111111;">✓ Animaux</button>
-<button type="button" class="pill crit" data-label="Enfants" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #FFFFFF; color: #111111; border: 1.5px solid #D8D4CC;">Enfants</button>
-<button type="button" class="pill crit" data-label="Rangement caché" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #FFFFFF; color: #111111; border: 1.5px solid #D8D4CC;">Rangement caché</button>
-<button type="button" class="pill crit" data-label="Fabriqué en France" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px 'Inter', Arial, sans-serif; cursor: pointer; background: #FFFFFF; color: #111111; border: 1.5px solid #D8D4CC;">Fabriqué en France</button>
+      <button type="button" class="pill crit" data-label="Seconde main" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--surface); color: var(--ink); border: 1.5px solid var(--line);">Seconde main</button>
+<button type="button" class="pill crit" data-label="Éco-responsable" aria-pressed="true" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--pine); color: var(--surface); border: 1.5px solid var(--pine);">✓ Éco-responsable</button>
+<button type="button" class="pill crit" data-label="Livré en 1 semaine" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--surface); color: var(--ink); border: 1.5px solid var(--line);">Livré en 1 semaine</button>
+<button type="button" class="pill crit" data-label="Facile à monter" aria-pressed="true" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--pine); color: var(--surface); border: 1.5px solid var(--pine);">✓ Facile à monter</button>
+<button type="button" class="pill crit" data-label="Animaux" aria-pressed="true" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--pine); color: var(--surface); border: 1.5px solid var(--pine);">✓ Animaux</button>
+<button type="button" class="pill crit" data-label="Enfants" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--surface); color: var(--ink); border: 1.5px solid var(--line);">Enfants</button>
+<button type="button" class="pill crit" data-label="Rangement caché" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--surface); color: var(--ink); border: 1.5px solid var(--line);">Rangement caché</button>
+<button type="button" class="pill crit" data-label="Fabriqué en France" aria-pressed="false" style="padding: 0 16px; height: 44px; border-radius: 22px; font: 500 14px var(--body); cursor: pointer; background: var(--surface); color: var(--ink); border: 1.5px solid var(--line);">Fabriqué en France</button>
     </div>
   </div>
 
-  <div style="padding: 12px 24px 34px; flex-shrink: 0; border-top: 1px solid #EFEDE8">
-    <a href="agent.html" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: #111111; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 600" id="cta">Lancer la recherche</a>
+  <div style="padding: 12px 24px 34px; flex-shrink: 0; border-top: 1px solid var(--line)">
+    <a href="agent.html" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 16px; font-weight: 600" id="cta">Lancer la recherche</a>
   </div>
 </div>
 <script>
@@ -103,9 +106,9 @@ document.querySelectorAll('.pill').forEach(function (p) {
     var on = p.getAttribute('aria-pressed') !== 'true';
     p.setAttribute('aria-pressed', on ? 'true' : 'false');
     p.textContent = (on ? '✓ ' : '') + p.dataset.label;
-    p.style.background = on ? '#111111' : '#FFFFFF';
-    p.style.color = on ? '#FFFFFF' : '#111111';
-    p.style.borderColor = on ? '#111111' : '#D8D4CC';
+    p.style.background = on ? 'var(--pine)' : 'var(--surface)';
+    p.style.color = on ? 'var(--surface)' : 'var(--ink)';
+    p.style.borderColor = on ? 'var(--ink)' : 'var(--line)';
     refreshCta();
   });
 });
@@ -120,8 +123,8 @@ if (Nestr.live) {
   var chipTpl = chips.children[0].cloneNode(true), timer = null, asked = 0;
   var understand = function () {
     var mine = ++asked, text = smart.value.trim();
-    if (!text) { label.textContent = 'Décrivez votre salon idéal.'; chips.textContent = ''; return; }
-    label.textContent = 'Nestr lit votre demande…';
+    if (!text) { label.textContent = 'Décris ton salon idéal.'; chips.textContent = ''; return; }
+    label.textContent = 'Nestr lit ta demande…';
     fetch('/api/understand', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                                body: JSON.stringify({ text: text, style: Nestr.get().style || 'Scandinave' }) })
       .then(function (r) { return r.json(); })
@@ -179,8 +182,8 @@ if (Nestr.live) (function () {
       urls.forEach(function (src) {
         var tile = tileTpl.cloneNode(true), photo = { src: src, tile: tile };
         tile.querySelector('img').src = src;
-        tile.querySelector('img').alt = 'Votre photo d’inspiration';
-        tile.querySelector('p').textContent = 'Votre photo';
+        tile.querySelector('img').alt = 'Ta photo d’inspiration';
+        tile.querySelector('p').textContent = 'Ta photo';
         row.insertBefore(tile, row.children[1]);
         photos.unshift(photo);
         removable(photo);
@@ -193,14 +196,14 @@ if (Nestr.live) (function () {
   function analyse() {
     var mine = ++asked, used = photos.slice(0, 3);
     countP.textContent = photos.length + ' photo' + (photos.length > 1 ? 's' : '');
-    if (!used.length) { detectedP.textContent = 'Ajoutez une photo qui vous inspire.'; Nestr.set({ inspiration: null }); return; }
-    detectedP.textContent = 'Nestr regarde vos photos…';
+    if (!used.length) { detectedP.textContent = 'Ajoute une photo qui t’inspire.'; Nestr.set({ inspiration: null }); return; }
+    detectedP.textContent = 'Nestr regarde tes photos…';
     fetch('/api/inspire', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ images: used.map(function (p) { return p.src; }) }) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (mine !== asked) return;
-        if (!j.llm || !j.detected.length) { detectedP.textContent = 'Photos non analysées ; votre texte et le style choisi seront utilisés.'; Nestr.set({ inspiration: null }); return; }
+        if (!j.llm || !j.detected.length) { detectedP.textContent = 'Photos non analysées ; ton texte et le style choisi seront utilisés.'; Nestr.set({ inspiration: null }); return; }
         detectedP.textContent = 'Détecté : ' + j.detected.join(', ');
         Nestr.set({ inspiration: { styles: j.styles, colors: j.colors, accent_color: j.accent_color } });
       })

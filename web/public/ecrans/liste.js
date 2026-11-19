@@ -19,7 +19,7 @@
 
     var budget = job.request.budget_eur, left = Math.round((budget - job.total_eur) * 100) / 100;
     var unverified = job.products.filter(function (p) { return p.door_verified === false; }).length;
-    total.children[1].children[0].textContent = Nestr.euro(job.total_eur);
+    Nestr.data(total.children[1].children[0]).textContent = Nestr.euro(job.total_eur);
     total.children[1].children[1].textContent = 'sur ' + Nestr.euro(budget);
     total.children[2].firstElementChild.style.width = Math.min(100, Math.round(job.total_eur / budget * 100)) + '%';
     total.children[3].textContent = (unverified ? unverified + ' passage(s) de porte non vérifié(s)' : '✓ Tout rentre et passe la porte')
@@ -29,19 +29,19 @@
     names.forEach(function (name) {
       var g = groupTpl.cloneNode(true);
       g.children[0].children[0].textContent = name;
-      g.children[0].children[1].textContent = Nestr.euro(by[name].reduce(function (a, p) { return a + p.price_eur; }, 0));
+      Nestr.data(g.children[0].children[1]).textContent = Nestr.euro(by[name].reduce(function (a, p) { return a + p.price_eur; }, 0));
       by[name].forEach(function (p) {
         var row = rowTpl.cloneNode(true), img = row.querySelector('img');
         img.removeAttribute('data-img'); img.src = p.image_url; img.alt = p.name;
         row.children[1].children[0].textContent = p.name.split(',')[0];
-        row.children[1].children[1].textContent = Nestr.dims(p);
+        Nestr.data(row.children[1].children[1]).textContent = Nestr.dims(p);
         if (p.live || p.found_by_agent) { // ce que les agents H ont fait sur ce produit
           var tag = document.createElement('p');
-          tag.style.cssText = 'margin:3px 0 0;font-size:12px;font-weight:500;color:' + (p.live && p.live.changed ? '#B84F2C' : '#1F7A4A');
+          tag.style.cssText = 'margin:3px 0 0;font-size:12px;font-weight:500;color:' + (p.live && p.live.changed ? 'var(--warn)' : 'var(--ok)');
           tag.textContent = (p.found_by_agent ? 'Trouvé par un agent H' : '') + (p.found_by_agent && p.live ? ' · ' : '') + (p.live ? Nestr.live(p)[0] : '');
           row.children[1].appendChild(tag);
         }
-        row.children[2].textContent = Nestr.euro(p.price_eur);
+        Nestr.data(row.children[2]).textContent = Nestr.euro(p.price_eur);
         row.style.cursor = 'pointer';
         row.addEventListener('click', function () { window.open(p.url, '_blank', 'noopener'); });
         g.appendChild(row);

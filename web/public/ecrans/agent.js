@@ -5,7 +5,7 @@
   var ring = root.children[1], rows = root.children[2], card = root.children[3], cta = root.children[5];
   var arc = ring.querySelectorAll('circle')[1], pct = ring.querySelectorAll('p')[0], clock = ring.querySelectorAll('p')[1];
   var title = ring.querySelector('h2'), subtitle = ring.querySelectorAll('p')[2];
-  var STEPS = [['criteria', 'IA', 'Vos envies', 'Lecture de votre demande'],
+  var STEPS = [['criteria', 'IA', 'Tes envies', 'Lecture de ta demande'],
                ['catalog', 'I', 'IKEA', 'Recherche dans le catalogue'],
                ['agent', 'H', 'Agent H Company', 'Recherche en direct sur ikea.com'],
                ['paint', 'C', 'Castorama', 'Recherche de la peinture'],
@@ -19,7 +19,7 @@
     row.children[1].children[0].textContent = s[2];
     row.children[1].children[1].textContent = s[3];
     var dot = document.createElement('span');
-    dot.style.cssText = 'width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#FFFFFF;background:#E7E5E0';
+    dot.style.cssText = 'width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--surface);background:var(--line)';
     row.replaceChild(dot, row.children[2]);
     row.style.padding = '8px 0'; // cinq étapes possibles : lignes plus serrées pour garder le bouton entier
     rows.appendChild(row);
@@ -30,7 +30,7 @@
   card.style.visibility = 'hidden';
   cta.style.opacity = '0.35';
   cta.style.pointerEvents = 'none';
-  subtitle.textContent = 'Votre demande est comparée au catalogue relevé par les agents H Company. S’il manque un produit, un agent part le chercher.';
+  subtitle.textContent = 'Ta demande est comparée au catalogue relevé par les agents H Company. S’il manque un produit, un agent part le chercher.';
 
   var started = Date.now();
   function show(job) {
@@ -43,7 +43,7 @@
       if (l.row.style.display === 'none') return;
       shown++;
       if (st === 'done' || st === 'skipped') done++;
-      l.dot.style.background = st === 'done' ? '#1F7A4A' : st === 'failed' ? '#B84F2C' : st === 'running' ? '#111111' : '#E7E5E0';
+      l.dot.style.background = st === 'done' ? 'var(--ok)' : st === 'failed' ? 'var(--warn)' : st === 'running' ? 'var(--ink)' : 'var(--line)';
       l.dot.textContent = st === 'done' ? '✓' : st === 'failed' ? '!' : st === 'running' ? '…' : '';
       l.dot.setAttribute('role', 'img');
       l.dot.setAttribute('aria-label', { done: 'Terminé', failed: 'Échec', running: 'En cours', skipped: 'Ignoré', pending: 'En attente' }[st]);
@@ -62,18 +62,18 @@
       img.removeAttribute('data-img'); img.src = last.image_url; img.alt = last.name;
       txt[0].textContent = (job.products ? 'Pièce maîtresse · ' : 'Dernière trouvaille · ') + Nestr.retailer(last);
       txt[1].textContent = last.name.split(',')[0];
-      txt[2].textContent = Nestr.euro(last.price_eur) + ' · ' + Nestr.dims(last);
+      Nestr.data(txt[2]).textContent = Nestr.euro(last.price_eur) + ' · ' + Nestr.dims(last);
       var chipTpl = chips.children[0].cloneNode(true);
       chips.textContent = '';
       Nestr.checks(last).forEach(function (c) {
         var chip = chipTpl.cloneNode(true);
         chip.textContent = c[0];
-        chip.style.color = c[1] ? '#1F7A4A' : '#B84F2C';
+        chip.style.color = c[1] ? 'var(--ok)' : 'var(--warn)';
         chips.appendChild(chip);
       });
     }
     if (job.status === 'done') {
-      title.textContent = 'Votre salon est prêt';
+      title.textContent = 'Ton salon est prêt';
       subtitle.textContent = job.products.length + ' produits pour ' + Nestr.euro(job.total_eur) + ' sur ' + Nestr.euro(job.request.budget_eur) + '.';
       cta.style.opacity = '1';
       cta.style.pointerEvents = 'auto';

@@ -58,7 +58,7 @@ window.Nestr = (function () {
       var back = document.createElement('a');
       back.href = 'pieces.html';
       back.textContent = '← Nouveau salon';
-      back.style.cssText = 'display:inline-block;margin:0 0 8px;padding:6px 12px;border-radius:999px;background:#F4F3F0;color:#111111;font-size:13px;font-weight:600;text-decoration:none';
+      back.style.cssText = 'display:inline-block;margin:0 0 8px;padding:6px 12px;border-radius:999px;background:var(--birch);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none';
       title.parentNode.insertBefore(back, title);
     }
     var tab = nav.lastElementChild.cloneNode(true), here = /agents\.html$/.test(location.pathname);
@@ -66,7 +66,7 @@ window.Nestr = (function () {
     tab.removeAttribute('aria-current');
     tab.lastChild.textContent = 'Agents';
     tab.querySelector('svg').innerHTML = '<circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>';
-    tab.style.color = here ? '#111111' : '#6B6B6B';
+    tab.style.color = here ? 'var(--ink)' : 'var(--ink-muted)';
     tab.style.fontWeight = here ? '600' : '500';
     if (here) tab.setAttribute('aria-current', 'page');
     nav.appendChild(tab);
@@ -76,6 +76,8 @@ window.Nestr = (function () {
     if (!id) return Promise.resolve(null);
     return fetch('/api/projects/' + id).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
-  return { live: /^https?:$/.test(location.protocol), get: get, set: set, num: num, euro: euro, dims: dims,
+  // Prix et mesures : police de données de la charte.
+  function data(el) { if (el) el.classList.add('data'); return el; }
+  return { data: data, live: /^https?:$/.test(location.protocol), get: get, set: set, num: num, euro: euro, dims: dims,
            retailer: retailer, checks: checks, live: live, project: project };
 })();

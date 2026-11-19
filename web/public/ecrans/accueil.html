@@ -4,21 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nestr — Accueil</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&amp;family=Figtree:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#E9E7E2}
-a{color:#111111}a:hover{color:#444444}
+h1, h2, h3 { font-family: var(--display); }
+.data { font-family: var(--data); font-weight: 500; letter-spacing: -0.02em; font-size: 0.92em; }
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--birch)}
+a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 </style>
 </head>
 <body>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #111111; font-family: 'Inter', Arial, sans-serif; display: flex; flex-direction: column; padding: 28px 24px 34px; overflow: hidden">
-  <p style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.8px">nestr<span style="color: #B84F2C">.</span></p>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; padding: 28px 24px 34px; overflow: hidden">
+  <p class="nestr-logo" aria-label="Nestr" style="margin: 0; font-size: 34px"><span class="nestr-accent">n</span>estr<span class="nestr-accent">.</span></p>
 
-  <div style="position: relative; margin-top: 24px; height: 360px; border-radius: 28px; background: #F4F3F0; overflow: hidden">
+  <div style="position: relative; margin-top: 24px; height: 360px; border-radius: var(--radius-card); background: var(--birch); overflow: hidden">
     <img src="https://images.unsplash.com/photo-1772797583328-f83bc3f94f80?w=684&amp;h=720&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.54&amp;q=80&amp;auto=format" alt="Salon lumineux style japandi : canapé clair, tapis, claustra en bois et plantes" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
-    <div style="position: absolute; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 4px 16px rgba(0,0,0,0.08)">
-      <span style="width: 22px; height: 22px; border-radius: 11px; background: #1F7A4A; display: flex; align-items: center; justify-content: center">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+    <div style="position: absolute; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; background: var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.08)">
+      <span style="width: 22px; height: 22px; border-radius: 11px; background: var(--ok); display: flex; align-items: center; justify-content: center">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
       </span>
       <p style="margin: 0; font-size: 13px; font-weight: 600">212 cm · ça rentre</p>
     </div>
@@ -29,11 +32,11 @@ a{color:#111111}a:hover{color:#444444}
 
   <div style="flex: 1"></div>
 
-  <h1 style="margin: 0; font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -1.2px">Votre intérieur, meublé au centimètre près.</h1>
-  <p style="margin: 14px 0 0; font-size: 16px; line-height: 1.5; color: #6B6B6B">Vos dimensions, votre style. On trouve ce qui rentre et on vous le montre en 3D.</p>
+  <h1 style="margin: 0; font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -1.2px">Ton intérieur, meublé au centimètre près.</h1>
+  <p style="margin: 14px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-muted)">Tes dimensions, ton style. On trouve ce qui rentre et on te le montre en 3D.</p>
 
-  <a href="pieces.html" style="margin-top: 28px; display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: #111111; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 600">Commencer</a>
-  <a href="pieces.html" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; height: 44px; color: #111111; text-decoration: none; font-size: 15px; font-weight: 500">J'ai déjà un plan</a>
+  <a href="pieces.html" style="margin-top: 28px; display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 16px; font-weight: 600">Commencer</a>
+  <a href="pieces.html" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; height: 44px; color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500">J'ai déjà un plan</a>
 </div>
 
 </body>

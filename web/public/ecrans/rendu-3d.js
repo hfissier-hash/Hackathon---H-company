@@ -25,7 +25,7 @@ if (job && job.status === 'done') {
   view.insertBefore(renderer.domElement, buttons);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#F4F3F0');
+  scene.background = new THREE.Color('#EEE7D7');
   // Sans environnement, les matériaux des modèles TRELLIS ressortent presque noirs.
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
   const sun = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -55,13 +55,13 @@ if (job && job.status === 'done') {
     selected = p;
     img.removeAttribute('data-img'); img.src = p.image_url; img.alt = p.name;
     texts[0].textContent = p.name.split(',')[0];
-    texts[1].textContent = Nestr.retailer(p) + ' · ' + Nestr.dims(p);
-    price.textContent = Nestr.euro(p.price_eur);
+    Nestr.data(texts[1]).textContent = Nestr.retailer(p) + ' · ' + Nestr.dims(p);
+    Nestr.data(price).textContent = Nestr.euro(p.price_eur);
     chips.textContent = '';
     for (const [label, ok] of Nestr.checks(p)) {
       const chip = chipTpl.cloneNode(true);
       chip.textContent = label;
-      if (!ok) { chip.style.background = '#FBEDE8'; chip.style.color = '#B84F2C'; }
+      if (!ok) { chip.style.background = 'var(--birch)'; chip.style.color = 'var(--warn)'; }
       chips.appendChild(chip);
     }
     link.href = p.url; link.target = '_blank'; link.rel = 'noopener';
@@ -107,7 +107,7 @@ if (job && job.status === 'done') {
   wish.maxLength = 80;
   wish.placeholder = 'Une envie ? ex. en velours vert';
   wish.setAttribute('aria-label', 'Décrire le produit souhaité');
-  wish.style.cssText = "width:100%;box-sizing:border-box;height:44px;margin-top:12px;padding:0 16px;border-radius:999px;border:1px solid #D8D4CC;background:#FFFFFF;color:#111111;font:400 14px 'Inter',Arial,sans-serif;outline-offset:2px";
+  wish.style.cssText = "width:100%;box-sizing:border-box;height:44px;margin-top:12px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:400 14px var(--body);outline-offset:2px";
   card.insertBefore(wish, card.children[2]);
   card.children[3].style.marginTop = '8px';
   const replaceBtn = card.children[3].querySelector('button');
@@ -142,7 +142,7 @@ if (job && job.status === 'done') {
   let version = job.version;
   const note = document.createElement('p');
   note.setAttribute('role', 'status');
-  note.style.cssText = 'position:absolute;left:12px;top:12px;margin:0;padding:6px 12px;border-radius:999px;background:#111111;color:#FFFFFF;font-size:12px;font-weight:600;display:none';
+  note.style.cssText = 'position:absolute;left:12px;top:12px;margin:0;padding:6px 12px;border-radius:999px;background:var(--pine);color:var(--surface);font-size:12px;font-weight:600;display:none';
   view.appendChild(note);
   const until = Date.now() + 6 * 60 * 1000;
   async function watch() {
@@ -171,20 +171,20 @@ if (job && job.status === 'done') {
   btnPhoto.textContent = 'Photo';
   const shot = document.createElement('img');
   shot.alt = 'Photo réaliste du salon meublé';
-  shot.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in;background:#F4F3F0';
+  shot.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in;background:var(--birch)';
   shot.addEventListener('click', () => window.open(shot.src, '_blank', 'noopener'));
   const wait = document.createElement('p');
   wait.setAttribute('role', 'status');
-  wait.style.cssText = 'position:absolute;inset:0;margin:0;display:none;align-items:center;justify-content:center;text-align:center;padding:0 32px;background:rgba(244,243,240,0.94);font-size:15px;line-height:1.45;font-weight:500;color:#111111';
+  wait.style.cssText = 'position:absolute;inset:0;margin:0;display:none;align-items:center;justify-content:center;text-align:center;padding:0 32px;background:rgba(244,243,240,0.94);font-size:15px;line-height:1.45;font-weight:500;color:var(--ink)';
   view.insertBefore(shot, buttons);
   view.insertBefore(wait, buttons);
   let photo = job.photo || null;
   function mode(isPhoto) {
     for (const [b, on] of [[btn3d, !isPhoto], [btnPhoto, isPhoto]]) {
       b.setAttribute('aria-pressed', on);
-      b.style.background = on ? '#FFFFFF' : 'transparent';
+      b.style.background = on ? 'var(--surface)' : 'transparent';
       b.style.boxShadow = on ? '0 1px 4px rgba(0,0,0,0.1)' : 'none';
-      b.style.color = on ? '#111111' : '#6B6B6B';
+      b.style.color = on ? 'var(--ink)' : 'var(--ink-muted)';
       b.style.fontWeight = on ? '600' : '500';
     }
     buttons.style.display = isPhoto ? 'none' : 'flex';
@@ -194,7 +194,7 @@ if (job && job.status === 'done') {
   btnPhoto.addEventListener('click', async () => {
     mode(true);
     if (photo && photo.version === version) { shot.src = photo.url; shot.style.display = 'block'; return; }
-    wait.textContent = 'Blender photographie votre salon… une quinzaine de secondes.';
+    wait.textContent = 'Blender photographie ton salon… une quinzaine de secondes.';
     wait.style.display = 'flex';
     try {
       const r = await fetch('/api/projects/' + job.id + '/photo', { method: 'POST' });
@@ -206,7 +206,7 @@ if (job && job.status === 'done') {
       shot.src = photo.url;
       shot.style.display = 'block';
     } catch (e) {
-      wait.textContent = e.message + ' Revenez à la vue 3D et réessayez.';
+      wait.textContent = e.message + ' Reviens à la vue 3D et réessaie.';
     }
   });
 

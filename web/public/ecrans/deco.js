@@ -33,7 +33,7 @@
       img.removeAttribute('data-img'); img.src = paint.image_url; img.alt = paint.name;
       var lines = info.children[1];
       lines.children[0].children[0].textContent = k.pots + ' pot' + (k.pots > 1 ? 's' : '') + ' de ' + fr(k.volume_l) + ' L';
-      lines.children[0].children[1].textContent = Nestr.euro(paint.price_eur);
+      Nestr.data(lines.children[0].children[1]).textContent = Nestr.euro(paint.price_eur);
       lines.children[1].textContent = fr(k.area_m2.toFixed(1)) + ' m² · 2 couches · ' + fr(k.litres.toFixed(1)) + ' L · ' + Nestr.retailer(paint);
       info.style.cursor = 'pointer';
       info.addEventListener('click', function () { window.open(paint.url, '_blank', 'noopener'); });

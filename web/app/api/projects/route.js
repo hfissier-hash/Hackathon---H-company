@@ -32,7 +32,7 @@ export async function POST(request) {
     return json({ error: e.message || 'demande illisible' }, 400);
   }
   try {
-    if (await overQuota('project', 40)) return json({ error: 'Trop de demandes en ce moment. Réessayez dans quelques minutes.' }, 429);
+    if (await overQuota('project', 40)) return json({ error: 'Trop de demandes en ce moment. Réessaie dans quelques minutes.' }, 429);
     const rows = await db('requests', { method: 'POST', body: { kind: 'project', payload }, prefer: 'return=representation' });
     return json({ id: rows[0].id }, 202);
   } catch (e) {

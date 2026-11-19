@@ -4,72 +4,75 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nestr — Style et budget</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&amp;family=Figtree:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#E9E7E2}
-a{color:#111111}a:hover{color:#444444}
-input[type=range]{accent-color:#111111}
+h1, h2, h3 { font-family: var(--display); }
+.data { font-family: var(--data); font-weight: 500; letter-spacing: -0.02em; font-size: 0.92em; }
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--birch)}
+a{color:var(--ink)}a:hover{color:var(--ink-muted)}
+input[type=range]{accent-color:var(--ink)}
 </style>
 </head>
 <body>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #111111; font-family: 'Inter', Arial, sans-serif; display: flex; flex-direction: column; padding: 16px 24px 34px; overflow: hidden">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; padding: 16px 24px 34px; overflow: hidden">
   <div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
-    <a href="pieces.html" aria-label="Retour" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: #111111">
+    <a href="pieces.html" aria-label="Retour" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: var(--ink)">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
     <div role="img" aria-label="Étape 2 sur 4" style="display: flex; gap: 6px">
-      <span style="width: 20px; height: 4px; border-radius: 2px; background: #111111"></span>
-      <span style="width: 20px; height: 4px; border-radius: 2px; background: #111111"></span>
-      <span style="width: 20px; height: 4px; border-radius: 2px; background: #E7E5E0"></span>
-      <span style="width: 20px; height: 4px; border-radius: 2px; background: #E7E5E0"></span>
+      <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--pine)"></span>
+      <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--pine)"></span>
+      <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--line)"></span>
+      <span style="width: 20px; height: 4px; border-radius: 2px; background: var(--line)"></span>
     </div>
     <span style="width: 44px"></span>
   </div>
 
   <h2 style="margin: 20px 0 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Quel style ?</h2>
-  <p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: #6B6B6B">L'agent s'en sert pour chercher et filtrer.</p>
+  <p style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-muted)">L'agent s'en sert pour chercher et filtrer.</p>
 
   <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px">
-    <button type="button" class="style-card" aria-pressed="true" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: 18px; background: #F4F3F0; cursor: pointer; font-family: inherit; border: 2px solid #111111;">
-  <img src="https://images.unsplash.com/photo-1783961859503-2f6cd85f6e87?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.49&amp;q=80&amp;auto=format" alt="Salon aux arches peintes rouge, jaune et bleu, meuble en noyer" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: #FFFFFF">
+    <button type="button" class="style-card" aria-pressed="true" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: var(--radius-card); background: var(--birch); cursor: pointer; font-family: inherit; border: 2px solid var(--pine);">
+  <img src="https://images.unsplash.com/photo-1783961859503-2f6cd85f6e87?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.49&amp;q=80&amp;auto=format" alt="Salon aux arches peintes rouge, jaune et bleu, meuble en noyer" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: var(--surface)">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px 2px">
-    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111111">Bauhaus</p>
-    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: #111111; display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink)">Bauhaus</p>
+    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: var(--pine); display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
   </div>
 </button>
-<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: 18px; background: #F4F3F0; cursor: pointer; font-family: inherit; border: 2px solid #F4F3F0;">
-  <img src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.575&amp;q=80&amp;auto=format" alt="Salon scandinave : canapé gris clair, tables en bois, tons doux" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: #FFFFFF">
+<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: var(--radius-card); background: var(--birch); cursor: pointer; font-family: inherit; border: 2px solid var(--birch);">
+  <img src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.575&amp;q=80&amp;auto=format" alt="Salon scandinave : canapé gris clair, tables en bois, tons doux" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: var(--surface)">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px 2px">
-    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111111">Scandinave</p>
-    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: #111111; display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink)">Scandinave</p>
+    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: var(--pine); display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
   </div>
 </button>
-<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: 18px; background: #F4F3F0; cursor: pointer; font-family: inherit; border: 2px solid #F4F3F0;">
-  <img src="https://images.unsplash.com/photo-1772797583328-f83bc3f94f80?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.566&amp;q=80&amp;auto=format" alt="Salon japandi : claustra en bois, lumière naturelle, tons beiges" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: #FFFFFF">
+<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: var(--radius-card); background: var(--birch); cursor: pointer; font-family: inherit; border: 2px solid var(--birch);">
+  <img src="https://images.unsplash.com/photo-1772797583328-f83bc3f94f80?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.566&amp;q=80&amp;auto=format" alt="Salon japandi : claustra en bois, lumière naturelle, tons beiges" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: var(--surface)">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px 2px">
-    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111111">Japandi</p>
-    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: #111111; display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink)">Japandi</p>
+    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: var(--pine); display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
   </div>
 </button>
-<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: 18px; background: #F4F3F0; cursor: pointer; font-family: inherit; border: 2px solid #F4F3F0;">
-  <img src="https://images.unsplash.com/photo-1773069459487-3d2d7bb4532e?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.525&amp;q=80&amp;auto=format" alt="Loft industriel : piliers en brique, grandes verrières, parquet clair" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: #FFFFFF">
+<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: var(--radius-card); background: var(--birch); cursor: pointer; font-family: inherit; border: 2px solid var(--birch);">
+  <img src="https://images.unsplash.com/photo-1773069459487-3d2d7bb4532e?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.525&amp;q=80&amp;auto=format" alt="Loft industriel : piliers en brique, grandes verrières, parquet clair" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: var(--surface)">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px 2px">
-    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111111">Industriel</p>
-    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: #111111; display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink)">Industriel</p>
+    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: var(--pine); display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
   </div>
 </button>
-<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: 18px; background: #F4F3F0; cursor: pointer; font-family: inherit; border: 2px solid #F4F3F0;">
-  <img src="https://images.unsplash.com/photo-1632119580908-ae947d4c7691?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.588&amp;q=80&amp;auto=format" alt="Salon mid-century : canapé vert, fauteuil cognac, table en noyer" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: #FFFFFF">
+<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: var(--radius-card); background: var(--birch); cursor: pointer; font-family: inherit; border: 2px solid var(--birch);">
+  <img src="https://images.unsplash.com/photo-1632119580908-ae947d4c7691?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.588&amp;q=80&amp;auto=format" alt="Salon mid-century : canapé vert, fauteuil cognac, table en noyer" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: var(--surface)">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px 2px">
-    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111111">Mid-century</p>
-    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: #111111; display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink)">Mid-century</p>
+    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: var(--pine); display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
   </div>
 </button>
-<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: 18px; background: #F4F3F0; cursor: pointer; font-family: inherit; border: 2px solid #F4F3F0;">
-  <img src="https://images.unsplash.com/photo-1747336754870-ca7b10cc75f5?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.508&amp;q=80&amp;auto=format" alt="Salon bohème : suspensions en raphia, bois brut, tons sable" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: #FFFFFF">
+<button type="button" class="style-card" aria-pressed="false" style="display: flex; flex-direction: column; text-align: left; padding: 6px 6px 8px; border-radius: var(--radius-card); background: var(--birch); cursor: pointer; font-family: inherit; border: 2px solid var(--birch);">
+  <img src="https://images.unsplash.com/photo-1747336754870-ca7b10cc75f5?w=480&amp;h=270&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.508&amp;q=80&amp;auto=format" alt="Salon bohème : suspensions en raphia, bois brut, tons sable" style="display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 12px; background: var(--surface)">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px 2px">
-    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111111">Bohème</p>
-    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: #111111; display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink)">Bohème</p>
+    <span class="tick" style="width: 20px; height: 20px; border-radius: 10px; background: var(--pine); display: none; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
   </div>
 </button>
   </div>
@@ -83,7 +86,7 @@ input[type=range]{accent-color:#111111}
   </div>
 
   <div style="flex: 1"></div>
-  <a href="envies.html" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: #111111; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 600">Continuer</a>
+  <a href="envies.html" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 16px; font-weight: 600">Continuer</a>
 </div>
 <script>
 document.querySelectorAll('.style-card').forEach(function (card) {
@@ -91,7 +94,7 @@ document.querySelectorAll('.style-card').forEach(function (card) {
     document.querySelectorAll('.style-card').forEach(function (c) {
       var on = c === card;
       c.setAttribute('aria-pressed', on ? 'true' : 'false');
-      c.style.borderColor = on ? '#111111' : '#F4F3F0';
+      c.style.borderColor = on ? 'var(--ink)' : 'var(--birch)';
       c.querySelector('.tick').style.display = on ? 'flex' : 'none';
     });
   });

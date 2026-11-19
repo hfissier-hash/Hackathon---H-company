@@ -18,7 +18,7 @@ export async function POST(request, { params }) {
   try {
     const project = await getProject(id);
     if (!project || project.status !== 'done') return json({ error: 'projet inconnu ou pas encore prêt' }, 404);
-    if (await overQuota('replace', 60)) return json({ error: 'Trop de demandes en ce moment. Réessayez dans quelques minutes.' }, 429);
+    if (await overQuota('replace', 60)) return json({ error: 'Trop de demandes en ce moment. Réessaie dans quelques minutes.' }, 429);
     const rows = await db('requests', { method: 'POST', body: { kind: 'replace', parent_id: id, payload: { category, wish } }, prefer: 'return=representation' });
     const done = await waitFor(rows[0].id, wish ? 280 : 45); // un agent en direct peut prendre plusieurs minutes
     if (!done) return json({ error: 'Le worker ne répond pas.' }, 504);
