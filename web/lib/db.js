@@ -20,6 +20,15 @@ export async function db(path, { method = 'GET', body, prefer } = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+// Garde-fou pour une application publique : chaque demande lance des agents H, du GPU et le worker.
+// Au-delà du plafond horaire, les nouvelles demandes sont refusées (réglable : NESTER_MAX_PER_HOUR).
+export async function overQuota(kind, fallback) {
+  const max = Number(process.env.NESTER_MAX_PER_HOUR || fallback);
+  const since = new Date(Date.now() - 3600 * 1000).toISOString();
+  const rows = await db(`requests?select=id&kind=eq.${kind}&created_at=gte.${since}&limit=${max + 1}`);
+  return rows.length >= max;
+}
+
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export function json(data, status = 200) {
