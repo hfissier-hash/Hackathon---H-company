@@ -146,7 +146,9 @@ if (Nestr.live) (function () {
   var addBtn = document.querySelector('button[aria-label^="Ajouter des photos"]'), row = addBtn.parentNode;
   var countP = row.previousElementSibling.children[1], detectedP = row.nextElementSibling.querySelector('p');
   var tileTpl = row.children[1].cloneNode(true), asked = 0;
-  var photos = [].slice.call(row.querySelectorAll('img')).map(function (img) { return { src: img.src, tile: img.parentNode }; });
+  // Les photos d'exemple de la maquette sont retirées : seules les photos ajoutées par le client orientent la recherche.
+  [].slice.call(row.querySelectorAll('img')).forEach(function (img) { img.parentNode.remove(); });
+  var photos = [];
   var picker = document.createElement('input');
   picker.type = 'file'; picker.accept = 'image/*'; picker.multiple = true; picker.style.display = 'none';
   document.body.appendChild(picker);

@@ -172,14 +172,16 @@ def place(room, products, p=None):
     if by.get("suspension"):
         out[by["suspension"]["id"]] = {"x": table_c[0], "y": table_c[1], "angle": 0}
 
-    lamp = by.get("luminaire")
-    if lamp:  # à côté du canapé, du côté le plus dégagé
-        for side in (1, -1):
+    sides = [1, -1]
+    for lamp in [x for x in products if x["category"] == "luminaire"]:  # à côté du canapé : un côté chacun, le plus dégagé d'abord
+        for side in list(sides):
             t = sofa_t + side * (sofa_w / 2 + 35)
             c = point(room, sw, t, 35)
             if 25 <= t <= wall_length(room, sw) - 25 and not overlaps(box(*c, 40, 40), zone):
                 out[lamp["id"]] = {"x": c[0], "y": c[1], "angle": 0}
                 used.append((sw, t - 25, t + 25))
+                floor.append(box(*c, 40, 40))
+                sides.remove(side)
                 break
 
     tv = by.get("meuble_tv")
@@ -243,14 +245,30 @@ def place(room, products, p=None):
                 out[chair["id"]] = {"x": c[0], "y": c[1], "angle": face + 90}  # forme : avant vers -y à l'angle 0
                 floor.append(b_)
                 break
-    plant = by.get("plante")
-    if plant:  # dans un angle libre, le plus loin possible de la porte
-        dz = ((zone[0] + zone[2]) / 2, (zone[1] + zone[3]) / 2)
-        corners = sorted(((32, 32), (W - 32, 32), (32, L - 32), (W - 32, L - 32)), key=lambda c: -math.hypot(c[0] - dz[0], c[1] - dz[1]))
+    # Plantes : chacune dans un angle libre, le plus loin possible de la porte ; à défaut, le long d'un mur libre.
+    dz = ((zone[0] + zone[2]) / 2, (zone[1] + zone[3]) / 2)
+    spots = [(32, 32), (W - 32, 32), (32, L - 32), (W - 32, L - 32)]
+    # puis tout le tour de la pièce, un point tous les 40 cm le long des murs
+    along_walls = [(x, y) for x in range(72, int(W) - 71, 40) for y in (32, L - 32)] + [(x, y) for y in range(72, int(L) - 71, 40) for x in (32, W - 32)]
+    spots += sorted(along_walls, key=lambda c: -math.hypot(c[0] - dz[0], c[1] - dz[1]))
+    corners = sorted(spots[:4], key=lambda c: -math.hypot(c[0] - dz[0], c[1] - dz[1])) + spots[4:]
+
+    def opening_at(c):
+        """Vrai si le point est devant une fenêtre ou la porte (on n'y pose pas de plante)."""
+        for o in windows + [door]:
+            t = c[0] if o["wall"] in ("north", "south") else c[1]
+            near = {"south": c[1] < 60, "north": c[1] > L - 60, "west": c[0] < 60, "east": c[0] > W - 60}[o["wall"]]
+            if near and o["offset_cm"] - 25 < t < o["offset_cm"] + o["width_cm"] + 25:
+                return True
+        return False
+
+    for plant in [x for x in products if x["category"] == "plante"]:
+        size = min(60, max(34, num(plant.get("width_cm") or plant.get("diameter_cm"), 40) + 14))  # une petite plante se glisse plus facilement
         for c in corners:
-            b_ = box(*c, 60, 60)
+            b_ = box(*c, size, size)
             near_wall_used = any(overlaps(b_, box(*point(room, w, (a + b2) / 2, 25), *((b2 - a, 50) if w in ("north", "south") else (50, b2 - a)))) for w, a, b2 in used)
-            if not any(overlaps(b_, f) for f in floor) and not near_wall_used:
+            if not any(overlaps(b_, f) for f in floor) and not near_wall_used and not (c in spots[4:] and opening_at(c)):
                 out[plant["id"]] = {"x": c[0], "y": c[1], "angle": 0}
+                floor.append(b_)
                 break
     return out, p

@@ -101,7 +101,11 @@ if (job && job.status === 'done') {
         const box = new THREE.Box3().setFromObject(current), c = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
         const d = Math.max(size.x, size.z) * 1.25;
-        camera.position.set(c.x + d * 0.75, d * 0.95, c.z + d * 0.9);
+        // La caméra se place en face du mur du canapé : c'est lui qui porte la couleur d'accent, il doit se voir d'emblée.
+        const sofa = current.children.find((o) => /^P\d+_canape/.test(o.name));
+        const out = sofa && WALL_OUT['Mur_' + sofa.userData.nester_wall];
+        if (out) camera.position.set(c.x - out[0] * d * 0.95 + out[1] * d * 0.55, d * 0.95, c.z - out[1] * d * 0.95 + out[0] * d * 0.55);
+        else camera.position.set(c.x + d * 0.75, d * 0.95, c.z + d * 0.9);
         controls.target.set(c.x, 0.5, c.z);
         controls.update();
         firstLoad = false;
