@@ -89,15 +89,31 @@ try {
     room.traverse((o) => { if (o.isMesh && WALL_OUT[o.name]) walls.push(o); });
     const box = new THREE.Box3().setFromObject(room), size = box.getSize(new THREE.Vector3());
     box.getCenter(center);
-    // Cadrage : la pièce entière tient à l'écran quel que soit l'angle de la rotation, même sur un écran étroit.
-    // On recule la caméra jusqu'à ce que la sphère qui englobe la pièce entre dans le champ le plus étroit.
-    const radius = Math.hypot(size.x, size.y, size.z) / 2;
+    // Cadrage : la pièce entière tient à l'écran pendant toute la rotation, sans marge inutile.
+    // On cherche la plus petite distance pour laquelle les huit coins de la pièce restent dans l'image
+    // sous tous les angles du tour complet.
+    const corners = [];
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) corners.push(new THREE.Vector3(x, y, z));
+    const radius = Math.hypot(size.x, size.y, size.z) / 2, tilt = Math.atan2(0.78, Math.hypot(0.7, 0.85));
+    const probe = camera.clone(), p = new THREE.Vector3();
+    function fits(dist) {
+      probe.aspect = camera.aspect;
+      probe.updateProjectionMatrix();
+      for (let a = 0; a < 360; a += 10) {
+        const r = THREE.MathUtils.degToRad(a);
+        probe.position.set(center.x + Math.cos(r) * Math.cos(tilt) * dist, center.y + Math.sin(tilt) * dist, center.z + Math.sin(r) * Math.cos(tilt) * dist);
+        probe.lookAt(center);
+        probe.updateMatrixWorld();
+        for (const c of corners) { p.copy(c).project(probe); if (Math.abs(p.x) > 0.97 || Math.abs(p.y) > 0.92) return false; }
+      }
+      return true;
+    }
     const dir = new THREE.Vector3(0.7, 0.78, 0.85).normalize();
     function frame() {
-      const half = THREE.MathUtils.degToRad(camera.fov) / 2;
-      const narrow = Math.min(half, Math.atan(Math.tan(half) * camera.aspect));
+      let dist = radius * 1.2;
+      while (!fits(dist) && dist < radius * 8) dist += radius * 0.04;
       controls.target.copy(center);
-      camera.position.copy(center).addScaledVector(dir, radius / Math.sin(narrow) * 1.04);
+      camera.position.copy(center).addScaledVector(dir, dist);
       controls.update();
     }
     frame();
