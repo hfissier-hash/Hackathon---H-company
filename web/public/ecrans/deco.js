@@ -4,8 +4,10 @@
   Nestr.project().then(function (job) {
     if (!job || job.status !== 'done') return;
     var c = document.body.firstElementChild.children[0];
-    var subtitle = c.children[1], swatches = c.children[2], accent = c.children[3], others = c.children[4];
-    var tipsTitle = c.children[5], tips = c.children[6];
+    // Le lien « ← Nouveau salon » ajouté par nestr.js ne compte pas dans l'ordre des blocs.
+    var k = [].filter.call(c.children, function (e) { return e.getAttribute('href') !== 'pieces.html'; });
+    var subtitle = k[1], swatches = k[2], accent = k[3], others = k[4];
+    var tipsTitle = k[5], tips = k[6];
     var fr = function (n) { return String(n).replace('.', ','); };
 
     subtitle.textContent = 'Palette ' + job.request.style;

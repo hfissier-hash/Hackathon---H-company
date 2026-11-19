@@ -16,7 +16,7 @@ if (job && job.status === 'done') {
   // La vue : on retire l'image et les cotes d'exemple, on garde les boutons.
   const buttons = view.lastElementChild;
   [...view.children].forEach((el) => { if (el !== buttons) el.remove(); });
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none';
@@ -25,7 +25,7 @@ if (job && job.status === 'done') {
   view.insertBefore(renderer.domElement, buttons);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#EEE7D7');
+  scene.background = null; // fond transparent : le verre de l'écran se voit derrière le salon
   // Sans environnement, les matériaux des modèles TRELLIS ressortent presque noirs.
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
   const sun = new THREE.DirectionalLight(0xffffff, 1.2);

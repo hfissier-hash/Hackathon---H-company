@@ -12,6 +12,8 @@ h1, h2, h3 { font-family: var(--display); }
 body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--birch)}
 a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 </style>
+<link rel="stylesheet" href="../glass.css">
+<script src="../glass.js" defer></script>
 </head>
 <body>
 <div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; padding: 16px 24px 34px; overflow: hidden">
@@ -168,25 +170,23 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
     var mono = { 'font-family': 'JetBrains Mono, Consolas, monospace', 'font-size': 11, 'font-weight': 500, 'text-anchor': 'middle' };
     // la cote : trait, taquets, mesure au centre
     el('path', { d: 'M' + x0 + ' ' + (y0 - 14) + 'H' + x1 + 'M' + x0 + ' ' + (y0 - 18) + 'v8M' + x1 + ' ' + (y0 - 18) + 'v8', stroke: 'var(--lingon)', 'stroke-width': 1 });
-    el('rect', { x: (x0 + x1) / 2 - 26, y: y0 - 22, width: 52, height: 16, fill: 'var(--birch)' });
-    el('text', Object.assign({ x: (x0 + x1) / 2, y: y0 - 10, fill: 'var(--lingon)' }, mono), fr(W) + ' m');
+    el('text', Object.assign({ x: (x0 + x1) / 2, y: y0 - 19, fill: 'var(--lingon)' }, mono), fr(W) + ' m');
     el('path', { d: 'M' + (x0 - 14) + ' ' + y0 + 'V' + y1 + 'M' + (x0 - 18) + ' ' + y0 + 'h8M' + (x0 - 18) + ' ' + y1 + 'h8', stroke: 'var(--lingon)', 'stroke-width': 1 });
-    el('rect', { x: x0 - 22, y: (y0 + y1) / 2 - 26, width: 16, height: 52, fill: 'var(--birch)' });
-    el('text', Object.assign({ x: x0 - 10, y: (y0 + y1) / 2 + 4, fill: 'var(--lingon)', transform: 'rotate(-90 ' + (x0 - 10) + ' ' + (y0 + y1) / 2 + ')' }, mono), fr(L) + ' m');
+    el('text', Object.assign({ x: x0 - 19, y: (y0 + y1) / 2 + 4, fill: 'var(--lingon)', transform: 'rotate(-90 ' + (x0 - 19) + ' ' + (y0 + y1) / 2 + ')' }, mono), fr(L) + ' m');
     // la pièce et ses murs
-    el('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: 'var(--surface)' });
+    el('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: 'rgba(255,255,255,0.55)' });
     el('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, stroke: 'var(--ink)', 'stroke-width': 3 });
     el('text', { x: (x0 + x1) / 2, y: (y0 + y1) / 2 - 2, 'text-anchor': 'middle', 'font-family': 'Figtree, Arial, sans-serif', 'font-size': 13, 'font-weight': 600, fill: 'var(--ink)' }, 'Salon');
     el('text', Object.assign({ x: (x0 + x1) / 2, y: (y0 + y1) / 2 + 14, fill: 'var(--ink-muted)' }, mono), (W * L / 10000).toFixed(1).replace('.', ',') + ' m²');
     // fenêtres : le mur s'ouvre, un trait fin marque le vitrage
     windows.forEach(function (w, i) {
       var a = at(w.wall, w.offset_cm, 0), b = at(w.wall, w.offset_cm + w.width_cm, 0), on = selected === i;
-      el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: 'var(--surface)', 'stroke-width': 5 });
+      el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: '#F4F2EA', 'stroke-width': 5 });
       el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: on ? 'var(--lingon)' : 'var(--ink-muted)', 'stroke-width': on ? 2.5 : 1.5 });
     });
     // porte : ouverture dans le mur, battant et arc du débattement, vers l'intérieur ou l'extérieur
     var da = at(door.wall, door.offset_cm, 0), db = at(door.wall, door.offset_cm + door.width_cm, 0), don = selected === 'door';
-    el('line', { x1: da[0], y1: da[1], x2: db[0], y2: db[1], stroke: 'var(--surface)', 'stroke-width': 5 });
+    el('line', { x1: da[0], y1: da[1], x2: db[0], y2: db[1], stroke: '#F4F2EA', 'stroke-width': 5 });
     var hingeT = door.hinge === 'end' ? door.offset_cm + door.width_cm : door.offset_cm;
     var freeT = door.hinge === 'end' ? door.offset_cm : door.offset_cm + door.width_cm;
     var depth = door.opens === 'out' ? -door.width_cm : door.width_cm;

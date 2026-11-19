@@ -1,0 +1,217 @@
+/* Nestr — couche « liquid glass » commune à tous les écrans.
+   Les écrans posent leurs couleurs en style direct avec les variables de la charte (var(--surface), var(--birch),
+   var(--pine)…). Cette feuille les transforme en verre sans toucher au HTML : elle cible ces styles par attribut.
+   Couleurs et polices restent celles de tokens.css. Script associé : glass.js (reflets, onglets, inclinaison). */
+
+:root {
+  --line: rgba(20, 35, 31, 0.14);              /* séparateurs fins sur verre */
+  --glass: rgba(255, 255, 255, 0.46);
+  --glass-strong: rgba(255, 255, 255, 0.66);
+  --glass-rim: inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 1.5px 0 rgba(255, 255, 255, 0.95), inset 0 -10px 18px -12px rgba(20, 51, 42, 0.16);
+  --glass-drop: 0 10px 28px -12px rgba(20, 51, 42, 0.28), 0 2px 6px -2px rgba(20, 51, 42, 0.10);
+  --blur: blur(22px) saturate(185%) brightness(1.04);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@view-transition { navigation: auto; }
+
+/* ---------- la scène : fond sombre autour, téléphone lumineux */
+body {
+  background:
+    radial-gradient(60% 50% at 18% 12%, rgba(47, 111, 163, 0.35), transparent 70%),
+    radial-gradient(50% 45% at 85% 88%, rgba(201, 67, 47, 0.30), transparent 70%),
+    radial-gradient(40% 40% at 70% 15%, rgba(242, 193, 78, 0.16), transparent 70%),
+    var(--pine-deep) !important;
+  background-attachment: fixed !important;
+}
+
+body > div:first-of-type {
+  position: relative;
+  isolation: isolate;
+  background: var(--surface) !important;
+}
+@media (min-width: 431px) {
+  body > div:first-of-type {
+    border-radius: 44px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 0 10px rgba(255, 255, 255, 0.06), 0 40px 90px -20px rgba(0, 0, 0, 0.6), 0 0 120px -30px rgba(242, 193, 78, 0.25);
+  }
+}
+
+/* l'aurore : des halos aux couleurs de la charte qui dérivent lentement derrière le verre */
+body > div:first-of-type::before,
+body > div:first-of-type::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -30%;
+  pointer-events: none;
+  will-change: transform;
+}
+body > div:first-of-type::before {
+  background:
+    radial-gradient(28% 22% at 24% 22%, rgba(31, 77, 63, 0.58), transparent 72%),
+    radial-gradient(26% 20% at 78% 34%, rgba(242, 193, 78, 0.68), transparent 72%),
+    radial-gradient(30% 24% at 30% 78%, rgba(47, 111, 163, 0.52), transparent 72%);
+  animation: lg-drift-a 22s ease-in-out infinite alternate;
+}
+body > div:first-of-type::after {
+  background:
+    radial-gradient(24% 20% at 72% 74%, rgba(201, 67, 47, 0.50), transparent 72%),
+    radial-gradient(22% 18% at 55% 12%, rgba(31, 77, 63, 0.30), transparent 72%),
+    radial-gradient(20% 16% at 12% 50%, rgba(242, 193, 78, 0.35), transparent 72%);
+  animation: lg-drift-b 28s ease-in-out infinite alternate;
+}
+@keyframes lg-drift-a { from { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); } to { transform: translate3d(7%, 6%, 0) rotate(24deg) scale(1.12); } }
+@keyframes lg-drift-b { from { transform: translate3d(6%, 5%, 0) rotate(0deg) scale(1.1); } to { transform: translate3d(-7%, -6%, 0) rotate(-28deg) scale(1); } }
+
+/* arrivée des blocs de l'écran */
+body > div:first-of-type > * { animation: lg-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+body > div:first-of-type > *:nth-child(2) { animation-delay: 0.05s; }
+body > div:first-of-type > *:nth-child(3) { animation-delay: 0.10s; }
+body > div:first-of-type > *:nth-child(4) { animation-delay: 0.15s; }
+body > div:first-of-type > *:nth-child(n+5) { animation-delay: 0.20s; }
+body > div:first-of-type > nav { animation: none; }
+@keyframes lg-rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
+
+/* ---------- le verre
+   Le reflet (premier fond) suit le pointeur : glass.js règle --mx et --my sur l'élément survolé. */
+:is(div, button, a, label, li, section, textarea)[style*="background: var(--surface)"]:not(body > div:first-of-type),
+:is(div, button, a, label, li, section, textarea)[style*="background:var(--surface)"]:not(body > div:first-of-type) {
+  background:
+    radial-gradient(120px 80px at var(--mx, 28%) var(--my, 0%), rgba(255, 255, 255, 0.75), transparent 70%),
+    linear-gradient(140deg, var(--glass-strong), rgba(255, 255, 255, 0.34)) !important;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--glass-rim), var(--glass-drop) !important;
+}
+
+:is(div, button, a, label, li, section)[style*="background: var(--birch)"],
+:is(div, button, a, label, li, section)[style*="background:var(--birch)"] {
+  background:
+    radial-gradient(160px 100px at var(--mx, 24%) var(--my, 0%), rgba(255, 255, 255, 0.60), transparent 70%),
+    linear-gradient(150deg, var(--glass), rgba(255, 255, 255, 0.20)) !important;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--glass-rim), var(--glass-drop) !important;
+}
+
+/* verre teinté pin : boutons principaux, choix actifs */
+:is(div, button, a, label)[style*="background: var(--pine)"]:not([style*="pine-deep"]),
+:is(div, button, a, label)[style*="background:var(--pine)"]:not([style*="pine-deep"]) {
+  background:
+    radial-gradient(140px 60px at var(--mx, 30%) var(--my, -10%), rgba(255, 255, 255, 0.42), transparent 70%),
+    linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.22) 48%, transparent 61%) 220% 0 / 260% 100% no-repeat,
+    linear-gradient(180deg, rgba(52, 118, 97, 0.90), rgba(20, 51, 42, 0.94)) !important;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), inset 0 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -10px 16px -10px rgba(0, 0, 0, 0.45),
+              0 12px 28px -10px rgba(31, 77, 63, 0.70), 0 0 0 0 rgba(242, 193, 78, 0) !important;
+  animation: lg-sheen 5.5s ease-in-out infinite;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+@keyframes lg-sheen { 0%, 55% { background-position: 0 0, 220% 0, 0 0; } 100% { background-position: 0 0, -120% 0, 0 0; } }
+
+:is(div, button, a, section)[style*="var(--pine-deep)"] {
+  background:
+    radial-gradient(200px 120px at var(--mx, 20%) var(--my, 0%), rgba(255, 255, 255, 0.22), transparent 70%),
+    linear-gradient(160deg, rgba(31, 77, 63, 0.86), rgba(20, 51, 42, 0.92)) !important;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), inset 0 1.5px 0 rgba(255, 255, 255, 0.40), 0 14px 32px -12px rgba(20, 51, 42, 0.65) !important;
+}
+
+/* blocs stylés par classe dans les écrans */
+.kpi {
+  background: linear-gradient(150deg, var(--glass-strong), rgba(255, 255, 255, 0.24)) !important;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--glass-rim), var(--glass-drop);
+}
+a[href="pieces.html"][style*="inline-block"] { align-self: flex-start; }
+
+/* bordures opaques de la maquette → liserés de verre */
+[style*="solid var(--birch)"], .style-card[aria-pressed="false"] { border-color: rgba(255, 255, 255, 0.55) !important; }
+.style-card[aria-pressed="true"] { border-color: var(--pine) !important; box-shadow: var(--glass-rim), 0 0 0 4px rgba(31, 77, 63, 0.14), 0 14px 30px -12px rgba(31, 77, 63, 0.55) !important; }
+img { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+
+/* ---------- matière vivante : tout ce qui se touche réagit */
+button, a[style*="border-radius"], .style-card, .pill {
+  transition: transform 0.35s var(--spring), box-shadow 0.3s ease, filter 0.3s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  button:hover, a[style*="border-radius"]:hover { transform: translateY(-1.5px) scale(1.015); filter: brightness(1.05); color: inherit; }
+  a[style*="background: var(--pine)"]:hover, a[style*="background:var(--pine)"]:hover { color: var(--surface); }
+}
+button:active, a[style*="border-radius"]:active, .style-card:active { transform: scale(0.955) !important; filter: brightness(0.97); transition-duration: 0.08s; }
+:focus-visible { outline: 2px solid var(--pine); outline-offset: 3px; border-radius: 12px; }
+
+input[type=text], input[type=number], input:not([type]), textarea { transition: border-color 0.2s ease, box-shadow 0.25s ease; }
+input:focus, textarea:focus { outline: none; box-shadow: 0 10px 18px -14px rgba(31, 77, 63, 0.9) !important; border-color: var(--pine) !important; }
+
+/* curseur du budget : rail et bouton en verre */
+input[type=range] { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; accent-color: var(--pine); }
+input[type=range]::-webkit-slider-runnable-track { height: 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(31, 77, 63, 0.55), rgba(242, 193, 78, 0.55)); box-shadow: inset 0 1px 2px rgba(20, 35, 31, 0.25), 0 1px 0 rgba(255, 255, 255, 0.8); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -9px; border-radius: 50%; background: radial-gradient(circle at 32% 26%, #fff, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.5)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 6px 14px -4px rgba(20, 51, 42, 0.5), 0 0 0 5px rgba(31, 77, 63, 0.12); cursor: grab; }
+input[type=range]::-moz-range-track { height: 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(31, 77, 63, 0.55), rgba(242, 193, 78, 0.55)); }
+input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 6px 14px -4px rgba(20, 51, 42, 0.5); }
+
+/* ---------- barre d'onglets flottante, capsule de verre ; la pastille glisse d'un onglet à l'autre */
+body > div:first-of-type > nav {
+  position: absolute !important;
+  left: 14px; right: 14px; bottom: 14px;
+  height: 64px !important;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 0 !important;
+  border-radius: 32px;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(26px) saturate(200%) brightness(1.05);
+  box-shadow: var(--glass-rim), 0 18px 40px -14px rgba(20, 51, 42, 0.45), 0 2px 8px -2px rgba(20, 51, 42, 0.14);
+  z-index: 20;
+  view-transition-name: lg-tabbar;
+}
+html.lg-refract body > div:first-of-type > nav {
+  -webkit-backdrop-filter: url(#lg-liquid) blur(14px) saturate(200%) brightness(1.05);
+  backdrop-filter: url(#lg-liquid) blur(14px) saturate(200%) brightness(1.05);
+}
+body > div:first-of-type > div:has(+ nav) { padding-bottom: 90px !important; }
+body > div:first-of-type > nav > a { position: relative; z-index: 0; border-radius: 26px; gap: 2px !important; transition: color 0.2s ease, transform 0.35s var(--spring); }
+body > div:first-of-type > nav > a[aria-current="page"] { color: var(--pine) !important; }
+body > div:first-of-type > nav > a[aria-current="page"]::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: 26px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55));
+  box-shadow: inset 0 1.5px 0 #fff, inset 0 -6px 10px -8px rgba(31, 77, 63, 0.35), 0 6px 16px -6px rgba(31, 77, 63, 0.45);
+  view-transition-name: lg-tab-pill;
+}
+::view-transition-group(lg-tab-pill) { animation-duration: 0.45s; animation-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1); }
+::view-transition-old(root) { animation: 0.22s ease both lg-out; }
+::view-transition-new(root) { animation: 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both lg-in; }
+@keyframes lg-out { to { opacity: 0; transform: scale(0.985); filter: blur(6px); } }
+@keyframes lg-in { from { opacity: 0; transform: scale(1.015); filter: blur(8px); } }
+
+/* titres : léger dégradé pin, comme une encre sous le verre */
+h1, h2 { background: linear-gradient(120deg, var(--ink) 20%, var(--pine) 60%, #2F6E5A); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* barres de défilement discrètes */
+* { scrollbar-width: thin; scrollbar-color: rgba(20, 35, 31, 0.2) transparent; }
+
+/* ---------- respect des réglages d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  @view-transition { navigation: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: rgba(250, 250, 246, 0.94); --glass-strong: rgba(255, 255, 255, 0.97); --blur: none; }
+  body > div:first-of-type > nav { background: var(--surface) !important; }
+}
+
+/* sur un vrai téléphone, l'écran occupe tout l'affichage (la barre d'onglets reste visible) */
+@media (max-width: 430px) {
+  body > div:first-of-type { width: 100% !important; height: 100dvh !important; }
+}
