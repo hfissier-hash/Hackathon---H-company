@@ -14,6 +14,25 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 </style>
 <link rel="stylesheet" href="../glass.css">
 <script src="../glass.js" defer></script>
+<style>
+/* La page défile : aucun bloc ne doit s'écraser quand le contenu dépasse la hauteur de l'écran. */
+body > div:first-of-type > div:first-child > * { flex-shrink: 0; }
+/* Idées : rangées de produits du catalogue que l'on fait défiler de côté. */
+.idees-titre { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 26px 0 10px; flex-shrink: 0; }
+.idees-titre p:first-child { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; font-family: var(--display); }
+.idees-titre p:last-child { margin: 0; font-size: 12px; color: var(--ink-muted); text-align: right; }
+.idees { display: flex; gap: 10px; margin: 0 -20px; padding: 2px 20px 12px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; flex-shrink: 0; }
+.idees::-webkit-scrollbar { display: none; }
+.idee { position: relative; flex: 0 0 132px; display: flex; flex-direction: column; padding: 6px 6px 10px; border-radius: 18px; text-decoration: none; color: var(--ink); scroll-snap-align: start;
+  background: rgba(255,255,255,0.14); box-shadow: var(--glass-rim), var(--glass-drop); animation: idee 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.idee:hover { transform: translateY(-3px); color: var(--ink); }
+.idee img { width: 100%; height: 112px; object-fit: contain; border-radius: 13px; background: #fff; }
+.idee-cat { position: absolute; left: 12px; top: 12px; padding: 2px 8px; border-radius: 999px; background: rgba(20,51,42,0.82); color: var(--surface); font-size: 10.5px; font-weight: 600; }
+.idee b { margin: 8px 4px 0; font-size: 13px; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; }
+.idee small { margin: 3px 4px 0; font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.idee-prix { margin: 6px 4px 0; font-size: 14px; color: var(--ink); }
+@keyframes idee { from { opacity: 0; transform: translateX(18px); } }
+</style>
 </head>
 <body>
 <div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; overflow: hidden">

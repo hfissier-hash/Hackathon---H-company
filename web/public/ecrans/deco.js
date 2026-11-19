@@ -49,6 +49,7 @@
     deco.forEach(function (p) {
       var row = tpl.cloneNode(true), img = row.querySelector('img');
       img.removeAttribute('data-img'); img.src = p.image_url; img.alt = p.name;
+      img.onerror = function () { img.style.visibility = 'hidden'; }; // photo indisponible chez l'enseigne : case vide plutôt que du texte
       row.children[1].textContent = p.name.split(',')[0] + ' · ' + Nestr.dims(p);
       var price = document.createElement('p');
       price.style.cssText = 'margin:0;font-size:15px;font-weight:600;white-space:nowrap';
@@ -58,5 +59,37 @@
       row.addEventListener('click', function () { window.open(p.url, '_blank', 'noopener'); });
       tips.appendChild(row);
     });
+
+    // D'autres idées : produits du catalogue qui iraient dans ce salon, avec leur photo (meubles, déco, peinture).
+    var LABELS = { canape: 'Canapé', fauteuil: 'Fauteuil', table_basse: 'Table basse', meuble_tv: 'Meuble TV', etagere: 'Étagère', tapis: 'Tapis',
+                   luminaire: 'Lampadaire', suspension: 'Suspension', miroir: 'Miroir', cadre: 'Cadre', plante: 'Plante', rideau: 'Rideaux', peinture: 'Peinture' };
+    fetch('/api/projects/' + job.id + '/ideas').then(function (r) { return r.ok ? r.json() : null; }).then(function (ideas) {
+      if (!ideas) return;
+      [['Idées de meubles', ideas.meubles, 'Ils rentrent dans ta pièce et ton budget'],
+       ['Idées de déco', ideas.deco, 'Dans le style de ton salon'],
+       ['Idées de peinture', ideas.peinture, 'Dans les couleurs de ta palette']].forEach(function (group) {
+        if (!group[1] || !group[1].length) return;
+        var head = document.createElement('div'), title = document.createElement('p'), sub = document.createElement('p'), rail = document.createElement('div');
+        head.className = 'idees-titre';
+        title.textContent = group[0]; sub.textContent = group[2];
+        head.append(title, sub);
+        rail.className = 'idees'; rail.setAttribute('role', 'list'); rail.setAttribute('aria-label', group[0]);
+        group[1].forEach(function (p, i) {
+          var a = document.createElement('a'), img = document.createElement('img'), tag = document.createElement('span');
+          var name = document.createElement('b'), meta = document.createElement('small'), price = document.createElement('span');
+          a.className = 'idee'; a.href = p.url; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('role', 'listitem');
+          a.style.animationDelay = Math.min(i, 6) * 0.05 + 's';
+          img.src = p.image_url; img.alt = p.name; img.loading = 'lazy';
+          img.onerror = function () { a.remove(); }; // fiche sans photo exploitable : on ne montre pas de case vide
+          tag.className = 'idee-cat'; tag.textContent = LABELS[p.category] || p.category;
+          name.textContent = p.name.split(',')[0];
+          meta.textContent = p.category === 'peinture' ? Nestr.retailer(p) + (p.color ? ' · ' + p.color.replace('_', ' ') : '') : Nestr.dims(p);
+          price.className = 'data idee-prix'; price.textContent = Nestr.euro(p.price_eur);
+          a.append(img, tag, name, meta, price);
+          rail.appendChild(a);
+        });
+        c.append(head, rail);
+      });
+    }).catch(function () {});
   });
 })();
