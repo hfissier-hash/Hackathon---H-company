@@ -89,10 +89,19 @@ try {
     room.traverse((o) => { if (o.isMesh && WALL_OUT[o.name]) walls.push(o); });
     const box = new THREE.Box3().setFromObject(room), size = box.getSize(new THREE.Vector3());
     box.getCenter(center);
-    const d = Math.max(size.x, size.z) * 1.55;
-    camera.position.set(center.x + d * 0.7, d * 0.78, center.z + d * 0.85);
-    controls.target.set(center.x, 0.55, center.z);
-    controls.update();
+    // Cadrage : la pièce entière tient à l'écran quel que soit l'angle de la rotation, même sur un écran étroit.
+    // On recule la caméra jusqu'à ce que la sphère qui englobe la pièce entre dans le champ le plus étroit.
+    const radius = Math.hypot(size.x, size.y, size.z) / 2;
+    const dir = new THREE.Vector3(0.7, 0.78, 0.85).normalize();
+    function frame() {
+      const half = THREE.MathUtils.degToRad(camera.fov) / 2;
+      const narrow = Math.min(half, Math.atan(Math.tan(half) * camera.aspect));
+      controls.target.copy(center);
+      camera.position.copy(center).addScaledVector(dir, radius / Math.sin(narrow) * 1.04);
+      controls.update();
+    }
+    frame();
+    addEventListener('resize', frame);
     const entrance = dropIn(room, THREE, { delay: 500, gap: 150, onLand: label });
     view.classList.add('pret');
     renderer.setAnimationLoop(() => {
