@@ -40,11 +40,13 @@ input[type=range]{accent-color:var(--ink)}
     <h2 style="margin: 12px 0 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.8px">Galerie d'inspiration</h2>
     <p id="aide" role="status" style="margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-muted)">Choisis jusqu'à 3 photos qui te ressemblent.</p>
   </div>
-  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px 100px">
+  <div id="themes" role="group" aria-label="Thèmes" style="display: flex; gap: 6px; padding: 14px 20px 2px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none"></div>
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 12px 20px 100px">
     <div id="grille"></div>
   </div>
   <a id="valider" href="envies.html" aria-disabled="true" style="position: absolute; left: 24px; right: 24px; bottom: 28px; display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 16px; font-weight: 600; opacity: 0.35; pointer-events: none; z-index: 5">Utiliser ces photos</a>
 </div>
+<script src="nestr.js"></script>
 <script>
 // Galerie d'inspiration : photos rangées dans le Storage Supabase (route /api/gallery).
 // Les photos choisies rejoignent « Tes inspirations » et sont lues par le modèle de vision comme les photos de l'appareil.
@@ -97,7 +99,23 @@ input[type=range]{accent-color:var(--ink)}
   });
   fetch('/api/gallery').then(function (r) { return r.json(); }).then(function (j) {
     if (!j.photos || !j.photos.length) { help.textContent = 'La galerie est vide pour le moment. Ajoute tes propres photos depuis l’écran précédent.'; return; }
-    j.photos.forEach(function (p, i) { grid.appendChild(tile(p, i)); });
+    var tiles = j.photos.map(function (p, i) { var t = tile(p, i); t.dataset.theme = p.theme || ''; grid.appendChild(t); return t; });
+    // Un thème par dossier de la galerie : la puce filtre la grille (les photos déjà choisies restent choisies).
+    var bar = document.getElementById('themes'), style = (Nestr.get().style || '').toLowerCase();
+    function chip(name, value) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = name; b.setAttribute('aria-pressed', 'false');
+      b.style.cssText = 'flex-shrink:0;height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 13px var(--body);cursor:pointer;white-space:nowrap';
+      b.addEventListener('click', function () {
+        [].forEach.call(bar.children, function (c) { var on = c === b; c.setAttribute('aria-pressed', on ? 'true' : 'false'); c.style.background = on ? 'var(--pine)' : 'var(--surface)'; c.style.color = on ? 'var(--surface)' : 'var(--ink)'; });
+        tiles.forEach(function (t) { t.style.display = value === null || t.dataset.theme === value ? 'block' : 'none'; });
+      });
+      bar.appendChild(b);
+      return b;
+    }
+    var all = chip('Tout', null), mine = null;
+    (j.themes || []).forEach(function (t) { var c = chip(t, t); if (style && t.toLowerCase().indexOf(style.split(/[ -]/)[0]) === 0) mine = c; });
+    (mine || all).click(); // le thème du style choisi à l'étape précédente s'ouvre en premier
   }).catch(function () { help.textContent = 'La galerie est injoignable pour le moment.'; });
   refresh();
 })();
