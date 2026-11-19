@@ -3,7 +3,7 @@
 import { db, json, overQuota, waitFor } from '@/lib/db';
 
 export const maxDuration = 60;
-const EMPTY = { styles: [], colors: [], accent_color: null, detected: [], llm: false };
+const EMPTY = { styles: [], colors: [], accent_color: null, materials: [], ambiance: 'neutre', brief: '', detected: [], llm: false };
 const DATA = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 
 export async function POST(request) {

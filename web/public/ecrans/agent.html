@@ -17,7 +17,7 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 <style>
 /* L'agent cherche : un orbe de verre vivant, des étapes qui s'allument, la trouvaille qui surgit. */
 .orbe .aura { position: absolute; inset: -14px; border-radius: 50%; background: conic-gradient(from 0deg, #F2C14E, #C9432F, #1F4D3F, #2F6FA3, #F2C14E); filter: blur(22px); opacity: 0.55; animation: tourne 6s linear infinite; }
-.orbe .bille { position: absolute; inset: 15px; border-radius: 50%; overflow: hidden;
+.orbe .bille { position: absolute; inset: 12px; border-radius: 50%; overflow: hidden;
   background: radial-gradient(circle at 32% 24%, rgba(255,255,255,0.95), rgba(255,255,255,0.35) 38%, rgba(255,255,255,0.12) 70%);
   -webkit-backdrop-filter: blur(10px) saturate(180%); backdrop-filter: blur(10px) saturate(180%);
   box-shadow: var(--glass-rim), 0 18px 34px -14px rgba(20,51,42,0.55); }
@@ -38,9 +38,9 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 @keyframes onde { from { transform: scale(0.9); opacity: 0.7; } to { transform: scale(2.3); opacity: 0; } }
 @keyframes pop { from { transform: scale(0.6); } }
 /* étapes : capsules de verre ; celle en cours est balayée par un reflet */
-#etapes > div { position: relative; overflow: hidden; padding: 7px 12px 7px 8px !important; margin-bottom: 6px; border: 0 !important; border-radius: 20px;
+#etapes > div { position: relative; overflow: hidden; padding: 5px 12px 5px 7px !important; margin-bottom: 5px; border: 0 !important; border-radius: 20px;
   background: rgba(255,255,255,0.10); box-shadow: var(--glass-rim), var(--glass-drop); transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s ease; }
-#etapes > div > span:first-child { width: 34px !important; height: 34px !important; border-radius: 12px !important; background: rgba(255,255,255,0.55) !important; font-family: var(--data); font-size: 12px !important; }
+#etapes > div > span:first-child { width: 30px !important; height: 30px !important; border-radius: 12px !important; background: rgba(255,255,255,0.55) !important; font-family: var(--data); font-size: 12px !important; }
 #etapes > div[data-state="pending"] { opacity: 0.45; transform: scale(0.97); }
 #etapes > div[data-state="running"] { background: rgba(255,255,255,0.38); }
 #etapes > div[data-state="running"]::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(242,193,78,0.38) 50%, transparent 70%); animation: balaye 1.3s ease-in-out infinite; }
@@ -56,6 +56,8 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 @keyframes surgit { from { opacity: 0; transform: translateY(28px) scale(0.94); } }
 [data-status="done"] #voir { animation: lg-sheen 3s ease-in-out infinite, appel 2.2s ease-in-out infinite !important; }
 @keyframes appel { 50% { filter: drop-shadow(0 0 16px rgba(242, 193, 78, 0.85)); } }
+#etapes p { line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#etapes > div > div { min-width: 0; }
 </style>
 </head>
 <body>
@@ -74,18 +76,18 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
   </div>
 
   <div id="orbe" style="display: flex; flex-direction: column; align-items: center; margin-top: 24px">
-    <div class="orbe" style="position: relative; width: 148px; height: 148px">
+    <div class="orbe" style="position: relative; width: 124px; height: 124px">
       <div class="aura" aria-hidden="true"></div>
       <div class="onde" aria-hidden="true"></div><div class="onde" aria-hidden="true"></div>
       <div class="bille" aria-hidden="true"><div class="radar"></div></div>
       <div class="orbite o1" aria-hidden="true"><i></i></div><div class="orbite o2" aria-hidden="true"><i></i></div><div class="orbite o3" aria-hidden="true"><i></i></div>
-      <svg width="148" height="148" viewBox="0 0 120 120" role="img" aria-label="Avancement de la recherche" style="position: absolute; inset: 0">
+      <svg width="124" height="124" viewBox="0 0 120 120" role="img" aria-label="Avancement de la recherche" style="position: absolute; inset: 0">
         <defs><linearGradient id="arc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F2C14E"/><stop offset="0.55" stop-color="#1F4D3F"/><stop offset="1" stop-color="#2F6FA3"/></linearGradient></defs>
         <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(20,35,31,0.10)" stroke-width="5"/>
         <circle class="arc" cx="60" cy="60" r="52" fill="none" stroke="url(#arc)" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 327" transform="rotate(-90 60 60)"/>
       </svg>
       <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
-        <p class="pct" style="margin: 0; font-family: var(--display); font-size: 30px; font-weight: 700; letter-spacing: -1px">0 %</p>
+        <p class="pct" style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -1px">0 %</p>
         <p class="data" style="margin: 0; font-size: 12px; color: var(--ink-muted)">0:00</p>
       </div>
     </div>

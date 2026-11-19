@@ -9,6 +9,7 @@
                ['catalog', 'I', 'IKEA', 'Recherche dans le catalogue'],
                ['agent', 'H', 'Agent H Company', 'Recherche en direct sur ikea.com'],
                ['paint', 'C', 'Castorama', 'Recherche de la peinture'],
+               ['stylist', 'IA', 'Styliste', 'Relecture du salon face à ta demande'],
                ['build', '3D', 'Salon en 3D', 'Construction aux vraies dimensions']];
 
   var template = rows.children[0];
@@ -30,7 +31,7 @@
   card.style.visibility = 'hidden';
   cta.style.opacity = '0.35';
   cta.style.pointerEvents = 'none';
-  subtitle.textContent = 'Ta demande est comparée au catalogue relevé par les agents H Company. S’il manque un produit, un agent part le chercher.';
+  subtitle.textContent = 'Ta demande est comparée au catalogue des agents H Company, puis relue par un styliste IA.';
 
   var started = Date.now(), seen = null, shownPct = 0, target = 0, counting = false;
   // Le pourcentage défile jusqu'à sa valeur au lieu de sauter.
@@ -51,7 +52,7 @@
       var s = (job.steps || {})[l.key] || { status: 'pending' };
       var st = s.status;
       // L'agent n'apparaît que s'il est lancé (catalogue insuffisant).
-      l.row.style.display = l.key === 'agent' && !(job.steps || {}).agent ? 'none' : 'flex';
+      l.row.style.display = (l.key === 'agent' || l.key === 'stylist') && !(job.steps || {})[l.key] ? 'none' : 'flex';
       if (l.row.style.display === 'none') return;
       shown++;
       if (st === 'done' || st === 'skipped') done++;
@@ -62,6 +63,7 @@
       l.dot.setAttribute('aria-label', { done: 'Terminé', failed: 'Échec', running: 'En cours', skipped: 'Ignoré', pending: 'En attente' }[st]);
       l.detail.textContent = s.detail ? s.detail + (s.seconds ? ' · ' + String(s.seconds).replace('.', ',') + ' s' : '') : l.wait;
     });
+    card.children[1].style.display = shown > 5 ? 'none' : 'flex'; // six étapes (un agent est parti) : la carte se resserre pour garder le bouton visible
     var ratio = job.status === 'done' ? 1 : done / shown;
     arc.setAttribute('stroke-dasharray', Math.round(327 * ratio) + ' 327');
     count(Math.round(ratio * 100));

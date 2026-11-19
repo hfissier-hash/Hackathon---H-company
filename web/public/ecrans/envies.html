@@ -213,7 +213,7 @@ if (Nestr.live) (function () {
         if (mine !== asked) return;
         if (!j.llm || !j.detected.length) { detectedP.textContent = 'Photos non analysées ; ton texte et le style choisi seront utilisés.'; Nestr.set({ inspiration: null }); return; }
         detectedP.textContent = 'Détecté : ' + j.detected.join(', ');
-        Nestr.set({ inspiration: { styles: j.styles, colors: j.colors, accent_color: j.accent_color } });
+        Nestr.set({ inspiration: { styles: j.styles, colors: j.colors, accent_color: j.accent_color, materials: j.materials, ambiance: j.ambiance, brief: j.brief, detected: j.detected } });
       })
       .catch(function () { if (mine === asked) detectedP.textContent = 'Serveur Nester injoignable.'; });
   }

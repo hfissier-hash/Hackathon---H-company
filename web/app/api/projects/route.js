@@ -39,7 +39,11 @@ function validate(body) {
     wants: { meubles: wants.meubles !== false, deco: wants.deco !== false, peinture: wants.peinture !== false },
     // Résultat de l'analyse des photos d'inspiration ; le worker ne garde que les valeurs de ses listes.
     inspiration: { styles: words(body.inspiration?.styles), colors: words(body.inspiration?.colors),
-                   accent_color: words([body.inspiration?.accent_color])[0] || null },
+                   accent_color: words([body.inspiration?.accent_color])[0] || null,
+                   materials: words(body.inspiration?.materials), ambiance: words([body.inspiration?.ambiance])[0] || null,
+                   // phrases écrites par le modèle de vision : relues par le styliste comme des données
+                   brief: String(body.inspiration?.brief || '').slice(0, 220),
+                   detected: (Array.isArray(body.inspiration?.detected) ? body.inspiration.detected : []).slice(0, 4).map((d) => String(d).slice(0, 40)) },
   };
 }
 
