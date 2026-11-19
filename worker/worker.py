@@ -4,7 +4,8 @@
 
 kind = project     nouvelle demande de salon
 kind = replace     remplacer le produit d'une catégorie dans un projet (parent_id)
-kind = understand  ce que l'IA a compris d'un texte (écran Envies)
+kind = understand  ce que l'IA a compris d'un texte ou de photos (écran Envies)
+kind = photo       rendu photoréaliste d'un projet (parent_id)
 """
 import json, os, threading, time, traceback
 import pipeline
@@ -84,7 +85,20 @@ def do_understand(row):
     return "done", None
 
 
-HANDLERS = {"project": do_project, "replace": do_replace, "understand": do_understand}
+def do_photo(row):
+    parent = pipeline.admin(f"requests?id=eq.{row['parent_id']}&select=id,status")
+    if not parent or parent[0]["status"] != "done":
+        raise ValueError("projet introuvable ou pas encore prêt")
+    with lock_of(parent[0]["id"]):
+        parent = pipeline.admin(f"requests?id=eq.{row['parent_id']}&select=id,payload,result")
+        job = dict(parent[0]["result"], id=parent[0]["id"], request=parent[0]["payload"])
+        pipeline.photo(job)
+        patch(parent[0]["id"], {"result": result_of(job)})
+    patch(row["id"], {"status": "done"})
+    return "done", job["photo"].get("seconds")
+
+
+HANDLERS = {"project": do_project, "replace": do_replace, "understand": do_understand, "photo": do_photo}
 
 if __name__ == "__main__":
     pipeline.secret()  # échoue tout de suite si la clé n'est pas la bonne

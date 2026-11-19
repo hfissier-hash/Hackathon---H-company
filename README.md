@@ -48,7 +48,10 @@ déployée sur Vercel (dossier racine `web`, variables `SUPABASE_URL` et `SUPABA
 439 fichiers, déjà aux vraies dimensions) ; sinon un modèle généré par TRELLIS depuis la photo (à la demande, 3 par salon) ;
 sinon une forme simple dessinée par Blender.
 
-Pas encore branché : vue Plan, critères de l'écran Envies (seconde main, animaux…), coussins.
+**Photo réaliste** : sur l'écran du salon, la bascule « 3D | Photo » demande à Blender (moteur Cycles) une vue d'intérieur du même salon,
+en une quinzaine de secondes. Les meubles sont ceux de la scène 3D : aucune IA d'image ne les réinvente.
+
+Pas encore branché : critères de l'écran Envies (seconde main, animaux…), coussins.
 
 ## La solution
 

@@ -120,6 +120,7 @@ if (job && job.status === 'done') {
       const next = await r.json();
       if (!r.ok) throw new Error(next.error);
       version = next.version;
+      mode(false);
       await load(next);
       select(next.products.find((p) => p.category === selected.category));
       wish.value = '';
@@ -148,6 +149,7 @@ if (job && job.status === 'done') {
       if (m) note.textContent = 'Modèles 3D : ' + m.detail.split(' générés')[0].replace(' modèle(s) 3D sur ', ' / ');
       if (j.version !== version && !replaceBtn.disabled) {
         version = j.version;
+        mode(false); // la photo affichée ne correspond plus au salon
         await load(j);
         select(j.products.find((p) => p.url === selected.url) || j.products[0]);
       } else if (v && v.status !== 'running' && !selected.live) {
@@ -159,6 +161,50 @@ if (job && job.status === 'done') {
     if (Date.now() < until) setTimeout(watch, 4000);
   }
   setTimeout(watch, 4000);
+
+  // Bascule « 3D | Photo » : la photo est un rendu photoréaliste du même salon, fait par Blender à la demande.
+  const [btn3d, btnPhoto] = header.querySelectorAll('[role="group"] button');
+  btnPhoto.textContent = 'Photo';
+  const shot = document.createElement('img');
+  shot.alt = 'Photo réaliste du salon meublé';
+  shot.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in;background:#F4F3F0';
+  shot.addEventListener('click', () => window.open(shot.src, '_blank', 'noopener'));
+  const wait = document.createElement('p');
+  wait.setAttribute('role', 'status');
+  wait.style.cssText = 'position:absolute;inset:0;margin:0;display:none;align-items:center;justify-content:center;text-align:center;padding:0 32px;background:rgba(244,243,240,0.94);font-size:15px;line-height:1.45;font-weight:500;color:#111111';
+  view.insertBefore(shot, buttons);
+  view.insertBefore(wait, buttons);
+  let photo = job.photo || null;
+  function mode(isPhoto) {
+    for (const [b, on] of [[btn3d, !isPhoto], [btnPhoto, isPhoto]]) {
+      b.setAttribute('aria-pressed', on);
+      b.style.background = on ? '#FFFFFF' : 'transparent';
+      b.style.boxShadow = on ? '0 1px 4px rgba(0,0,0,0.1)' : 'none';
+      b.style.color = on ? '#111111' : '#6B6B6B';
+      b.style.fontWeight = on ? '600' : '500';
+    }
+    buttons.style.display = isPhoto ? 'none' : 'flex';
+    if (!isPhoto) { shot.style.display = 'none'; wait.style.display = 'none'; }
+  }
+  btn3d.addEventListener('click', () => mode(false));
+  btnPhoto.addEventListener('click', async () => {
+    mode(true);
+    if (photo && photo.version === version) { shot.src = photo.url; shot.style.display = 'block'; return; }
+    wait.textContent = 'Blender photographie votre salon… une quinzaine de secondes.';
+    wait.style.display = 'flex';
+    try {
+      const r = await fetch('/api/projects/' + job.id + '/photo', { method: 'POST' });
+      const next = await r.json();
+      if (!r.ok || !next.photo) throw new Error(next.error || 'Le rendu a échoué.');
+      photo = next.photo;
+      if (btnPhoto.getAttribute('aria-pressed') !== 'true') return; // l'utilisateur est revenu à la 3D entre-temps
+      shot.onload = () => { wait.style.display = 'none'; };
+      shot.src = photo.url;
+      shot.style.display = 'block';
+    } catch (e) {
+      wait.textContent = e.message + ' Revenez à la vue 3D et réessayez.';
+    }
+  });
 
   const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
   let down = null;
