@@ -14,32 +14,71 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 </style>
 <link rel="stylesheet" href="../glass.css">
 <script src="../glass.js" defer></script>
+<style>
+/* Accueil : le salon occupe le haut de l'écran et se fond dans le fond ; le titre entre mot à mot. */
+#accueil > * { animation: none; }
+#scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; opacity: 0; transition: opacity 0.9s ease;
+  -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); }
+#scene.pret canvas { opacity: 1; }
+#scene.pret #charge { display: none; }
+#halo { position: absolute; left: 50%; top: 54%; width: 330px; height: 330px; margin: -165px 0 0 -165px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 193, 78, 0.55), rgba(242, 193, 78, 0) 68%); filter: blur(6px); animation: halo 6s ease-in-out infinite alternate; }
+@keyframes halo { from { transform: scale(0.9); opacity: 0.7; } to { transform: scale(1.12); opacity: 1; } }
+.nestr-logo { animation: logo 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+@keyframes logo { from { opacity: 0; transform: translateY(-14px) scale(0.8); } }
+#badge { animation: logo 0.9s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+/* étiquettes accrochées aux meubles */
+.etiquette { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 7px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--surface);
+  font-size: 12px; font-weight: 600; white-space: nowrap; opacity: 0; transition: opacity 0.35s ease; will-change: transform; }
+.etiquette.vue { opacity: 1; }
+.etiquette i { width: 20px; height: 20px; border-radius: 50%; background: var(--ok); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.etiquette b { font-family: var(--data); font-weight: 500; color: var(--ink-muted); }
+/* titre : pas de dégradé ici (il gêne l'animation mot à mot), encre pleine */
+#titre { background: none; -webkit-text-fill-color: currentColor; color: var(--ink); }
+.mot { display: inline-block; animation: mot 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+@keyframes mot { from { opacity: 0; transform: translateY(26px) rotate(4deg); filter: blur(10px); } }
+.mot:nth-of-type(1) { animation-delay: 0.25s; } .mot:nth-of-type(2) { animation-delay: 0.33s; } .mot:nth-of-type(3) { animation-delay: 0.41s; }
+#cote { position: relative; display: inline-block; color: var(--pine); }
+#cote .mot:nth-of-type(1) { animation-delay: 0.55s; } #cote .mot:nth-of-type(2) { animation-delay: 0.63s; } #cote .mot:nth-of-type(3) { animation-delay: 0.71s; }
+#cote svg { position: absolute; left: 0; right: 0; bottom: -13px; width: 100%; height: 12px; overflow: visible; }
+#cote path { fill: none; stroke: var(--lingon); stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-dasharray: 640; stroke-dashoffset: 640; animation: trait 1.1s 1.0s cubic-bezier(0.6, 0, 0.2, 1) forwards; }
+@keyframes trait { to { stroke-dashoffset: 0; } }
+.suite { animation: suite 0.7s 1.15s cubic-bezier(0.2, 0.8, 0.2, 1) backwards !important; }
+a.suite + a.suite { animation-delay: 1.3s !important; }
+#go.suite { animation: suite 0.7s 1.22s cubic-bezier(0.2, 0.8, 0.2, 1) backwards, lg-sheen 5.5s 2s ease-in-out infinite, appel 2.8s 2.4s ease-in-out infinite !important; }
+@keyframes suite { from { opacity: 0; transform: translateY(18px); } }
+@keyframes appel { 50% { filter: drop-shadow(0 0 14px rgba(242, 193, 78, 0.75)); } }
+#go svg { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+#go:hover svg { transform: translateX(5px); }
+</style>
 </head>
 <body>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; padding: 28px 24px 34px; overflow: hidden">
-  <p class="nestr-logo" aria-label="Nestr" style="margin: 0; font-size: 34px"><span class="nestr-accent">n</span>estr<span class="nestr-accent">.</span></p>
-
-  <div style="position: relative; margin-top: 24px; height: 360px; border-radius: var(--radius-card); background: var(--birch); overflow: hidden">
-    <img src="https://images.unsplash.com/photo-1772797583328-f83bc3f94f80?w=684&amp;h=720&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.54&amp;q=80&amp;auto=format" alt="Salon lumineux style japandi : canapé clair, tapis, claustra en bois et plantes" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
-    <div style="position: absolute; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; background: var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.08)">
-      <span style="width: 22px; height: 22px; border-radius: 11px; background: var(--ok); display: flex; align-items: center; justify-content: center">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
-      </span>
-      <p style="margin: 0; font-size: 13px; font-weight: 600">212 cm · ça rentre</p>
-    </div>
-    <div style="position: absolute; right: 16px; top: 16px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.9)">
-      <p style="margin: 0; font-size: 12px; font-weight: 600">Salon · Japandi</p>
-    </div>
+<div id="accueil" style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; padding: 0 24px 30px; overflow: hidden">
+  <!-- Le salon en 3D, vivant : il tourne, les meubles se posent un par un, des étiquettes suivent les produits. -->
+  <div id="scene" style="position: relative; flex: 1 1 0; min-height: 300px; margin: 0 -24px 12px">
+    <img id="secours" hidden src="https://images.unsplash.com/photo-1772797583328-f83bc3f94f80?w=780&amp;h=956&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.54&amp;q=80&amp;auto=format" alt="Salon lumineux style japandi : canapé clair, tapis, claustra en bois et plantes" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+    <div id="halo" aria-hidden="true"></div>
+    <p class="nestr-logo" aria-label="Nestr" style="position: absolute; left: 24px; top: 26px; margin: 0; font-size: 34px; z-index: 3"><span class="nestr-accent">n</span>estr<span class="nestr-accent">.</span></p>
+    <div id="badge" class="tag" style="position: absolute; right: 20px; top: 28px; padding: 7px 13px; border-radius: 999px; background: var(--surface); font-size: 12px; font-weight: 600; z-index: 3">Salon · 6,00 × 3,00 m</div>
+    <div id="tags" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 2"></div>
+    <p id="charge" class="data" role="status" style="position: absolute; left: 0; right: 0; top: 46%; margin: 0; text-align: center; font-size: 12px; color: var(--ink-muted)">Le salon arrive…</p>
   </div>
 
-  <div style="flex: 1"></div>
+  <h1 id="titre" style="margin: 0; font-size: 36px; line-height: 1.08; font-weight: 700; letter-spacing: -1.3px">
+    <span class="mot">Ton</span> <span class="mot">intérieur,</span> <span class="mot">meublé</span><br>
+    <span id="cote"><span class="mot">au</span> <span class="mot">centimètre</span> <span class="mot">près.</span>
+      <svg viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true"><path d="M2 7H298M2 1v12M298 1v12" /></svg>
+    </span>
+  </h1>
+  <p class="suite" style="margin: 20px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-muted)">Tes dimensions, ton style. On trouve ce qui rentre et on te le montre en 3D.</p>
 
-  <h1 style="margin: 0; font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -1.2px">Ton intérieur, meublé au centimètre près.</h1>
-  <p style="margin: 14px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-muted)">Tes dimensions, ton style. On trouve ce qui rentre et on te le montre en 3D.</p>
-
-  <a href="pieces.html" style="margin-top: 28px; display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 16px; font-weight: 600">Commencer</a>
-  <a href="pieces.html" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; height: 44px; color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500">J'ai déjà un plan</a>
+  <a id="go" class="suite" href="pieces.html" style="margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 10px; height: 58px; border-radius: 999px; background: var(--pine); color: var(--surface); text-decoration: none; font-size: 17px; font-weight: 600">Commencer
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </a>
+  <a class="suite" href="pieces.html" style="margin-top: 6px; display: flex; align-items: center; justify-content: center; height: 40px; color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 500">J'ai déjà un plan</a>
 </div>
 
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module" src="accueil.js"></script>
 </body>
 </html>

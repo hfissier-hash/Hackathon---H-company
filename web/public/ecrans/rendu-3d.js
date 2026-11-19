@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { dropIn } from './entree.js';
 
 // Les salons sont compressés (Draco) : le décodeur vient du même paquet three.js.
 const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/');
@@ -77,7 +78,7 @@ if (job && job.status === 'done') {
       wall.visible = (camera.position.x - roomCenter.x) * nx + (camera.position.z - roomCenter.z) * nz < 0.4;
     }
   }
-  let current = null, selected = job.products[0], firstLoad = true;
+  let current = null, selected = job.products[0], firstLoad = true, entrance = null;
   function load(project) {
     for (const k of Object.keys(byUrl)) delete byUrl[k];
     for (const p of project.products) byUrl[p.url] = p;
@@ -104,6 +105,7 @@ if (job && job.status === 'done') {
         controls.target.set(c.x, 0.5, c.z);
         controls.update();
         firstLoad = false;
+        entrance = dropIn(current, THREE); // à l'ouverture, les meubles se posent un par un
       }
       window.__nester = { products: meshes.length, version: project.version };
       resolve();
@@ -236,5 +238,5 @@ if (job && job.status === 'done') {
   const [turn, full] = buttons.querySelectorAll('button');
   turn.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; turn.setAttribute('aria-pressed', controls.autoRotate); });
   full.addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : view.requestFullscreen(); });
-  renderer.setAnimationLoop(() => { controls.update(); hideFrontWalls(); renderer.render(scene, camera); });
+  renderer.setAnimationLoop(() => { controls.update(); hideFrontWalls(); if (entrance) entrance.tick(); renderer.render(scene, camera); });
 }
