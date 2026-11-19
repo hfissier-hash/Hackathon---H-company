@@ -7,6 +7,8 @@ function number(v, lo, hi, name) {
   return n;
 }
 
+const words = (list) => (Array.isArray(list) ? list : []).filter((w) => typeof w === 'string' && /^[a-z_]{2,20}$/.test(w)).slice(0, 4);
+
 function validate(body) {
   const room = body.room || {}, wants = body.wants || {};
   return {
@@ -16,6 +18,9 @@ function validate(body) {
     budget_eur: number(body.budget_eur, 100, 20000, 'budget'),
     text: String(body.text || '').slice(0, 600),
     wants: { meubles: wants.meubles !== false, deco: wants.deco !== false, peinture: wants.peinture !== false },
+    // Résultat de l'analyse des photos d'inspiration ; le worker ne garde que les valeurs de ses listes.
+    inspiration: { styles: words(body.inspiration?.styles), colors: words(body.inspiration?.colors),
+                   accent_color: words([body.inspiration?.accent_color])[0] || null },
   };
 }
 

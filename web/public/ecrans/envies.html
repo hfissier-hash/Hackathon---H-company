@@ -136,6 +136,78 @@ if (Nestr.live) {
   smart.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(understand, 900); });
   understand();
 }
+// Photos d'inspiration : ajout depuis l'appareil, puis lecture par un modèle de vision (Hugging Face).
+if (Nestr.live) (function () {
+  var addBtn = document.querySelector('button[aria-label^="Ajouter des photos"]'), row = addBtn.parentNode;
+  var countP = row.previousElementSibling.children[1], detectedP = row.nextElementSibling.querySelector('p');
+  var tileTpl = row.children[1].cloneNode(true), asked = 0;
+  var photos = [].slice.call(row.querySelectorAll('img')).map(function (img) { return { src: img.src, tile: img.parentNode }; });
+  var picker = document.createElement('input');
+  picker.type = 'file'; picker.accept = 'image/*'; picker.multiple = true; picker.style.display = 'none';
+  document.body.appendChild(picker);
+  addBtn.addEventListener('click', function () { picker.click(); });
+
+  function removable(photo) {
+    photo.tile.style.cursor = 'pointer';
+    photo.tile.setAttribute('role', 'button');
+    photo.tile.setAttribute('tabindex', '0');
+    photo.tile.setAttribute('aria-label', 'Retirer cette photo');
+    photo.tile.title = 'Retirer cette photo';
+    var drop = function () { photos.splice(photos.indexOf(photo), 1); photo.tile.remove(); analyse(); };
+    photo.tile.addEventListener('click', drop);
+    photo.tile.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); drop(); } });
+  }
+  photos.forEach(removable);
+
+  // La photo est réduite à 768 px dans le navigateur avant d'être envoyée.
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, 768 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        resolve(c.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  picker.addEventListener('change', function () {
+    Promise.all([].slice.call(picker.files, 0, 3).map(shrink)).then(function (urls) {
+      urls.forEach(function (src) {
+        var tile = tileTpl.cloneNode(true), photo = { src: src, tile: tile };
+        tile.querySelector('img').src = src;
+        tile.querySelector('img').alt = 'Votre photo d’inspiration';
+        tile.querySelector('p').textContent = 'Votre photo';
+        row.insertBefore(tile, row.children[1]);
+        photos.unshift(photo);
+        removable(photo);
+      });
+      picker.value = '';
+      analyse();
+    }).catch(function () { detectedP.textContent = 'Cette image n’a pas pu être lue.'; });
+  });
+
+  function analyse() {
+    var mine = ++asked, used = photos.slice(0, 3);
+    countP.textContent = photos.length + ' photo' + (photos.length > 1 ? 's' : '');
+    if (!used.length) { detectedP.textContent = 'Ajoutez une photo qui vous inspire.'; Nestr.set({ inspiration: null }); return; }
+    detectedP.textContent = 'Nestr regarde vos photos…';
+    fetch('/api/inspire', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ images: used.map(function (p) { return p.src; }) }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (mine !== asked) return;
+        if (!j.llm || !j.detected.length) { detectedP.textContent = 'Photos non analysées ; votre texte et le style choisi seront utilisés.'; Nestr.set({ inspiration: null }); return; }
+        detectedP.textContent = 'Détecté : ' + j.detected.join(', ');
+        Nestr.set({ inspiration: { styles: j.styles, colors: j.colors, accent_color: j.accent_color } });
+      })
+      .catch(function () { if (mine === asked) detectedP.textContent = 'Serveur Nester injoignable.'; });
+  }
+  analyse();
+})();
 document.querySelectorAll('a[href="agent.html"]').forEach(function (a) {
   a.addEventListener('click', function () {
     var on = function (label) { var p = document.querySelector('.pill[data-label="' + label + '"]'); return !p || p.getAttribute('aria-pressed') === 'true'; };

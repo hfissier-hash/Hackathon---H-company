@@ -107,7 +107,8 @@
   var s = Nestr.get();
   if (s.projectId) return poll(s.projectId);
   var body = { room: s.room || { width_cm: 420, length_cm: 360, height_cm: 250, door_cm: 83 },
-               style: s.style || 'Scandinave', budget_eur: s.budget_eur || 1200, text: s.text || '', wants: s.wants };
+               style: s.style || 'Scandinave', budget_eur: s.budget_eur || 1200, text: s.text || '', wants: s.wants,
+               inspiration: s.inspiration };
   fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
     .then(function (j) { Nestr.set({ projectId: j.id }); poll(j.id); })
