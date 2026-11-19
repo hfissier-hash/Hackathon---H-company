@@ -41,3 +41,59 @@ export function dropIn(root, THREE, opts) {
   }
   return { items, tick, done };
 }
+
+// Mise en scène d'un salon : vraies ombres portées et socle d'ombre sous la pièce, pour qu'elle ne flotte pas dans le vide.
+// La lumière suit la caméra (elle vient de derrière l'épaule) : les murs masqués côté caméra ne font donc jamais d'ombre sur la pièce.
+// Renvoie { fit(root), follow(camera) } : fit() à chaque salon chargé, follow() à chaque image.
+export function stage(THREE, renderer, scene, sun) {
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.03;
+  sun.shadow.radius = 5;
+  scene.add(sun.target);
+  const center = new THREE.Vector3(), offset = new THREE.Vector3();
+  let radius = 4, pad = null;
+  function fit(root) {
+    const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
+    box.getCenter(center);
+    radius = Math.hypot(size.x, size.y, size.z) / 2;
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = o.name !== 'Sol';
+      o.receiveShadow = true;
+    });
+    const cam = sun.shadow.camera;
+    cam.left = cam.bottom = -radius * 1.15;
+    cam.right = cam.top = radius * 1.15;
+    cam.near = 0.1;
+    cam.far = radius * 7;
+    cam.updateProjectionMatrix();
+    sun.target.position.copy(center);
+    // Socle : une ombre douce qui déborde de la pièce, dessinée une fois sur un disque.
+    if (pad) { scene.remove(pad); pad.geometry.dispose(); pad.material.map.dispose(); pad.material.dispose(); }
+    const c = document.createElement('canvas');
+    c.width = c.height = 256;
+    const g = c.getContext('2d'), grad = g.createRadialGradient(128, 128, 20, 128, 128, 128);
+    grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+    grad.addColorStop(0.55, 'rgba(0,0,0,0.30)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 256, 256);
+    pad = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+    pad.rotation.x = -Math.PI / 2;
+    pad.scale.set(size.x * 1.75, size.z * 1.75, 1);
+    pad.position.set(center.x, box.min.y - 0.03, center.z);
+    pad.renderOrder = -1;
+    scene.add(pad);
+  }
+  function follow(camera) {
+    offset.copy(camera.position).sub(center).setY(0);
+    if (offset.lengthSq() < 1e-6) offset.set(1, 0, 1);
+    offset.normalize().applyAxisAngle(THREE.Object3D.DEFAULT_UP, 0.6); // un peu de côté, pour que les ombres se voient
+    sun.position.copy(center).addScaledVector(offset, radius * 1.6).setY(center.y + radius * 2.4);
+  }
+  return { fit, follow };
+}

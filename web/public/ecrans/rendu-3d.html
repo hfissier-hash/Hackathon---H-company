@@ -14,6 +14,12 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 </style>
 <link rel="stylesheet" href="../glass.css">
 <script src="../glass.js" defer></script>
+<style>
+/* Décor de studio du rendu 3D : fond sombre, donc boutons en verre clair. */
+.studio button { background: rgba(255,255,255,0.14) !important; color: var(--surface) !important; box-shadow: var(--glass-rim-dark), 0 6px 16px -8px rgba(0,0,0,0.6) !important; }
+.studio canvas { cursor: grab; }
+.studio canvas:active { cursor: grabbing; }
+</style>
 </head>
 <body>
 <div style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; overflow: hidden">

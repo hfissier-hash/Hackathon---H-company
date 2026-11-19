@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { dropIn } from './entree.js';
+import { dropIn, stage } from './entree.js';
 
 // Les salons sont compressés (Draco) : le décodeur vient du même paquet three.js.
 const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/');
@@ -32,6 +32,11 @@ if (job && job.status === 'done') {
   const sun = new THREE.DirectionalLight(0xffffff, 1.2);
   sun.position.set(3, 6, 4);
   scene.add(sun);
+  const set = stage(THREE, renderer, scene, sun); // ombres portées et socle d'ombre
+  // Décor de studio : fond pin en dégradé avec un halo chaud, à la place du fond clair.
+  view.classList.add('studio');
+  view.style.background = 'radial-gradient(60% 34% at 50% 66%, rgba(242,193,78,0.26), rgba(242,193,78,0) 70%), radial-gradient(120% 90% at 50% 34%, #3F836D 0%, #1F4D3F 48%, #14332A 100%)';
+  view.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 0 60px rgba(0,0,0,0.35), 0 18px 40px -18px rgba(20,51,42,0.7)';
   const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -97,6 +102,7 @@ if (job && job.status === 'done') {
         if (url && byUrl[url]) { o.userData.nester_url = url; meshes.push(o); }
       });
       new THREE.Box3().setFromObject(current).getCenter(roomCenter);
+      set.fit(current);
       if (firstLoad) {
         const box = new THREE.Box3().setFromObject(current), c = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
@@ -107,6 +113,10 @@ if (job && job.status === 'done') {
         if (out) camera.position.set(c.x - out[0] * d * 0.95 + out[1] * d * 0.55, d * 0.95, c.z - out[1] * d * 0.95 + out[0] * d * 0.55);
         else camera.position.set(c.x + d * 0.75, d * 0.95, c.z + d * 0.9);
         controls.target.set(c.x, 0.5, c.z);
+        // Recul : la pièce entière doit tenir dans la vue, quel que soit son format (étroite sur téléphone).
+        const half = THREE.MathUtils.degToRad(camera.fov) / 2, narrow = Math.min(half, Math.atan(Math.tan(half) * camera.aspect));
+        const dir = camera.position.clone().sub(controls.target).normalize();
+        camera.position.copy(controls.target).addScaledVector(dir, Math.hypot(size.x, size.y, size.z) / 2 / Math.sin(narrow) * 0.98);
         controls.update();
         firstLoad = false;
         entrance = dropIn(current, THREE); // à l'ouverture, les meubles se posent un par un
@@ -193,7 +203,7 @@ if (job && job.status === 'done') {
   shot.addEventListener('click', () => window.open(shot.src, '_blank', 'noopener'));
   const wait = document.createElement('p');
   wait.setAttribute('role', 'status');
-  wait.style.cssText = 'position:absolute;inset:0;margin:0;display:none;align-items:center;justify-content:center;text-align:center;padding:0 32px;background:rgba(244,243,240,0.94);font-size:15px;line-height:1.45;font-weight:500;color:var(--ink)';
+  wait.style.cssText = 'position:absolute;inset:0;margin:0;display:none;align-items:center;justify-content:center;text-align:center;padding:0 32px;background:rgba(20,51,42,0.92);font-size:15px;line-height:1.45;font-weight:500;color:#EEF1EC';
   view.insertBefore(shot, buttons);
   view.insertBefore(wait, buttons);
   let photo = job.photo || null;
@@ -242,5 +252,5 @@ if (job && job.status === 'done') {
   const [turn, full] = buttons.querySelectorAll('button');
   turn.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; turn.setAttribute('aria-pressed', controls.autoRotate); });
   full.addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : view.requestFullscreen(); });
-  renderer.setAnimationLoop(() => { controls.update(); hideFrontWalls(); if (entrance) entrance.tick(); renderer.render(scene, camera); });
+  renderer.setAnimationLoop(() => { controls.update(); hideFrontWalls(); if (entrance) entrance.tick(); set.follow(camera); renderer.render(scene, camera); });
 }

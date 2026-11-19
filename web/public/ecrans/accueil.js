@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { dropIn } from './entree.js';
+import { dropIn, stage } from './entree.js';
 
 const view = document.getElementById('scene'), tags = document.getElementById('tags');
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -24,6 +24,7 @@ try {
   const sun = new THREE.DirectionalLight(0xffffff, 1.2);
   sun.position.set(3, 6, 4);
   scene.add(sun);
+  const set = stage(THREE, renderer, scene, sun); // ombres portées et socle d'ombre
   const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 100);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -118,6 +119,7 @@ try {
     }
     frame();
     addEventListener('resize', frame);
+    set.fit(room);
     const entrance = dropIn(room, THREE, { delay: 500, gap: 150, onLand: label });
     view.classList.add('pret');
     renderer.setAnimationLoop(() => {
@@ -127,6 +129,7 @@ try {
         wall.visible = (camera.position.x - center.x) * nx + (camera.position.z - center.z) * nz < 0.4;
       }
       entrance.tick();
+      set.follow(camera);
       renderer.render(scene, camera);
       placeLabels();
     });
