@@ -6,6 +6,8 @@ import 'server-only';
 
 const IMAGE = /\.(jpe?g|png|webp)$/i;
 const PER_THEME = 12, HOURS = 6;
+// Dossiers du Storage qui ne doivent pas apparaître dans la galerie (rangés là par erreur).
+const HIDDEN = ['boho-chic'];
 
 async function storage(url, key, path, body) {
   const res = await fetch(`${url}/storage/v1/${path}`, {
@@ -36,7 +38,7 @@ export async function GET() {
     const order = { column: 'name', order: 'asc' };
     const root = await storage(url, key, `object/list/${bucket}`, { prefix: '', limit: 100, sortBy: order });
     const files = root.filter((o) => o.id && IMAGE.test(o.name)).slice(0, PER_THEME).map((o) => ({ path: o.name, theme: '' }));
-    const folders = root.filter((o) => !o.id).slice(0, 24);
+    const folders = root.filter((o) => !o.id && !HIDDEN.includes(o.name)).slice(0, 24);
     const lists = await Promise.all(folders.map((f) => storage(url, key, `object/list/${bucket}`, { prefix: f.name + '/', limit: PER_THEME + 4, sortBy: order })));
     folders.forEach((f, i) => lists[i].filter((o) => o.id && IMAGE.test(o.name)).slice(0, PER_THEME)
       .forEach((o) => files.push({ path: `${f.name}/${o.name}`, theme: label(f.name) })));
