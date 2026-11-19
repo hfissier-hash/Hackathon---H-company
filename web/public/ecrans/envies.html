@@ -53,25 +53,22 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
 
     <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 24px">
       <p style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px">Tes inspirations</p>
-      <p style="margin: 0; font-size: 13px; color: var(--ink-muted)">2 photos</p>
+      <p style="margin: 0; font-size: 13px; color: var(--ink-muted)">0 photo</p>
     </div>
     <div style="display: flex; gap: 10px; margin-top: 12px">
       <button type="button" aria-label="Ajouter des photos d'inspiration" style="width: 96px; height: 120px; flex-shrink: 0; border-radius: var(--radius-card); border: 1.5px dashed var(--ink-muted); background: var(--surface); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 13px var(--body)">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         Ajouter
       </button>
-      <div style="position: relative; width: 96px; height: 120px; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--birch)">
-        <img src="https://images.unsplash.com/photo-1618221381711-42ca8ab6e908?w=240&amp;h=300&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.47&amp;fp-y=0.5&amp;q=80&amp;auto=format" alt="Inspiration importée depuis Pinterest : canapé orange devant un mur vert couvert de cadres" style="display: block; width: 100%; height: 100%; object-fit: cover">
-        <p style="position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 8px; border-radius: 999px; background: var(--surface); font-size: 11px; font-weight: 500">Pinterest</p>
-      </div>
-      <div style="position: relative; width: 96px; height: 120px; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--birch)">
-        <img src="https://images.unsplash.com/photo-1790343434182-872b9d1539c3?w=240&amp;h=300&amp;fit=crop&amp;crop=focalpoint&amp;fp-x=0.5&amp;fp-y=0.567&amp;q=80&amp;auto=format" alt="Inspiration importée depuis la galerie : mur terracotta, fauteuils et table en bois massif, carrelage" style="display: block; width: 100%; height: 100%; object-fit: cover">
-        <p style="position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 8px; border-radius: 999px; background: var(--surface); font-size: 11px; font-weight: 500">Galerie</p>
-      </div>
+      <a id="vers-galerie" href="galerie.html" style="flex: 1; min-width: 0; height: 120px; box-sizing: border-box; padding: 14px; border-radius: var(--radius-card); background: var(--birch); color: var(--ink); text-decoration: none; display: flex; flex-direction: column; justify-content: space-between">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lingon)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="2"/><rect x="13" y="3" width="8" height="6" rx="2"/><rect x="13" y="11" width="8" height="10" rx="2"/><rect x="3" y="15" width="8" height="6" rx="2"/></svg>
+        <span style="font-size: 14px; font-weight: 600; line-height: 1.25">Consultez notre galerie d'inspiration <span aria-hidden="true">→</span></span>
+      </a>
     </div>
+    <div id="mes-photos" style="display: none; gap: 10px; margin-top: 10px; overflow-x: auto; flex-shrink: 0"></div>
     <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--birch)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lingon)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/></svg>
-      <p style="margin: 0; font-size: 13px; line-height: 1.35; color: var(--ink)">Détecté : terracotta, orange brûlé, bois massif, murs de cadres</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.35; color: var(--ink)">Ajoute une photo qui t’inspire.</p>
     </div>
 
     <p style="margin: 24px 0 12px; font-size: 17px; font-weight: 700; letter-spacing: -0.3px">À chercher</p>
@@ -143,12 +140,24 @@ if (Nestr.live) {
 }
 // Photos d'inspiration : ajout depuis l'appareil, puis lecture par un modèle de vision (Hugging Face).
 if (Nestr.live) (function () {
-  var addBtn = document.querySelector('button[aria-label^="Ajouter des photos"]'), row = addBtn.parentNode;
-  var countP = row.previousElementSibling.children[1], detectedP = row.nextElementSibling.querySelector('p');
-  var tileTpl = row.children[1].cloneNode(true), asked = 0;
-  // Les photos d'exemple de la maquette sont retirées : seules les photos ajoutées par le client orientent la recherche.
-  [].slice.call(row.querySelectorAll('img')).forEach(function (img) { img.parentNode.remove(); });
-  var photos = [];
+  var addBtn = document.querySelector('button[aria-label^="Ajouter des photos"]'), row = document.getElementById('mes-photos');
+  var countP = addBtn.parentNode.previousElementSibling.children[1], detectedP = row.nextElementSibling.querySelector('p');
+  var asked = 0, photos = [];
+  var tileTpl = document.createElement('div');
+  tileTpl.style.cssText = 'position:relative;width:96px;height:120px;flex-shrink:0;border-radius:var(--radius-card);overflow:hidden';
+  tileTpl.innerHTML = '<img alt="" style="display:block;width:100%;height:100%;object-fit:cover"><p style="position:absolute;left:8px;top:8px;margin:0;padding:2px 8px;border-radius:999px;background:var(--surface);font-size:11px;font-weight:500"></p>';
+  // Les photos choisies (appareil ou galerie) et le texte saisi sont gardés le temps de la visite.
+  function remember() {
+    try { sessionStorage.setItem('nestr-inspirations', JSON.stringify(photos.map(function (p) { return { src: p.src, from: p.from }; }))); } catch (e) {}
+  }
+  function show(src, from, first) {
+    var tile = tileTpl.cloneNode(true), photo = { src: src, tile: tile, from: from };
+    tile.querySelector('img').src = src;
+    tile.querySelector('img').alt = from === 'Galerie' ? 'Photo de la galerie d’inspiration' : 'Ta photo d’inspiration';
+    tile.querySelector('p').textContent = from;
+    if (first) { row.insertBefore(tile, row.firstChild); photos.unshift(photo); } else { row.appendChild(tile); photos.push(photo); }
+    removable(photo);
+  }
   var picker = document.createElement('input');
   picker.type = 'file'; picker.accept = 'image/*'; picker.multiple = true; picker.style.display = 'none';
   document.body.appendChild(picker);
@@ -164,7 +173,6 @@ if (Nestr.live) (function () {
     photo.tile.addEventListener('click', drop);
     photo.tile.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); drop(); } });
   }
-  photos.forEach(removable);
 
   // La photo est réduite à 768 px dans le navigateur avant d'être envoyée.
   function shrink(file) {
@@ -184,13 +192,7 @@ if (Nestr.live) (function () {
   picker.addEventListener('change', function () {
     Promise.all([].slice.call(picker.files, 0, 3).map(shrink)).then(function (urls) {
       urls.forEach(function (src) {
-        var tile = tileTpl.cloneNode(true), photo = { src: src, tile: tile };
-        tile.querySelector('img').src = src;
-        tile.querySelector('img').alt = 'Ta photo d’inspiration';
-        tile.querySelector('p').textContent = 'Ta photo';
-        row.insertBefore(tile, row.children[1]);
-        photos.unshift(photo);
-        removable(photo);
+        show(src, 'Ta photo', true);
       });
       picker.value = '';
       analyse();
@@ -200,6 +202,8 @@ if (Nestr.live) (function () {
   function analyse() {
     var mine = ++asked, used = photos.slice(0, 3);
     countP.textContent = photos.length + ' photo' + (photos.length > 1 ? 's' : '');
+    row.style.display = photos.length ? 'flex' : 'none';
+    remember();
     if (!used.length) { detectedP.textContent = 'Ajoute une photo qui t’inspire.'; Nestr.set({ inspiration: null }); return; }
     detectedP.textContent = 'Nestr regarde tes photos…';
     fetch('/api/inspire', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -213,6 +217,11 @@ if (Nestr.live) (function () {
       })
       .catch(function () { if (mine === asked) detectedP.textContent = 'Serveur Nester injoignable.'; });
   }
+  try { JSON.parse(sessionStorage.getItem('nestr-inspirations') || '[]').slice(0, 6).forEach(function (p) { show(p.src, p.from); }); } catch (e) {}
+  var smart = document.getElementById('smart'), kept = null;
+  try { kept = sessionStorage.getItem('nestr-envie'); } catch (e) {}
+  if (kept !== null) { smart.value = kept; smart.dispatchEvent(new Event('input')); }
+  smart.addEventListener('input', function () { try { sessionStorage.setItem('nestr-envie', smart.value); } catch (e) {} });
   analyse();
 })();
 document.querySelectorAll('a[href="agent.html"]').forEach(function (a) {
