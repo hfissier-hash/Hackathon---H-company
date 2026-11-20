@@ -110,19 +110,19 @@ body > div:first-of-type > nav { animation: none; }
   background:
     radial-gradient(140px 60px at var(--mx, 30%) var(--my, -10%), rgba(255, 255, 255, 0.42), transparent 70%),
     linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.22) 48%, transparent 61%) 220% 0 / 260% 100% no-repeat,
-    linear-gradient(180deg, rgba(40, 98, 80, 0.66), rgba(20, 51, 42, 0.80)) !important;
+    linear-gradient(180deg, rgba(40, 98, 80, 0.44), rgba(24, 62, 51, 0.58)) !important;
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
-  box-shadow: var(--glass-rim-dark), 0 10px 24px -10px rgba(31, 77, 63, 0.65), 0 2px 6px rgba(0, 0, 0, 0.10) !important;
+  box-shadow: var(--glass-rim-dark), 0 8px 20px -12px rgba(31, 77, 63, 0.45), 0 2px 6px rgba(0, 0, 0, 0.06) !important;
   animation: lg-sheen 5.5s ease-in-out infinite;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 1px 2px rgba(10, 30, 24, 0.55), 0 0 8px rgba(10, 30, 24, 0.35);
 }
 @keyframes lg-sheen { 0%, 55% { background-position: 0 0, 220% 0, 0 0; } 100% { background-position: 0 0, -120% 0, 0 0; } }
 
 :is(div, button, a, section)[style*="var(--pine-deep)"] {
   background:
     radial-gradient(200px 120px at var(--mx, 20%) var(--my, 0%), rgba(255, 255, 255, 0.22), transparent 70%),
-    linear-gradient(160deg, rgba(31, 77, 63, 0.70), rgba(20, 51, 42, 0.84)) !important;
+    linear-gradient(160deg, rgba(31, 77, 63, 0.50), rgba(20, 51, 42, 0.64)) !important;
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   box-shadow: var(--glass-rim-dark), 0 14px 32px -12px rgba(20, 51, 42, 0.60) !important;
