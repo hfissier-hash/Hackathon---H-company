@@ -30,3 +30,4 @@ worker/models_cache/
 
 # Lien local avec le projet Vercel
 .vercel
+docs/presentation/*.mp4

@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nestr — Démo technique</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600..800&amp;family=Figtree:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<!--
+  Présentation « démo technique » de Nestr : 5 minutes, 15 séquences minutées.
+  Ouverte dans un navigateur, elle se joue seule (espace : pause, flèches : séquence précédente ou suivante, R : début).
+  Tout l'affichage dépend d'une seule fonction, seek(t) : c'est elle qu'utilise l'export vidéo (export/video.mjs).
+  Chiffres : relevés dans la base de l'application le 20.11.2026 (42 salons, 192 sessions d'agents).
+-->
+<style>
+:root { --pine: #1F4D3F; --pine-deep: #14332A; --lingon: #C9432F; --sun: #F2C14E; --surface: #FAFAF6; --birch: #EEE7D7; --line: #D5D8CE;
+  --ink: #14231F; --ink-muted: #4A5A55; --ink-on-dark: #EEF1EC; --ok: #2F6FA3; --warn: #A65A12;
+  --display: 'Bricolage Grotesque', 'Arial Black', Arial, sans-serif; --body: 'Figtree', Verdana, Arial, sans-serif; --data: 'JetBrains Mono', Consolas, monospace; }
+html, body { margin: 0; height: 100%; background: #0B1C17; overflow: hidden; }
+#stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: var(--surface); font-family: var(--body); color: var(--ink); }
+section { position: absolute; inset: 0; box-sizing: border-box; padding: 120px 140px 0; background: var(--surface); opacity: 0; visibility: hidden; }
+section.dark { background: var(--pine-deep); color: var(--ink-on-dark); }
+[data-at] { will-change: opacity, transform; }
+.kicker { margin: 0; font: 500 22px var(--data); letter-spacing: 0.18em; text-transform: uppercase; color: var(--lingon); }
+.dark .kicker { color: var(--sun); }
+h1 { margin: 22px 0 0; font: 700 68px/1.1 var(--display); letter-spacing: -1.6px; color: var(--pine); max-width: 1640px; }
+.dark h1 { color: #fff; }
+h1 em { font-style: normal; color: var(--lingon); }
+.pied { position: absolute; left: 140px; right: 140px; bottom: 52px; display: flex; justify-content: space-between; font-size: 19px; color: var(--ink-muted); }
+.pied span:last-child { font-family: var(--data); font-size: 18px; }
+.mono { font-family: var(--data); font-weight: 500; }
+
+/* cartes de chiffres */
+.chiffres { display: grid; gap: 28px; margin-top: 70px; }
+.chiffre { padding: 34px 32px 38px; border-radius: 16px; background: var(--birch); }
+.chiffre b { display: block; font: 500 66px/1 var(--data); letter-spacing: -2px; color: var(--pine); }
+.chiffre strong { display: block; margin-top: 26px; font: 600 29px/1.2 var(--body); }
+.chiffre span { display: block; margin-top: 14px; font-size: 22px; line-height: 1.35; color: var(--ink-muted); }
+.chiffre.fort { background: var(--lingon); color: #FFF8F2; }
+.chiffre.fort b, .chiffre.fort span { color: #FFF8F2; }
+.encadre { display: flex; gap: 40px; align-items: center; margin-top: 40px; padding: 30px 40px; border: 2px solid var(--line); border-radius: 16px; font-size: 25px; line-height: 1.45; color: var(--ink-muted); }
+.encadre b { flex-shrink: 0; font: 500 26px var(--data); color: var(--lingon); }
+
+/* schéma de la stack */
+.stack { position: relative; margin-top: 64px; height: 560px; }
+.bloc { position: absolute; width: 480px; height: 200px; box-sizing: border-box; padding: 30px 32px; border-radius: 14px; background: var(--birch); }
+.bloc b { display: block; font: 700 36px var(--display); letter-spacing: -0.6px; color: var(--pine); }
+.bloc span { display: block; margin-top: 14px; font-size: 23px; line-height: 1.4; color: var(--ink-muted); }
+.bloc i { font: 500 22px var(--data); font-style: normal; color: var(--ink); }
+.bloc.pin { background: var(--pine-deep); } .bloc.pin b, .bloc.pin span, .bloc.pin i { color: #fff; }
+.bloc.rouge { background: var(--lingon); } .bloc.rouge b, .bloc.rouge span, .bloc.rouge i { color: #FFF8F2; }
+.stack svg { position: absolute; inset: 0; overflow: visible; }
+.stack text { font: 500 19px 'JetBrains Mono', monospace; fill: var(--ink-muted); }
+
+/* séquences de démo */
+.demo { padding: 0; }
+.demo .logo { position: absolute; left: 130px; top: 96px; font: 800 44px var(--display); color: #fff; letter-spacing: -0.5px; }
+.demo .texte { position: absolute; left: 130px; top: 300px; width: 1010px; }
+.demo h1 { font-size: 62px; margin-top: 20px; }
+.ligne { display: flex; align-items: baseline; gap: 26px; margin-top: 30px; font-size: 29px; line-height: 1.4; color: var(--ink-on-dark); }
+.ligne:first-of-type { margin-top: 44px; }
+.ligne code { flex-shrink: 0; padding: 7px 14px; border-radius: 6px; background: rgba(242, 193, 78, 0.14); color: var(--sun); font: 500 22px var(--data); }
+.cote { margin: 46px 0 0; font: 500 30px var(--data); color: var(--sun); }
+.tel { position: absolute; left: 1296px; top: 68px; width: 436px; height: 944px; border-radius: 52px; overflow: hidden; background: var(--surface); box-shadow: 0 0 0 10px #0B1C17, 0 0 0 12px rgba(255,255,255,0.14), 0 50px 90px -30px rgba(0,0,0,0.75); }
+.tel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+
+/* agent en direct */
+.direct { display: flex; gap: 60px; margin-top: 64px; }
+.page { flex: 1; border-radius: 14px; overflow: hidden; background: var(--surface); color: var(--ink); }
+.page header { padding: 18px 28px; background: var(--birch); font: 500 21px var(--data); color: var(--ink-muted); }
+.page .corps { display: flex; gap: 40px; padding: 40px; }
+.page .photo { width: 380px; height: 330px; border-radius: 10px; background: var(--birch); }
+.page .champs { flex: 1; display: flex; flex-direction: column; gap: 22px; padding-top: 8px; }
+.trait { height: 18px; border-radius: 9px; background: var(--line); }
+.champ { padding: 14px 18px; border: 3px solid var(--lingon); border-radius: 8px; background: #FBE5E0; font: 500 22px var(--data); color: var(--lingon); }
+.reponse { width: 560px; box-sizing: border-box; padding: 40px; border-radius: 14px; background: #1F4D3F; font: 500 27px/1.75 var(--data); color: #fff; }
+.reponse small { display: block; font-size: 20px; color: var(--sun); margin-bottom: 18px; }
+.reponse u { text-decoration: none; float: right; margin-right: 60px; color: var(--sun); }
+.mesures { display: flex; gap: 70px; margin-top: 44px; font: 500 26px var(--data); color: var(--sun); }
+
+/* appris / à faire */
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 60px; }
+.col { padding: 44px 48px; border-radius: 16px; background: var(--birch); }
+.col.pin { background: var(--pine-deep); color: var(--ink-on-dark); }
+.col > p { margin: 0 0 6px; font: 500 21px var(--data); letter-spacing: 0.16em; color: var(--lingon); }
+.col.pin > p { color: var(--sun); }
+.col div { padding: 24px 0; border-bottom: 1px solid rgba(20, 35, 31, 0.14); }
+.col.pin div { border-color: rgba(255,255,255,0.14); }
+.col div:last-child { border: 0; padding-bottom: 0; }
+.col b { display: block; font: 700 31px var(--body); color: var(--pine); }
+.col.pin b { color: #fff; }
+.col span { display: block; margin-top: 10px; font-size: 23px; line-height: 1.4; color: var(--ink-muted); }
+.col.pin span { color: #C9D3CD; }
+
+.centre { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0; }
+.marque { font: 800 190px/1 var(--display); letter-spacing: -4px; color: #fff; }
+.marque em { font-style: normal; color: var(--lingon); }
+#barre { position: absolute; left: 0; bottom: 0; height: 5px; background: var(--lingon); z-index: 50; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 0:00 Le problème -->
+<section data-start="0" data-end="15">
+  <p class="kicker" data-at="4.2">Le problème</p>
+  <h1 data-at="4.6">230 cm de canapé. 210 cm entre les murs.<br><em>Retour au magasin.</em></h1>
+  <svg viewBox="0 0 1640 520" width="1640" height="520" style="margin-top: 50px; overflow: visible">
+    <path d="M250 40h1140v300h-80V64H330v276h-80z" fill="#14231F"/>
+    <g id="canape"><rect x="285" y="110" width="1070" height="190" rx="8" fill="#C9432F"/><rect x="285" y="110" width="1070" height="56" rx="8" fill="#9E3323"/>
+      <rect x="285" y="110" width="45" height="190" fill="#A65A12" opacity="0.75"/><rect x="1310" y="110" width="45" height="190" fill="#A65A12" opacity="0.75"/></g>
+    <g stroke="#2F6FA3" stroke-width="3"><path d="M330 372h980M330 358v28M1310 358v28"/></g>
+    <text x="820" y="418" text-anchor="middle" font-family="JetBrains Mono" font-size="28" fill="#2F6FA3">espace : 210 cm</text>
+    <g data-at="3.4"><path d="M285 470h1070M285 456v28M1355 456v28" stroke="#A65A12" stroke-width="3"/>
+      <text x="820" y="516" text-anchor="middle" font-family="JetBrains Mono" font-size="28" fill="#A65A12">canapé : 230 cm · ne rentre pas</text></g>
+  </svg>
+  <div class="pied"><span>Nestr · Team 12 · Hackathon Build The Future</span><span>H Company Agents API</span></div>
+</section>
+
+<!-- 0:15 Nestr -->
+<section class="dark centre" data-start="15" data-end="30">
+  <div class="marque" data-at="0.6"><em>n</em>estr<em>.</em></div>
+  <p data-at="1.6" style="margin: 50px 0 0; font: 700 62px/1.2 var(--display); letter-spacing: -1px; color: #fff">Une demande, un salon de 13 produits réels en 3D,<br>en 12 secondes.</p>
+  <p class="mono" data-at="3" style="margin: 44px 0 0; font-size: 25px; color: var(--sun)">médiane mesurée sur 42 salons · en ligne sur nester-mu.vercel.app</p>
+</section>
+
+<!-- 0:30 La stack -->
+<section data-start="30" data-end="70">
+  <p class="kicker" data-at="0.4">La stack · 4 blocs et 3 services</p>
+  <h1 data-at="0.8" style="font-size: 60px">L'appli ne parle qu'à Supabase. Seul le worker appelle les agents H, Hugging Face et Blender.</h1>
+  <div class="stack">
+    <svg viewBox="0 0 1640 560">
+      <g stroke="#4A5A55" stroke-width="3" fill="none">
+        <path data-at="6" d="M480 100h100M560 88l20 12-20 12"/>
+        <path data-at="10" d="M1060 100h100M1080 88l-20 12 20 12M1140 88l20 12-20 12"/>
+        <path data-at="15" d="M1400 200v70M240 270h1160M240 270v70M820 270v70M1400 270v70M228 322l12 20 12-20M808 322l12 20 12-20M1388 322l12 20 12-20"/>
+      </g>
+      <text data-at="6" x="530" y="242" text-anchor="middle">dépose la demande, lit l'avancement</text>
+      <text data-at="10" x="1110" y="242" text-anchor="middle">lit les demandes, écrit les résultats</text>
+    </svg>
+    <div class="bloc" data-at="3" style="left: 0; top: 0"><b>Application</b><span>Next.js 16, three.js<br><i>Vercel</i></span></div>
+    <div class="bloc" data-at="6" style="left: 580px; top: 0"><b>Supabase</b><span>Postgres : catalogue, demandes, profils<br>Auth : comptes · Storage : salons 3D</span></div>
+    <div class="bloc pin" data-at="10" style="left: 1160px; top: 0"><b>Worker Python</b><span>enchaîne toutes les étapes<br><i>Mac du CTO</i></span></div>
+    <div class="bloc rouge" data-at="16" style="left: 0; top: 350px"><b>Agents H Company</b><span><i>h/web-scraper-flash</i><br>lisent les sites des enseignes</span></div>
+    <div class="bloc" data-at="21" style="left: 580px; top: 350px"><b>Hugging Face</b><span>gpt-oss-120b · gemma-4 (vision)<br>TRELLIS : 3D depuis une photo</span></div>
+    <div class="bloc" data-at="27" style="left: 1160px; top: 350px"><b>Blender 5.3</b><span>sans interface, en Python<br>salon 3D et rendu photo</span></div>
+  </div>
+  <p data-at="32" style="position: absolute; left: 140px; bottom: 104px; margin: 0; font-size: 22px; color: var(--ink-muted)"><span class="mono">GitHub → Vercel</span> : le site est redéployé à chaque envoi sur main</p>
+  <div class="pied"><span>Nestr · Team 12 · Hackathon Build The Future</span><span>H Company Agents API</span></div>
+</section>
+
+<!-- 1:10 Le catalogue -->
+<section data-start="70" data-end="90">
+  <p class="kicker" data-at="0.4">Avant la démo · le catalogue</p>
+  <h1 data-at="0.8">Les agents H ont d'abord relevé les fiches des enseignes, qui n'ont pas d'API publique.</h1>
+  <div class="chiffres" style="grid-template-columns: repeat(5, 1fr)">
+    <div class="chiffre" data-at="3"><b>724</b><strong>sessions d'agents H</strong><span>pour relever le catalogue</span></div>
+    <div class="chiffre" data-at="4.5"><b>97 %</b><strong>des pages exploitables</strong><span>pendant la collecte</span></div>
+    <div class="chiffre" data-at="6"><b>636</b><strong>fiches produits</strong><span>prix, photo, dimensions, colis</span></div>
+    <div class="chiffre" data-at="8"><b>476</b><strong>utilisables par l'appli</strong><span>365 IKEA, 111 peintures Castorama</span></div>
+    <div class="chiffre" data-at="10"><b>439</b><strong>modèles 3D officiels</strong><span>aux vraies dimensions</span></div>
+  </div>
+  <div class="pied"><span>Nestr · Team 12 · Hackathon Build The Future</span><span>H Company Agents API</span></div>
+</section>
+
+<!-- 1:30 Démo 1/7 -->
+<section class="dark demo" data-start="90" data-end="110">
+  <div class="logo">nestr.</div>
+  <div class="texte">
+    <p class="kicker" data-at="0.5">Démo · 1/7 · sous le capot</p>
+    <h1 data-at="0.9">Tu crées ton compte et tu mesures ton salon</h1>
+    <div class="ligne" data-at="5"><code>Supabase Auth</code><span>un compte par adresse mail, session en cookies illisibles par le navigateur</span></div>
+    <div class="ligne" data-at="9"><code>profiles</code><span>le logement est enregistré une fois et resservi à chaque salon</span></div>
+    <div class="ligne" data-at="12"><code>plan à l'échelle</code><span>porte, fenêtres et sens d'ouverture placés sur les murs</span></div>
+    <p class="cote" data-at="14">|— dimensions en cm, porte comprise —|</p>
+  </div>
+  <div class="tel"><img src="ecrans/01-accueil.png" data-from="0" alt=""><img src="ecrans/02-compte.png" data-from="5" alt=""><img src="ecrans/03-logement.png" data-from="11" alt=""></div>
+</section>
+
+<!-- 1:50 Démo 2/7 -->
+<section class="dark demo" data-start="110" data-end="125">
+  <div class="logo">nestr.</div>
+  <div class="texte">
+    <p class="kicker" data-at="0.5">Démo · 2/7 · sous le capot</p>
+    <h1 data-at="0.9">Tu choisis un style et un budget</h1>
+    <div class="ligne" data-at="3"><code>catalog_products</code><span>476 produits réels en 13 catégories, relevés par les agents H</span></div>
+    <div class="ligne" data-at="6"><code>product_tags</code><span>style et famille de couleur de chaque produit, étiquetés par gpt-oss-120b</span></div>
+    <p class="cote" data-at="9">|— le budget borne toute la recherche —|</p>
+  </div>
+  <div class="tel"><img src="ecrans/04-style.png" data-from="0" alt=""></div>
+</section>
+
+<!-- 2:05 Démo 3/7 -->
+<section class="dark demo" data-start="125" data-end="145">
+  <div class="logo">nestr.</div>
+  <div class="texte">
+    <p class="kicker" data-at="0.5">Démo · 3/7 · sous le capot</p>
+    <h1 data-at="0.9">Tu décris ce que tu veux, en mots et en photos</h1>
+    <div class="ligne" data-at="4"><code>galerie</code><span>photos d'inspiration classées par thème, ou tes propres photos</span></div>
+    <div class="ligne" data-at="9"><code>gemma-4-31B</code><span>lit les photos : styles, couleurs, matières, mur d'accent</span></div>
+    <div class="ligne" data-at="12"><code>gpt-oss-120b</code><span>lit le texte : ambiance, quantités, taille du canapé</span></div>
+    <p class="cote" data-at="15">|— 3,9 s · médiane sur 93 lectures —|</p>
+  </div>
+  <div class="tel"><img src="ecrans/05-galerie.png" data-from="0" alt=""><img src="ecrans/06-envies.png" data-from="8" alt=""></div>
+</section>
+
+<!-- 2:25 Démo 4/7 -->
+<section class="dark demo" data-start="145" data-end="160">
+  <div class="logo">nestr.</div>
+  <div class="texte">
+    <p class="kicker" data-at="0.5">Démo · 4/7 · sous le capot</p>
+    <h1 data-at="0.9">La recherche, puis un styliste IA</h1>
+    <div class="ligne" data-at="3"><code>search_catalog</code><span>fonction Postgres : ce qui rentre dans la pièce, passe la porte et tient dans le budget</span></div>
+    <div class="ligne" data-at="6"><code>gpt-oss-120b</code><span>classe les produits retenus, catégorie par catégorie</span></div>
+    <div class="ligne" data-at="9"><code>styliste</code><span>relit le salon entier et remplace ce qui ne va pas ensemble : 1,8 s</span></div>
+    <p class="cote" data-at="11">|— 4,7 s · médiane —|</p>
+  </div>
+  <div class="tel"><img src="ecrans/07-recherche-debut.png" data-from="0" alt=""><img src="ecrans/08-recherche-milieu.png" data-from="4" alt=""><img src="ecrans/09-recherche-fin.png" data-from="8" alt=""></div>
+</section>
+
+<!-- 2:40 Démo 5/7 -->
+<section class="dark" data-start="160" data-end="180">
+  <p class="kicker" data-at="0.5">Démo · 5/7 · l'agent H en direct</p>
+  <h1 data-at="0.9" style="font-size: 60px">Si aucune fiche ne rentre dans la pièce, un agent H va chercher sur ikea.com.</h1>
+  <div class="direct">
+    <div class="page" data-at="3">
+      <header>ikea.com · fiche produit</header>
+      <div class="corps"><div class="photo"></div>
+        <div class="champs"><div class="trait" style="width: 70%"></div><div class="trait" style="width: 40%"></div>
+          <div class="champ" data-at="6">prix</div><div class="champ" data-at="7.5">dimensions</div><div class="champ" data-at="9">colis</div><div class="trait" style="width: 55%"></div></div></div>
+    </div>
+    <div class="reponse" data-at="10"><small>réponse de l'agent → Supabase</small>{<br>&nbsp;&nbsp;"prix_eur": <u data-at="11">✓</u><br>&nbsp;&nbsp;"dimensions": <u data-at="11.6">✓</u><br>&nbsp;&nbsp;"colis": <u data-at="12.2">✓</u><br>&nbsp;&nbsp;"teinte": <u data-at="12.8">✓</u><br>}<small style="margin: 22px 0 0; color: #C9D3CD">h/web-scraper-flash · commande holo</small></div>
+  </div>
+  <div class="mesures" data-at="14"><span>42 s · durée médiane d'une réussite</span><span>3 réussites sur 5 recherches</span><span>fiche ajoutée au catalogue</span></div>
+</section>
+
+<!-- 3:00 Démo 6/7 -->
+<section class="dark demo" data-start="180" data-end="205">
+  <div class="logo">nestr.</div>
+  <div class="texte">
+    <p class="kicker" data-at="0.5">Démo · 6/7 · sous le capot</p>
+    <h1 data-at="0.9">Ton salon en 3D, aux vraies dimensions</h1>
+    <div class="ligne" data-at="4"><code>Blender 5.3</code><span>sans interface, piloté en Python : place chaque meuble</span></div>
+    <div class="ligne" data-at="8"><code>modèles 3D</code><span>439 modèles officiels IKEA, sinon TRELLIS (environ 30 s par meuble), sinon une forme simple</span></div>
+    <div class="ligne" data-at="12"><code>Storage · three.js</code><span>le fichier .glb va dans Supabase, l'appli l'affiche</span></div>
+    <div class="ligne" data-at="16"><code>enregistrer</code><span>le salon et son modèle 3D se retrouvent dans le profil</span></div>
+    <p class="cote" data-at="19">|— 3,8 s · médiane —|</p>
+  </div>
+  <div class="tel"><img src="ecrans/10-salon-3d.png" data-from="0" alt=""><img src="ecrans/12-deco.png" data-from="15" alt=""></div>
+</section>
+
+<!-- 3:25 Démo 7/7 -->
+<section class="dark demo" data-start="205" data-end="220">
+  <div class="logo">nestr.</div>
+  <div class="texte">
+    <p class="kicker" data-at="0.5">Démo · 7/7 · sous le capot</p>
+    <h1 data-at="0.9">La liste d'achat, prix vérifiés</h1>
+    <div class="ligne" data-at="3"><code>5 agents H</code><span>en parallèle, vérifient le prix du jour des 5 produits les plus chers</span></div>
+    <div class="ligne" data-at="6"><code>agent_runs</code><span>une ligne par session : durée, résultat, erreur</span></div>
+    <div class="ligne" data-at="9"><code>si un agent échoue</code><span>le produit reste, sans la mention « prix vérifié »</span></div>
+    <p class="cote" data-at="11">|— 38 s · 76 % de réussite —|</p>
+  </div>
+  <div class="tel"><img src="ecrans/14-liste.png" data-from="0" alt=""></div>
+</section>
+
+<!-- 3:40 Résultats -->
+<section data-start="220" data-end="250">
+  <p class="kicker" data-at="0.4">Résultats mesurés</p>
+  <h1 data-at="0.8">Mesuré dans l'appli en ligne, pas en laboratoire.</h1>
+  <div class="chiffres" style="grid-template-columns: repeat(5, 1fr)">
+    <div class="chiffre" data-at="3"><b>11,7 s</b><strong>de la demande au salon</strong><span>médiane sur 42 salons</span></div>
+    <div class="chiffre" data-at="7"><b>3,9 s</b><strong>pour lire la demande</strong><span>gpt-oss-120b et gemma-4</span></div>
+    <div class="chiffre" data-at="9.5"><b>3,8 s</b><strong>pour construire le salon</strong><span>Blender, sans interface</span></div>
+    <div class="chiffre" data-at="12"><b>76 %</b><strong>de réussite des agents H</strong><span>192 sessions en direct</span></div>
+    <div class="chiffre" data-at="15"><b>38 s</b><strong>pour vérifier 5 prix</strong><span>agents en parallèle, après l'affichage du salon</span></div>
+  </div>
+  <div class="encadre" data-at="19"><b>Cas d'échec</b><span>46 sessions sur 192 : réponse de l'agent illisible (44), recherche restée incomplète (2). Un échec ne bloque jamais le salon : le produit reste, sans la mention « prix vérifié ».</span></div>
+  <div class="pied"><span>Nestr · Team 12 · Hackathon Build The Future</span><span>H Company Agents API</span></div>
+</section>
+
+<!-- 4:10 Coût -->
+<section data-start="250" data-end="265">
+  <p class="kicker" data-at="0.4">Coût de run</p>
+  <h1 data-at="0.8">Un salon coûte environ 10 centimes. Presque tout part dans les agents.</h1>
+  <div class="chiffres" style="grid-template-columns: 1fr 60px 1fr 60px 1fr 60px 1fr; align-items: stretch; gap: 12px">
+    <div class="chiffre" data-at="3"><b>0,10 $</b><strong>Agents H</strong><span>5 vérifications de prix, + 1 recherche si besoin</span></div>
+    <b data-at="4.5" style="align-self: center; text-align: center; font: 600 44px var(--body)">+</b>
+    <div class="chiffre" data-at="4.5"><b style="font-size: 54px; white-space: nowrap; line-height: 66px">&lt; 0,001 $</b><strong>IA texte et vision</strong><span>gpt-oss-120b, gemma-4, styliste</span></div>
+    <b data-at="6" style="align-self: center; text-align: center; font: 600 44px var(--body)">+</b>
+    <div class="chiffre" data-at="6"><b>0 $</b><strong>3D et rendu</strong><span>modèles officiels, TRELLIS dans le quota, Blender</span></div>
+    <b data-at="8" style="align-self: center; text-align: center; font: 600 44px var(--body)">=</b>
+    <div class="chiffre fort" data-at="8"><b>0,10 $</b><strong>par salon</strong><span>vérifier 1 prix au lieu de 5 divise la facture par plus de 3</span></div>
+  </div>
+  <div class="pied"><span>Nestr · Team 12 · Hackathon Build The Future</span><span>H Company Agents API</span></div>
+</section>
+
+<!-- 4:25 Appris -->
+<section data-start="265" data-end="290">
+  <p class="kicker" data-at="0.4">Retour d'expérience sur l'Agent API</p>
+  <h1 data-at="0.8">Ce qu'on a appris, et ce qui reste à faire.</h1>
+  <div class="deux">
+    <div class="col" data-at="3"><p>APPRIS</p>
+      <div><b>Une consigne directe va 2 fois plus vite</b><span>« Prends le premier résultat conforme, ne compare pas » a divisé le temps de recherche par plus de deux.</span></div>
+      <div><b>Le catalogue d'abord, l'agent ensuite</b><span>Une recherche en direct prend 42 s : on ne lance l'agent que si le catalogue ne suffit pas.</span></div>
+      <div><b>Maisons du Monde sorti du périmètre</b><span>Son catalogue n'a pas pu être fusionné.</span></div></div>
+    <div class="col pin" data-at="13"><p>À FAIRE</p>
+      <div><b>Sortir le worker du Mac du CTO</b><span>Le faire tourner sur un serveur avec Blender.</span></div>
+      <div><b>Faire filtrer tous les critères</b><span>Seconde main, animaux, facile à monter : pas encore pris en compte.</span></div>
+      <div><b>Plus de pièces que le salon</b><span>Chambre, bureau, logement entier.</span></div></div>
+  </div>
+  <div class="pied"><span>Nestr · Team 12 · Hackathon Build The Future</span><span>H Company Agents API</span></div>
+</section>
+
+<!-- 4:50 Fin -->
+<section class="dark centre" data-start="290" data-end="300">
+  <div class="marque" data-at="0.5" style="font-size: 170px"><em>n</em>estr<em>.</em></div>
+  <p data-at="1.3" style="margin: 36px 0 0; font: 500 40px var(--body); color: #fff">Ton salon en 3D, avec de vrais produits qui rentrent.</p>
+  <p data-at="2.4" style="margin: 60px 0 0; font-size: 25px; color: #C9D3CD">Lili Sheppard, CEO · Hugo Fissier, CTO · Arquam El Mezouari, CPO · Victor Bella, CDO · Apolline Bouquet, CAO</p>
+  <p class="mono" data-at="2.9" style="margin: 20px 0 0; font-size: 21px; color: var(--sun)">Team 12 · Hackathon Build The Future · Eugenia × H Company · nester-mu.vercel.app</p>
+</section>
+
+<div id="barre"></div>
+</div>
+
+<script>
+(function () {
+  var TOTAL = 300, stage = document.getElementById('stage'), bar = document.getElementById('barre');
+  var scenes = [].map.call(document.querySelectorAll('section'), function (el, i) {
+    el.style.zIndex = i + 1;
+    return { el: el, start: +el.dataset.start, end: +el.dataset.end,
+             items: [].slice.call(el.querySelectorAll('[data-at]')), shots: [].slice.call(el.querySelectorAll('img[data-from]')) };
+  });
+  var clamp = function (x) { return Math.max(0, Math.min(1, x)); };
+  var ease = function (x) { return 1 - Math.pow(1 - x, 3); };
+  var sofa = document.getElementById('canape');
+
+  // Tout l'affichage se déduit de t (en secondes) : la lecture et l'export vidéo passent par ici.
+  window.seek = function (t) {
+    t = Math.max(0, Math.min(TOTAL, t));
+    scenes.forEach(function (s) {
+      var on = t >= s.start && t < s.end + 0.6;
+      s.el.style.visibility = on ? 'visible' : 'hidden';
+      if (!on) return;
+      var local = t - s.start;
+      s.el.style.opacity = s.start === 0 ? 1 : clamp(local / 0.6);
+      s.items.forEach(function (it) {
+        var k = ease(clamp((local - +it.dataset.at) / 0.6));
+        it.style.opacity = k;
+        if (!(it instanceof SVGElement)) it.style.transform = 'translateY(' + ((1 - k) * 26).toFixed(2) + 'px)';
+      });
+      s.shots.forEach(function (img) { var from = +img.dataset.from; img.style.opacity = from === 0 ? 1 : clamp((local - from) / 0.5); });
+    });
+    // Le canapé arrive par le bas et bute sur les murs.
+    var k = ease(clamp((t - 1.2) / 1.6));
+    sofa.setAttribute('transform', 'translate(0,' + ((1 - k) * 420).toFixed(1) + ')');
+    sofa.style.opacity = clamp((t - 1.2) / 0.5);
+    bar.style.width = (t / TOTAL * 100) + '%';
+    window.now = t;
+  };
+
+  function fit() {
+    var k = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = 'scale(' + k + ') translate(-50%, -50%)';
+  }
+  addEventListener('resize', fit); fit();
+
+  var q = new URLSearchParams(location.search), playing = !q.has('fixe'), t = +(q.get('t') || 0), last = null;
+  function frame(ts) {
+    if (playing) { if (last !== null) t = Math.min(TOTAL, t + (ts - last) / 1000); seek(t); }
+    last = ts;
+    requestAnimationFrame(frame);
+  }
+  addEventListener('keydown', function (ev) {
+    var i = scenes.findIndex(function (s) { return t >= s.start && t < s.end; });
+    if (ev.key === ' ') { playing = !playing; ev.preventDefault(); }
+    if (ev.key === 'ArrowRight' && i < scenes.length - 1) t = scenes[i + 1].start;
+    if (ev.key === 'ArrowLeft') t = scenes[Math.max(0, t - scenes[i].start < 2 ? i - 1 : i)].start;
+    if (ev.key === 'r' || ev.key === 'R') t = 0;
+    seek(t);
+  });
+  seek(t);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
