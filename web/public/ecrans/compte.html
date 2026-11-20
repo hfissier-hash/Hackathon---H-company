@@ -92,8 +92,8 @@ input[type=range]{accent-color:var(--ink)}
   function enter() {
     fetch('/api/me').then(function (r) { return r.json(); }).then(function (j) {
       try { localStorage.removeItem('nestr-projet'); } catch (e) {}
-      location.href = j.user && j.user.room ? 'profil.html' : 'pieces.html?compte=1';
-    }).catch(function () { location.href = 'profil.html'; });
+      location.href = j.user && j.user.room ? 'menu.html' : 'pieces.html?compte=1';
+    }).catch(function () { location.href = 'menu.html'; });
   }
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();

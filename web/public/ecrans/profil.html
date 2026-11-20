@@ -106,8 +106,6 @@ input[type=range]{accent-color:var(--ink)}
 // Écran « Profil » : informations du compte, logement, salons enregistrés et derniers salons générés.
 (function () {
   var saved = document.getElementById('enregistres'), recent = document.getElementById('recents'), nav = document.querySelector('nav');
-  // Sans salon ouvert, les onglets 3D / Déco / Liste n'ont rien à montrer : la barre reste masquée.
-  if (!Nestr.get().projectId) nav.style.display = 'none';
   var metres = function (cm) { return (cm / 100).toFixed(2).replace('.', ','); };
 
   Nestr.me.then(function (user) {

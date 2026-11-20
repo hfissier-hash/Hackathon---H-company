@@ -66,7 +66,7 @@ window.Nestr = (function () {
     if (!nav || nav.querySelector('a[href="profil.html"]')) return;
     // Retour vers la saisie (pièce, style, budget, envies) depuis les écrans du projet.
     var title = document.querySelector('h2');
-    if (title && !/profil\.html$/.test(location.pathname)) {
+    if (title && !/(profil|menu)\.html$/.test(location.pathname)) {
       var back = document.createElement('a');
       back.href = 'profil.html';
       back.textContent = '← Mes salons';
@@ -83,6 +83,19 @@ window.Nestr = (function () {
     tab.style.fontWeight = here ? '600' : '500';
     if (here) tab.setAttribute('aria-current', 'page');
     nav.appendChild(tab);
+    // Onglet « Accueil » : le point de retour de l'application.
+    var home = tab.cloneNode(true), there = /menu\.html$/.test(location.pathname);
+    home.href = 'menu.html';
+    home.lastChild.textContent = 'Accueil';
+    home.querySelector('svg').innerHTML = '<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1v-8z"/>';
+    home.style.color = there ? 'var(--ink)' : 'var(--ink-muted)';
+    home.style.fontWeight = there ? '600' : '500';
+    if (there) home.setAttribute('aria-current', 'page'); else home.removeAttribute('aria-current');
+    nav.insertBefore(home, nav.firstChild);
+    // Sans salon ouvert, 3D / Déco / Liste n'ont rien à montrer : onglets grisés.
+    if (!get().projectId) [].forEach.call(nav.querySelectorAll('a[href="rendu-3d.html"], a[href="deco.html"], a[href="liste.html"]'), function (a) {
+      a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true'); a.style.opacity = '0.35';
+    });
   });
   function project() {
     var id = get().projectId;

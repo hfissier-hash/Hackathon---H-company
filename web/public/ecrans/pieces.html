@@ -313,7 +313,7 @@ a{color:var(--ink)}a:hover{color:var(--ink-muted)}
     document.querySelector('h2').textContent = 'Ton logement';
     document.querySelector('h2').nextElementSibling.textContent = 'Dernière étape du compte : les mesures de ton salon. Tu pourras les modifier.';
   }
-  document.querySelector('a[aria-label="Retour"]').href = onboarding ? 'compte.html' : 'profil.html';
+  document.querySelector('a[aria-label="Retour"]').href = onboarding ? 'compte.html' : 'menu.html';
   // Le logement du profil arrive après le chargement : on remplit les champs s'ils n'ont pas été touchés.
   var touched = false;
   FIELDS.forEach(function (f) { document.getElementById(f[0]).addEventListener('input', function () { touched = true; }); });
